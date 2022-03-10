@@ -22,17 +22,22 @@ import (
 
 // todo: make sure CreatedOn is persisted as epoch seconds
 type AccessToken struct {
-	Token     string    `json:"access_token"`
-	Scope     string    `json:"scope"`
-	ExpiresIn int       `json:"expires_in"` // token lifetime in seconds
-	CreatedOn time.Time `json:"created_on"`
+	Token     string `json:"access_token"`
+	Scope     string `json:"scope"`
+	ExpiresIn int    `json:"expires_in"` // token lifetime in seconds
+	CreatedOn int64  `json:"created_on"` // epoch seconds
+}
+
+// Returns the current time in epoch seconds.
+func nowEpochSecs() int64 {
+	return time.Now().UnixMilli() / 1000
 }
 
 func (a *AccessToken) Load(r io.Reader) error {
 	if err := json.NewDecoder(r).Decode(a); err != nil {
 		return err
 	}
-	a.CreatedOn = time.Now()
+	a.CreatedOn = nowEpochSecs()
 	return nil
 }
 
@@ -40,15 +45,13 @@ func (a *AccessToken) String() string {
 	return a.Token
 }
 
-func (a *AccessToken) Duration() time.Duration {
-	return time.Duration(a.ExpiresIn) * time.Second
+// Instant the token expires in epoch seconds.
+func (a *AccessToken) ExpiresOn() int64 {
+	return a.CreatedOn + int64(a.ExpiresIn)
 }
 
 func (a *AccessToken) IsExpired() bool {
-	if a.Duration() < time.Since(a.CreatedOn) {
-		return true
-	}
-	return false
+	return nowEpochSecs() > a.ExpiresOn()
 }
 
 type ClientCredentials struct {

@@ -23,6 +23,9 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+const DefaultConfigFile = "~/.rai/config"
+const DefaultConfigProfile = "default"
+
 const defaultClientCredentialsUrl = "https://login.relationalai.com/oauth/token"
 
 type Config struct {
@@ -58,8 +61,18 @@ func loadStanza(fname, profile string) (*ini.Section, error) {
 	return stanza, nil
 }
 
-// Load config data from the named file and profile stanza.
-func LoadConfig(fname, profile string, cfg *Config) error {
+// Load settings from the default profile of the default config file.
+func LoadConfig(cfg *Config) error {
+	return LoadConfigFile(DefaultConfigFile, DefaultConfigProfile, cfg)
+}
+
+// Load settings from the given profile in the default config file.
+func LoadConfigProfile(profile string, cfg *Config) error {
+	return LoadConfigFile(DefaultConfigFile, profile, cfg)
+}
+
+// Load settings from the given profile of the named config file.
+func LoadConfigFile(fname, profile string, cfg *Config) error {
 	fname, err := expandUser(fname)
 	if err != nil {
 		return err
