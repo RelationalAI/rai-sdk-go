@@ -12,29 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package rai
 
 import (
-	"context"
-	"flag"
-	"fmt"
-
-	"github.com/relationalai/rai-sdk-go/rai"
+	"encoding/json"
+	"io"
+	"os"
 )
 
-func main() {
-	state := flag.String("state", "", "state filter (default: none)")
-	profile := flag.String("profile", rai.DefaultConfigProfile, "config profile (default: default)")
-	flag.Parse()
+// Helpers for encoding responses, including transaction results.
 
-	var cfg rai.Config
-	rai.LoadConfigProfile(*profile, &cfg)
-	client := rai.NewClient(context.Background(), &rai.ClientOptions{Config: cfg})
-
-	rsp, err := client.ListEngines(rai.Filters{"state": *state})
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		rai.Print(rsp, 4)
+func makeIndent(indent int) string {
+	result := make([]rune, indent)
+	for i := 0; i < indent; i++ {
+		result[i] = ' '
 	}
+	return string(result)
+}
+
+// Encode the given item as JSON to the given writer.
+func Encode(w io.Writer, item interface{}, indent int) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", makeIndent(indent))
+	return enc.Encode(item)
+}
+
+// Print the given item as JSON to stdout.
+func Print(item interface{}, indent int) error {
+	return Encode(os.Stdout, item, indent)
 }

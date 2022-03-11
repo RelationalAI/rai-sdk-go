@@ -15,10 +15,6 @@
 package rai
 
 import (
-	"encoding/json"
-	"io"
-	"os"
-	"strings"
 	"time"
 )
 
@@ -27,22 +23,6 @@ import (
 //
 // Resources
 //
-
-type Entity struct{}
-
-func (e *Entity) Encode(w io.Writer) error {
-	return json.NewEncoder(w).Encode(e)
-}
-
-func (e *Entity) Print() {
-	e.Encode(os.Stdout)
-}
-
-func (e *Entity) String() string {
-	b := new(strings.Builder)
-	e.Encode(b)
-	return b.String()
-}
 
 type Database struct {
 	ID            string `json:"id"`
@@ -220,7 +200,6 @@ type ListEdbsResponse struct {
 }
 
 type ListEnginesResponse struct {
-	Entity
 	Engines []Engine `json:"computes"`
 }
 

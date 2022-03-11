@@ -359,11 +359,20 @@ func queryArgs(filters ...Filters) (url.Values, error) {
 	args := url.Values{}
 	for _, filter := range filters {
 		for k, v := range filter {
+			if v == nil {
+				continue // ignore
+			}
 			switch vv := v.(type) {
 			case string:
+				if vv == "" {
+					continue // ignore
+				}
 				args.Add(k, vv)
 			case []string:
 				for _, item := range vv {
+					if item == "" {
+						continue // ignore
+					}
 					args.Add(k, item)
 				}
 			case int:

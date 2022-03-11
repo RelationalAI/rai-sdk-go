@@ -108,12 +108,12 @@ func writeTokenCache(cache map[string]*AccessToken) {
 	if err != nil {
 		return
 	}
-	f, err := os.Open(fname)
+	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return
 	}
-	defer f.Close()
 	json.NewEncoder(f).Encode(cache)
+	f.Close()
 }
 
 func (h DefaultAccessTokenHandler) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) {

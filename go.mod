@@ -1,4 +1,4 @@
-module rai
+module github.com/relationalai/rai-sdk-go
 
 go 1.17
 
