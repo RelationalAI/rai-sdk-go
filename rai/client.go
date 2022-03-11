@@ -28,6 +28,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -84,6 +85,17 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 		client.accessTokenHandler = NewDefaultAccessTokenHandler(client)
 	}
 	return client
+}
+
+// Returns a new client using the background context and the config settings
+// loaded from the named profile.
+func NewClientFromConfig(profile string) (*Client, error) {
+	var cfg Config
+	if err := LoadConfigProfile(profile, &cfg); err != nil {
+		return nil, err
+	}
+	opts := ClientOptions{Config: cfg}
+	return NewClient(context.Background(), &opts), nil
 }
 
 func (c *Client) Context() context.Context {
@@ -175,9 +187,6 @@ func (c *Client) ensureHeaders(req *http.Request) *http.Request {
 	}
 	if v := req.Header.Get("content-type"); v == "" {
 		req.Header.Set("Content-Type", "application/json")
-	}
-	if v := req.Header.Get("host"); v == "" {
-		req.Header.Set("Host", c.Host) // todo: don't set host, leave to lib
 	}
 	if v := req.Header.Get("user-agent"); v == "" {
 		req.Header.Set("User-Agent", userAgent)
@@ -276,7 +285,7 @@ func (c *Client) request(method, path string, args url.Values, data, result inte
 	if err != nil {
 		return err
 	}
-	showRequest(req, data)
+	// showRequest(req, data)
 	rsp, err := c.Do(req)
 	if err != nil {
 		return err
@@ -348,38 +357,76 @@ const (
 	PathUsers        = "/users"
 )
 
-type Filters map[string]interface{} // string, []string, int, bool
-
 func makePath(parts ...string) string {
 	return strings.Join(parts, "/")
 }
 
-// Construct a url.Values struct from the given filters.
-func queryArgs(filters ...Filters) (url.Values, error) {
-	args := url.Values{}
-	for _, filter := range filters {
-		for k, v := range filter {
-			if v == nil {
-				continue // ignore
-			}
-			switch vv := v.(type) {
-			case string:
-				if vv == "" {
+// Add the filter to the given query args.
+func addFilter(args url.Values, name string, value interface{}) error {
+	if value == nil {
+		return nil // ignore
+	}
+	switch v := value.(type) {
+	case int:
+		args.Add(name, strconv.Itoa(v))
+	case string:
+		args.Add(name, v)
+	case []string:
+		for _, item := range v {
+			args.Add(name, item)
+		}
+	default:
+		return errors.Errorf("bad filter value '%v'", v)
+	}
+	return nil
+}
+
+// Add the contents of the filter map to the given query args.
+func addFilterMap(args url.Values, m map[string]interface{}) error {
+	for k, v := range m {
+		if v == nil {
+			continue // ignore
+		}
+		switch vv := v.(type) {
+		case int:
+			args.Add(k, strconv.Itoa(vv))
+		case string:
+			args.Add(k, vv)
+		case []string:
+			for _, item := range vv {
+				if item == "" {
 					continue // ignore
 				}
-				args.Add(k, vv)
-			case []string:
-				for _, item := range vv {
-					if item == "" {
-						continue // ignore
-					}
-					args.Add(k, item)
-				}
-			case int:
-				args.Add(k, strconv.Itoa(vv))
-			default:
-				return nil, errors.Errorf("bad filter value '%v'", vv)
+				args.Add(k, item)
 			}
+		default:
+			return errors.Errorf("bad filter value '%v'", vv)
+		}
+	}
+	return nil
+}
+
+// Construct a url.Values struct from the given filters.
+func queryArgs(filters ...interface{}) (url.Values, error) {
+	args := url.Values{}
+	for i := 0; i < len(filters); i++ {
+		filter := filters[i]
+		switch item := filter.(type) {
+		case map[string]interface{}:
+			if err := addFilterMap(args, item); err != nil {
+				return nil, err
+			}
+		case string:
+			if i == len(filters) {
+				return nil, errors.New("missing filter value")
+			}
+			i++
+			value := filters[i]
+			if err := addFilter(args, item, value); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, errors.Errorf("bad filter arg '%v'", item)
 		}
 	}
 	return args, nil
@@ -389,7 +436,7 @@ func queryArgs(filters ...Filters) (url.Values, error) {
 // Databases
 //
 
-func (c *Client) CreateDatabase(database, engine, source string, overwrite bool) (*CreateDatabaseResponse, error) {
+func (c *Client) CloneDatabase(database, engine, source string, overwrite bool) (*CreateDatabaseResponse, error) {
 	var result CreateDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
@@ -397,6 +444,21 @@ func (c *Client) CreateDatabase(database, engine, source string, overwrite bool)
 		Engine:   engine,
 		Mode:     createMode(source, overwrite),
 		Source:   source}
+	data := tx.Payload()
+	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *Client) CreateDatabase(database, engine string, overwrite bool) (*CreateDatabaseResponse, error) {
+	var result CreateDatabaseResponse
+	tx := Transaction{
+		Region:   c.Region,
+		Database: database,
+		Engine:   engine,
+		Mode:     createMode("", overwrite)}
 	data := tx.Payload()
 	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
 	if err != nil {
@@ -416,7 +478,7 @@ func (c *Client) DeleteDatabase(database string) (*DeleteDatabaseResponse, error
 }
 
 func (c *Client) GetDatabase(database string) (*Database, error) {
-	args, err := queryArgs(Filters{"name": database})
+	args, err := queryArgs("name", database)
 	if err != nil {
 		return nil, err
 	}
@@ -431,7 +493,7 @@ func (c *Client) GetDatabase(database string) (*Database, error) {
 	return &result.Databases[0], nil
 }
 
-func (c *Client) ListDatabases(filters ...Filters) ([]Database, error) {
+func (c *Client) ListDatabases(filters ...interface{}) ([]Database, error) {
 	args, err := queryArgs(filters...)
 	if err != nil {
 		return nil, err
@@ -457,7 +519,30 @@ func (c *Client) UpdateDatabase(database string, update *UpdateDatabaseRequest) 
 // Engines
 //
 
+// Answeres if the given state is a terminal state.
+func isTerminalState(state, targetState string) bool {
+	return state == targetState || strings.Contains(state, "FAILED")
+}
+
+// Request the creation of an engine, and wait for the opeartion to complete.
+// This can block the caller for up to a minute.
 func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
+	rsp, err := c.CreateEngineAsync(engine, size)
+	if err != nil {
+		return nil, err
+	}
+	for !isTerminalState(rsp.State, "PROVISIONED") {
+		time.Sleep(5 * time.Second)
+		if rsp, err = c.GetEngine(engine); err != nil {
+			return nil, err
+		}
+	}
+	return rsp, nil
+}
+
+// Request the creation of an engine, and immediately return. The process
+// of provisioning a new engine can take up to a minute.
+func (c *Client) CreateEngineAsync(engine, size string) (*Engine, error) {
 	var result CreateEngineResponse
 	data := &CreateEngineRequest{Region: c.Region, Name: engine, Size: size}
 	err := c.Put(PathEngine, nil, data, &result)
@@ -467,18 +552,36 @@ func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
 	return &result.Engine, nil
 }
 
-func (c *Client) DeleteEngine(engine string) (*DeleteEngineStatus, error) {
+// Request the deletion of an engine and wait for the operation to complete.
+func (c *Client) DeleteEngine(engine string) error {
+	rsp, err := c.DeleteEngineAsync(engine)
+	if err != nil {
+		return err
+	}
+	for !isTerminalState(rsp.State, "DELETED") {
+		time.Sleep(3 * time.Second)
+		if rsp, err = c.GetEngine(engine); err != nil {
+			if err == ErrNotFound {
+				return nil // successfully deleted
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Client) DeleteEngineAsync(engine string) (*Engine, error) {
 	var result DeleteEngineResponse
 	data := &DeleteEngineRequest{Name: engine}
 	err := c.Delete(PathEngine, nil, data, &result)
 	if err != nil {
 		return nil, err
 	}
-	return &result.Status, nil
+	return c.GetEngine(engine) // normalize return type
 }
 
 func (c *Client) GetEngine(engine string) (*Engine, error) {
-	args, err := queryArgs(Filters{"name": engine, "deleted_on": ""})
+	args, err := queryArgs("name", engine, "deleted_on", "")
 	if err != nil {
 		return nil, err
 	}
@@ -493,7 +596,7 @@ func (c *Client) GetEngine(engine string) (*Engine, error) {
 	return &result.Engines[0], nil
 }
 
-func (c *Client) ListEngines(filters ...Filters) ([]Engine, error) {
+func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 	args, err := queryArgs(filters...)
 	if err != nil {
 		return nil, err
@@ -551,8 +654,7 @@ func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
 // Models
 //
 
-// todo: rename DeleteModels
-func (c *Client) DeleteModel(database, engine string, models []string) (interface{}, error) {
+func (c *Client) DeleteModels(database, engine string, models []string) (interface{}, error) {
 	var result interface{}
 	tx := Transaction{
 		Region:   c.Region,
@@ -640,7 +742,7 @@ type Transaction struct {
 	Source        string
 	Abort         bool
 	Readonly      bool
-	NowaitDurable bool
+	NoWaitDurable bool
 	Version       int
 }
 
@@ -659,7 +761,7 @@ func (tx *Transaction) Payload(actions ...DbAction) map[string]interface{} {
 		"abort":          tx.Abort,
 		"actions":        makeActions(actions...),
 		"dbname":         tx.Database,
-		"nowait_durable": tx.NowaitDurable,
+		"nowait_durable": tx.NoWaitDurable,
 		"readonly":       tx.Readonly,
 		"version":        tx.Version}
 	if tx.Engine != "" {

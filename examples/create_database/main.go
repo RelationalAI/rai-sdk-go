@@ -23,8 +23,10 @@ import (
 )
 
 type Options struct {
-	State   []string `short:"s" long:"state" description:"state filter"`
-	Profile string   `long:"profile" default:"default" description:"config profile"`
+	Database  string `short:"d" long:"database" required:"true" description:"database name"`
+	Engine    string `short:"e" long:"engine" required:"true" description:"engine name"`
+	Overwrite bool   `long:"overwrite" description:"overwrite existing database"`
+	Profile   string `long:"profile" default:"default" description:"config profile"`
 }
 
 func run(opts *Options) error {
@@ -32,7 +34,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.ListEngines("state", opts.State)
+	rsp, err := client.CreateDatabase(opts.Database, opts.Engine, opts.Overwrite)
 	if err != nil {
 		return err
 	}

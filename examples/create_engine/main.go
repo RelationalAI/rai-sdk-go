@@ -23,8 +23,9 @@ import (
 )
 
 type Options struct {
-	State   []string `short:"s" long:"state" description:"state filter"`
-	Profile string   `long:"profile" default:"default" description:"config profile"`
+	Engine  string `short:"e" long:"engine" required:"true" description:"engine name"`
+	Size    string `short:"s" long:"size" default:"XS" description:"engine size"`
+	Profile string `long:"profile" default:"default" description:"config profile"`
 }
 
 func run(opts *Options) error {
@@ -32,7 +33,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.ListEngines("state", opts.State)
+	rsp, err := client.CreateEngine(opts.Engine, opts.Size)
 	if err != nil {
 		return err
 	}
