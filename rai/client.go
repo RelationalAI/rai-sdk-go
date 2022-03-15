@@ -487,14 +487,10 @@ func (c *Client) CreateDatabase(database, engine string, overwrite bool) (*Datab
 	return c.GetDatabase(database)
 }
 
-func (c *Client) DeleteDatabase(database string) (*DeleteDatabaseResponse, error) {
-	var result DeleteDatabaseResponse
+func (c *Client) DeleteDatabase(database string) error {
+	var result deleteDatabaseResponse
 	data := &DeleteDatabaseRequest{Name: database}
-	err := c.Delete(PathDatabase, nil, data, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+	return c.Delete(PathDatabase, nil, data, &result)
 }
 
 func (c *Client) GetDatabase(database string) (*Database, error) {
@@ -518,7 +514,7 @@ func (c *Client) ListDatabases(filters ...interface{}) ([]Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result ListDatabasesResponse
+	var result listDatabasesResponse
 	err = c.Get(PathDatabase, args, &result)
 	if err != nil {
 		return nil, err
@@ -563,7 +559,7 @@ func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
 // Request the creation of an engine, and immediately return. The process
 // of provisioning a new engine can take up to a minute.
 func (c *Client) CreateEngineAsync(engine, size string) (*Engine, error) {
-	var result CreateEngineResponse
+	var result createEngineResponse
 	data := &CreateEngineRequest{Region: c.Region, Name: engine, Size: size}
 	err := c.Put(PathEngine, nil, data, &result)
 	if err != nil {
@@ -591,7 +587,7 @@ func (c *Client) DeleteEngine(engine string) error {
 }
 
 func (c *Client) DeleteEngineAsync(engine string) (*Engine, error) {
-	var result DeleteEngineResponse
+	var result deleteEngineResponse
 	data := &DeleteEngineRequest{Name: engine}
 	err := c.Delete(PathEngine, nil, data, &result)
 	if err != nil {
@@ -621,7 +617,7 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result ListEnginesResponse
+	var result listEnginesResponse
 	err = c.Get(PathEngine, args, &result)
 	if err != nil {
 		return nil, err
@@ -634,7 +630,7 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 //
 
 func (c *Client) CreateOAuthClient(name string, perms []string) (*OAuthClientExtra, error) {
-	var result CreateOAuthClientResponse
+	var result createOAuthClientResponse
 	data := CreateOAuthClientRequest{Name: name, Permissions: perms}
 	err := c.Post(PathOAuthClients, nil, data, &result)
 	if err != nil {
@@ -662,7 +658,7 @@ func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
 }
 
 func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
-	var result ListOAuthClientsResponse
+	var result listOAuthClientsResponse
 	err := c.Get(PathOAuthClients, nil, &result)
 	if err != nil {
 		return nil, err
@@ -955,7 +951,7 @@ func (c *Client) Execute(
 }
 
 func (c *Client) ListEdbs(database, engine string) ([]Edb, error) {
-	var result ListEdbsResponse
+	var result listEdbsResponse
 	tx := &Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -1050,7 +1046,7 @@ func (c *Client) GetUser(id string) (*User, error) {
 }
 
 func (c *Client) ListUsers() ([]User, error) {
-	var result ListUsersResponse
+	var result listUsersResponse
 	err := c.Get(PathUsers, nil, &result)
 	if err != nil {
 		return nil, err
@@ -1059,7 +1055,7 @@ func (c *Client) ListUsers() ([]User, error) {
 }
 
 func (c *Client) UpdateUser(id string, update *UpdateUserRequest) (*User, error) {
-	var result UpdateUserResponse
+	var result updateUserResponse
 	err := c.Patch(makePath(PathUsers, id), nil, update, &result)
 	if err != nil {
 		return nil, err

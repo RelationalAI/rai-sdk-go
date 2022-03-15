@@ -82,6 +82,7 @@ func findModel(models []Model, name string) *Model {
 	return nil
 }
 
+// Test the database management APIs.
 func TestDatabase(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -89,7 +90,7 @@ func TestDatabase(t *testing.T) {
 	err = ensureEngine(t, client)
 	assert.Nil(t, err)
 
-	if _, err := client.DeleteDatabase(databaseName); err != nil {
+	if err := client.DeleteDatabase(databaseName); err != nil {
 		assert.Equal(t, ErrNotFound, err)
 	}
 
@@ -152,9 +153,8 @@ func TestDatabase(t *testing.T) {
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
-	deleteRsp, err := client.DeleteDatabase(databaseName)
+	err = client.DeleteDatabase(databaseName)
 	assert.Nil(t, err)
-	assert.True(t, deleteRsp.Name == databaseName)
 
 	_, err = client.GetDatabase(databaseName)
 	assert.Equal(t, err, ErrNotFound)
@@ -163,4 +163,66 @@ func TestDatabase(t *testing.T) {
 	assert.Nil(t, err)
 	database = findDatabase(databases, databaseName)
 	assert.Nil(t, err)
+}
+
+func findEngine(engines []Engine, name string) *Engine {
+	for _, engine := range engines {
+		if engine.State == "PROVISIONED" && engine.Name == name {
+			return &engine
+		}
+	}
+	return nil
+}
+
+// Test the engine management APIs.
+func TestEngine(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	if err := client.DeleteEngine(engineName); err != nil {
+		assert.Equal(t, ErrNotFound, err)
+	}
+
+	engine, err := client.CreateEngine(engineName, "XS")
+	assert.Nil(t, err)
+	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, "PROVISIONED", engine.State)
+
+	engine, err = client.GetEngine(engineName)
+	assert.Nil(t, err)
+	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, "PROVISIONED", engine.State)
+	assert.Equal(t, "XS", engine.Size)
+
+	engines, err := client.ListEngines()
+	assert.Nil(t, err)
+	engine = findEngine(engines, engineName)
+	assert.NotNil(t, engine)
+	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, "PROVISIONED", engine.State)
+	assert.Equal(t, "XS", engine.Size)
+
+	engines, err = client.ListEngines("state", "PROVISIONED")
+	assert.Nil(t, err)
+	engine = findEngine(engines, engineName)
+	assert.NotNil(t, engine)
+	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, "PROVISIONED", engine.State)
+	assert.Equal(t, "XS", engine.Size)
+
+	engines, err = client.ListEngines("state", "NONSENSE")
+	assert.Nil(t, err)
+	engine = findEngine(engines, engineName)
+	assert.Nil(t, engine)
+
+	err = client.DeleteEngine(engineName)
+	assert.Nil(t, err)
+
+	_, err = client.GetEngine(engineName)
+	assert.Equal(t, ErrNotFound, err)
+
+	engines, err = client.ListEngines()
+	assert.Nil(t, err)
+	engine = findEngine(engines, engineName)
+	assert.Nil(t, engine)
 }

@@ -130,7 +130,7 @@ type CreateEngineRequest struct {
 	Region string `json:"region"` // todo: isnt region part of the context?
 }
 
-type CreateEngineResponse struct {
+type createEngineResponse struct {
 	Engine Engine `json:"compute"`
 }
 
@@ -139,12 +139,12 @@ type CreateOAuthClientRequest struct {
 	Permissions []string `json:"permissions"`
 }
 
-type CreateOAuthClientResponse struct {
+type createOAuthClientResponse struct {
 	Client OAuthClientExtra `json:"client"`
 }
 
 type getOAuthClientResponse struct {
-	CreateOAuthClientResponse
+	createOAuthClientResponse
 }
 
 type CreateUserRequest struct {
@@ -156,7 +156,7 @@ type DeleteDatabaseRequest struct {
 	Name string `json:"name"`
 }
 
-type DeleteDatabaseResponse struct {
+type deleteDatabaseResponse struct {
 	Name    string `json:"name"`
 	Message string `json:"message"`
 }
@@ -165,7 +165,7 @@ type DeleteEngineRequest struct {
 	Name string `json:"name"`
 }
 
-type DeleteEngineResponse struct {
+type deleteEngineResponse struct {
 	Status DeleteEngineStatus `json:"status"`
 }
 
@@ -192,11 +192,11 @@ type getUserResponse struct {
 	User User `json:"user"`
 }
 
-type ListDatabasesResponse struct {
+type listDatabasesResponse struct {
 	Databases []Database `json:"databases"`
 }
 
-type ListEdbsResponse struct {
+type listEdbsResponse struct {
 	Actions []struct {
 		Result struct {
 			Rels []Edb `json:"rels"`
@@ -204,11 +204,11 @@ type ListEdbsResponse struct {
 	} `json:"actions"`
 }
 
-type ListEnginesResponse struct {
+type listEnginesResponse struct {
 	Engines []Engine `json:"computes"`
 }
 
-type ListOAuthClientsResponse struct {
+type listOAuthClientsResponse struct {
 	Clients []OAuthClient `json:"clients"`
 }
 
@@ -220,7 +220,7 @@ type listModelsResponse struct {
 	} `json:"actions"`
 }
 
-type ListUsersResponse struct {
+type listUsersResponse struct {
 	Users []User `json:"users"`
 }
 
@@ -235,6 +235,6 @@ type UpdateUserRequest struct {
 	Roles  []string `json:"roles,omitempty"`
 }
 
-type UpdateUserResponse struct {
+type updateUserResponse struct {
 	User User `json:"user"`
 }
