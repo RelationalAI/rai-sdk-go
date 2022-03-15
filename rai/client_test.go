@@ -34,25 +34,21 @@ func contains(items []string, value string) bool {
 }
 
 // Ensure that the test database exists.
-func ensureDatabase(t *testing.T, client *Client) error {
-	var err error
-	_, err = client.GetDatabase(databaseName)
-	if err != nil {
-		assert.Equal(t, ErrNotFound, err)
-		_, err = client.CreateDatabase(databaseName, engineName, true)
-	}
-	return err
+func ensureDatabase(t *testing.T, client *Client) {
+	ensureEngine(t, client)
+	_, err := client.CreateDatabase(databaseName, engineName, true)
+	assert.Nil(t, err)
 }
 
 // Ensure that the test engine exists.
-func ensureEngine(t *testing.T, client *Client) error {
+func ensureEngine(t *testing.T, client *Client) {
 	var err error
 	_, err = client.GetEngine(engineName)
 	if err != nil {
 		assert.Equal(t, ErrNotFound, err)
 		_, err = client.CreateEngine(engineName, "XS")
+		assert.Nil(t, err)
 	}
-	return err
 }
 
 func findDatabase(databases []Database, name string) *Database {
@@ -87,8 +83,7 @@ func TestDatabase(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
 
-	err = ensureEngine(t, client)
-	assert.Nil(t, err)
+	ensureEngine(t, client)
 
 	if err := client.DeleteDatabase(databaseName); err != nil {
 		assert.Equal(t, ErrNotFound, err)
@@ -225,4 +220,32 @@ func TestEngine(t *testing.T) {
 	assert.Nil(t, err)
 	engine = findEngine(engines, engineName)
 	assert.Nil(t, engine)
+}
+
+// Test transaction execution.
+func TestExecute(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+
+	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	output := rsp.Output
+	assert.Equal(t, 1, len(output))
+	relation := output[0]
+	relKey := relation.RelKey
+	assert.Equal(t, "output", relKey.Name)
+	assert.Equal(t, []string{"Int64", "Int64", "Int64"}, relKey.Keys)
+	assert.Equal(t, []string{"Int64"}, relKey.Values)
+	columns := relation.Columns
+	expected := [][]interface{}{
+		{1., 2., 3., 4., 5.},
+		{1., 4., 9., 16., 25.},
+		{1., 8., 27., 64., 125.},
+		{1., 16., 81., 256., 625.}}
+	assert.Equal(t, expected, columns)
 }
