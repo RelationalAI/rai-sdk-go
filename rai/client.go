@@ -56,25 +56,37 @@ type Client struct {
 	accessTokenHandler AccessTokenHandler
 }
 
+const DefaultHost = "azure.relationalai.com"
+const DefaultPort = "443"
+const DefaultRegion = "us-east"
+const DefaultScheme = "https"
+
 func NewClient(ctx context.Context, opts *ClientOptions) *Client {
-	if opts.Region == "" {
-		opts.Region = "us-east"
+	host := opts.Host
+	if host == "" {
+		host = DefaultHost
 	}
-	if opts.Scheme == "" {
-		opts.Scheme = "https"
+	port := opts.Port
+	if port == "" {
+		port = DefaultPort
 	}
-	if opts.Port == "" {
-		opts.Port = "443"
+	region := opts.Region
+	if region == "" {
+		region = DefaultRegion
+	}
+	scheme := opts.Scheme
+	if scheme == "" {
+		scheme = DefaultScheme
 	}
 	if opts.HTTPClient == nil {
 		opts.HTTPClient = &http.Client{}
 	}
 	client := &Client{
 		ctx:         ctx,
-		Region:      opts.Region,
-		Scheme:      opts.Scheme,
-		Host:        opts.Host,
-		Port:        opts.Port,
+		Region:      region,
+		Scheme:      scheme,
+		Host:        host,
+		Port:        port,
 		Credentials: opts.Credentials,
 		http:        opts.HTTPClient}
 	if opts.AccessTokenHandler != nil {
@@ -87,8 +99,8 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 	return client
 }
 
-// Returns a new client using the background context and the config settings
-// loaded from the named profile.
+// Returns a new client using the background context and config settings from
+// the named profile.
 func NewClientFromConfig(profile string) (*Client, error) {
 	var cfg Config
 	if err := LoadConfigProfile(profile, &cfg); err != nil {
@@ -96,6 +108,12 @@ func NewClientFromConfig(profile string) (*Client, error) {
 	}
 	opts := ClientOptions{Config: cfg}
 	return NewClient(context.Background(), &opts), nil
+}
+
+// Returns a new client using the background context and config settings from
+// the default profile.
+func NewDefaultClient() (*Client, error) {
+	return NewClientFromConfig(DefaultConfigProfile)
 }
 
 func (c *Client) Context() context.Context {
@@ -406,6 +424,8 @@ func addFilterMap(args url.Values, m map[string]interface{}) error {
 	return nil
 }
 
+var ErrMissingFilterValue = errors.New("missing filter value")
+
 // Construct a url.Values struct from the given filters.
 func queryArgs(filters ...interface{}) (url.Values, error) {
 	args := url.Values{}
@@ -417,8 +437,8 @@ func queryArgs(filters ...interface{}) (url.Values, error) {
 				return nil, err
 			}
 		case string:
-			if i == len(filters) {
-				return nil, errors.New("missing filter value")
+			if i == len(filters)-1 {
+				return nil, ErrMissingFilterValue
 			}
 			i++
 			value := filters[i]
@@ -436,8 +456,8 @@ func queryArgs(filters ...interface{}) (url.Values, error) {
 // Databases
 //
 
-func (c *Client) CloneDatabase(database, engine, source string, overwrite bool) (*CreateDatabaseResponse, error) {
-	var result CreateDatabaseResponse
+func (c *Client) CloneDatabase(database, engine, source string, overwrite bool) (*Database, error) {
+	var result createDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -449,11 +469,11 @@ func (c *Client) CloneDatabase(database, engine, source string, overwrite bool) 
 	if err != nil {
 		return nil, err
 	}
-	return &result, nil
+	return c.GetDatabase(database)
 }
 
-func (c *Client) CreateDatabase(database, engine string, overwrite bool) (*CreateDatabaseResponse, error) {
-	var result CreateDatabaseResponse
+func (c *Client) CreateDatabase(database, engine string, overwrite bool) (*Database, error) {
+	var result createDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -464,7 +484,7 @@ func (c *Client) CreateDatabase(database, engine string, overwrite bool) (*Creat
 	if err != nil {
 		return nil, err
 	}
-	return &result, nil
+	return c.GetDatabase(database)
 }
 
 func (c *Client) DeleteDatabase(database string) (*DeleteDatabaseResponse, error) {
@@ -482,7 +502,7 @@ func (c *Client) GetDatabase(database string) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result GetDatabaseResponse
+	var result getDatabaseResponse
 	err = c.Get(PathDatabase, args, &result)
 	if err != nil {
 		return nil, err
@@ -585,7 +605,7 @@ func (c *Client) GetEngine(engine string) (*Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result GetEngineResponse
+	var result getEngineResponse
 	err = c.Get(PathEngine, args, &result)
 	if err != nil {
 		return nil, err
@@ -633,7 +653,7 @@ func (c *Client) DeleteOAuthClient(id string) (*DeleteOAuthClientResponse, error
 }
 
 func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
-	var result GetOAuthClientResponse
+	var result getOAuthClientResponse
 	err := c.Get(makePath(PathOAuthClients, id), nil, &result)
 	if err != nil {
 		return nil, err
@@ -670,24 +690,24 @@ func (c *Client) DeleteModels(database, engine string, models []string) (interfa
 	return result, err
 }
 
-func (c *Client) GetModel(database, engine, model string) (string, error) {
-	var result ListModelsResponse
+func (c *Client) GetModel(database, engine, model string) (*Model, error) {
+	var result listModelsResponse
 	tx := NewTransaction(c.Region, database, engine, "OPEN")
 	data := tx.Payload(makeListModelsAction())
 	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	// assert len(result.Actions) == 1
 	for _, item := range result.Actions[0].Result.Models {
 		if item.Name == model {
-			return item.Value, nil
+			return &item, nil
 		}
 	}
-	return "", ErrNotFound
+	return nil, ErrNotFound
 }
 
-func (c *Client) InstallModels(
+func (c *Client) LoadModels(
 	database, engine string, models map[string]string,
 ) (interface{}, error) {
 	var result interface{}
@@ -699,7 +719,7 @@ func (c *Client) InstallModels(
 		Readonly: false}
 	actions := []DbAction{}
 	for name, model := range models {
-		actions = append(actions, makeInstallModelAction(name, model))
+		actions = append(actions, makeLoadModelAction(name, model))
 	}
 	data := tx.Payload(actions...)
 	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
@@ -710,8 +730,8 @@ func (c *Client) InstallModels(
 }
 
 // Returns a list of model names for the given database.
-func (c *Client) ListModels(database, engine string) ([]string, error) {
-	var models ListModelsResponse
+func (c *Client) ListModelNames(database, engine string) ([]string, error) {
+	var models listModelsResponse
 	tx := NewTransaction(c.Region, database, engine, "OPEN")
 	data := tx.Payload(makeListModelsAction())
 	err := c.Post(PathTransaction, tx.QueryArgs(), data, &models)
@@ -725,6 +745,20 @@ func (c *Client) ListModels(database, engine string) ([]string, error) {
 		result = append(result, model.Name)
 	}
 	return result, nil
+}
+
+// Returns a list of model names for the given database.
+func (c *Client) ListModels(database, engine string) ([]Model, error) {
+	var models listModelsResponse
+	tx := NewTransaction(c.Region, database, engine, "OPEN")
+	data := tx.Payload(makeListModelsAction())
+	err := c.Post(PathTransaction, tx.QueryArgs(), data, &models)
+	if err != nil {
+		return nil, err
+	}
+	actions := models.Actions
+	// assert len(actions) == 1
+	return actions[0].Result.Models, nil
 }
 
 //
@@ -851,7 +885,7 @@ func makeDeleteModelsAction(models []string) DbAction {
 	return DbAction{"type": "ModifyWorkspaceAction", "delete_source": models}
 }
 
-func makeInstallModelAction(name, model string) DbAction {
+func makeLoadModelAction(name, model string) DbAction {
 	return DbAction{
 		"type":    "InstallAction",
 		"sources": []map[string]interface{}{makeQuerySource(name, model)}}
@@ -1007,7 +1041,7 @@ func (c *Client) CreateUser(email string, roles []string) (interface{}, error) {
 }
 
 func (c *Client) GetUser(id string) (*User, error) {
-	var result GetUserResponse
+	var result getUserResponse
 	err := c.Get(makePath(PathUsers, id), nil, &result)
 	if err != nil {
 		return nil, err

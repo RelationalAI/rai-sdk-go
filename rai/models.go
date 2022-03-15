@@ -54,6 +54,11 @@ type Engine struct {
 	State       string `json:"state"`
 }
 
+type Model struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type OAuthClient struct {
 	Id          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -111,7 +116,7 @@ type TransactionResult struct {
 // Request/response payloads
 //
 
-type CreateDatabaseResponse struct {
+type createDatabaseResponse struct {
 	Aborted  bool          `json:"aborted"`
 	Actions  []interface{} `json:"actions"`
 	Output   []interface{} `json:"output"`
@@ -138,7 +143,7 @@ type CreateOAuthClientResponse struct {
 	Client OAuthClientExtra `json:"client"`
 }
 
-type GetOAuthClientResponse struct {
+type getOAuthClientResponse struct {
 	CreateOAuthClientResponse
 }
 
@@ -175,15 +180,15 @@ type DeleteOAuthClientResponse struct {
 	Message string `json:"message"`
 }
 
-type GetDatabaseResponse struct {
+type getDatabaseResponse struct {
 	Databases []Database `json:"databases"`
 }
 
-type GetEngineResponse struct {
+type getEngineResponse struct {
 	Engines []Engine `json:"computes"`
 }
 
-type GetUserResponse struct {
+type getUserResponse struct {
 	User User `json:"user"`
 }
 
@@ -207,13 +212,10 @@ type ListOAuthClientsResponse struct {
 	Clients []OAuthClient `json:"clients"`
 }
 
-type ListModelsResponse struct {
+type listModelsResponse struct {
 	Actions []struct {
 		Result struct {
-			Models []struct {
-				Name  string `json:"name"`
-				Value string `json:"value"`
-			} `json:"sources"`
+			Models []Model `json:"sources"`
 		} `json:"result"`
 	} `json:"actions"`
 }
