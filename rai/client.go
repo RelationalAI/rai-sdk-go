@@ -14,9 +14,6 @@
 
 package rai
 
-// todo: simplify CSVOptions
-// todo: models for all interface{} return types
-
 import (
 	"context"
 	"encoding/json"
@@ -970,52 +967,136 @@ func (c *Client) ListEdbs(database, engine string) ([]Edb, error) {
 	return result.Actions[0].Result.Rels, nil
 }
 
-type CSVOption struct {
-	k, v string
+// Note, the default LoadCSV value for HeaderRow is 1, so if you instantiate
+// this using initializer syntax instead of `NewCSVOptions` make sure you set
+// HeaderRow to the correct value, because the zero value means no header.
+type CSVOptions struct {
+	Schema     map[string]string
+	HeaderRow  int
+	Delim      rune
+	EscapeChar rune
+	QuoteChar  rune
 }
 
-func (o CSVOption) String() string {
-	return fmt.Sprintf("def config:syntax:%s=%s", o.k, o.v)
+func NewCSVOptions() *CSVOptions {
+	return &CSVOptions{HeaderRow: 1}
 }
 
-// Returns a Rel string literal for the given string.
-func stringLiteral(s string) string {
-	s = strings.Replace(s, "'", "\\'", -1)
-	return fmt.Sprintf("'%s'", s)
+func (opts *CSVOptions) WithDelim(delim rune) *CSVOptions {
+	opts.Delim = delim
+	return opts
 }
 
-func CSVHeaderRow(n int) CSVOption {
-	return CSVOption{k: "header_row", v: strconv.Itoa(n)}
+func (opts *CSVOptions) WithEscapeChar(escapeChar rune) *CSVOptions {
+	opts.EscapeChar = escapeChar
+	return opts
 }
 
-func CSVDelim(s string) CSVOption {
-	return CSVOption{k: "delim", v: stringLiteral(s)}
+func (opts *CSVOptions) WithQuoteChar(quoteChar rune) *CSVOptions {
+	opts.QuoteChar = quoteChar
+	return opts
 }
 
-func CSVEscapeChar(s string) CSVOption {
-	return CSVOption{k: "escapechar", v: stringLiteral(s)}
+func (opts *CSVOptions) WithHeaderRow(headerRow int) *CSVOptions {
+	opts.HeaderRow = headerRow
+	return opts
 }
 
-func CSVQuoteChar(s string) CSVOption {
-	return CSVOption{k: "quotechar", v: stringLiteral(s)}
+func (opts *CSVOptions) WithSchema(schema map[string]string) *CSVOptions {
+	opts.Schema = schema
+	return opts
 }
 
-func (c *Client) LoadCSV(database, engine, relation, data string, opts ...CSVOption) (interface{}, error) {
-	inputs := map[string]string{"data": data}
-	b := new(strings.Builder)
-	for _, opt := range opts {
-		b.WriteString(fmt.Sprintf("%s\n", opt.String()))
+// Generates Rel schema config defs for the given CSV options.
+func genSchemaConfig(b *strings.Builder, opts *CSVOptions) {
+	if opts == nil {
+		return
 	}
+	schema := opts.Schema
+	if schema == nil || len(schema) == 0 {
+		return
+	}
+	count := 0
+	b.WriteString("def config:schema = ")
+	for k, v := range schema {
+		if count > 0 {
+			b.WriteRune(';')
+		}
+		b.WriteString(fmt.Sprintf("\n    :%s, \"%s\"", k, v))
+		count++
+	}
+	b.WriteRune('\n')
+}
+
+func genLiteralInt(v int) string {
+	return strconv.Itoa(v)
+}
+
+func genLiteralRune(v rune) string {
+	if v == '\'' {
+		return "'\\''"
+	}
+	return fmt.Sprintf("'%s'", string(v))
+}
+
+// Returns a Rel literal for the given value.
+func genLiteral(v interface{}) string {
+	switch vv := v.(type) {
+	case int:
+		return genLiteralInt(vv)
+	case rune:
+		return genLiteralRune(vv)
+	}
+	panic("unreached")
+}
+
+// Generates a Rel syntax config def for the given option name and value.
+func genSyntaxOption(b *strings.Builder, name string, value interface{}) {
+	lit := genLiteral(value)
+	def := fmt.Sprintf("def config:syntax:%s = %s\n", name, lit)
+	b.WriteString(def)
+}
+
+// Generates Rel syntax config defs for the given CSV options.
+func genSyntaxConfig(b *strings.Builder, opts *CSVOptions) {
+	if opts == nil {
+		return
+	}
+	if opts.HeaderRow != 1 { // default: 1
+		genSyntaxOption(b, "header_row", opts.HeaderRow)
+	}
+	if opts.Delim != 0 {
+		genSyntaxOption(b, "delim", opts.Delim)
+	}
+	if opts.EscapeChar != 0 {
+		genSyntaxOption(b, "escapechar", opts.EscapeChar)
+	}
+	if opts.QuoteChar != 0 {
+		genSyntaxOption(b, "quotechar", opts.QuoteChar)
+	}
+}
+
+// Generate Rel to load CSV data into a relation with the given name.
+func genLoadCSV(relation string, opts *CSVOptions) string {
+	b := new(strings.Builder)
+	genSyntaxConfig(b, opts)
+	genSchemaConfig(b, opts)
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_csv[config]", relation))
-	return c.Execute(database, engine, b.String(), inputs, false)
+	return b.String()
 }
 
-func (c *Client) LoadJSON(database, engine, relation, data string) (interface{}, error) {
+func (c *Client) LoadCSV(database, engine, relation, data string, opts *CSVOptions) (*TransactionResult, error) {
+	source := genLoadCSV(relation, opts)
 	inputs := map[string]string{"data": data}
+	return c.Execute(database, engine, source, inputs, false)
+}
+
+func (c *Client) LoadJSON(database, engine, relation, data string) (*TransactionResult, error) {
 	b := new(strings.Builder)
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
+	inputs := map[string]string{"data": data}
 	return c.Execute(database, engine, b.String(), inputs, false)
 }
 

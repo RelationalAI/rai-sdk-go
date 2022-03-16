@@ -249,3 +249,249 @@ func TestExecute(t *testing.T) {
 		{1., 16., 81., 256., 625.}}
 	assert.Equal(t, expected, columns)
 }
+
+func findRelation(relations []Relation, colName string) *Relation {
+	for _, relation := range relations {
+		keys := relation.RelKey.Keys
+		if len(keys) == 0 {
+			continue
+		}
+		name := keys[0]
+		if name == colName {
+			return &relation
+		}
+	}
+	return nil
+}
+
+const sample = "" +
+	"cocktail,quantity,price,date\n" +
+	"\"martini\",2,12.50,\"2020-01-01\"\n" +
+	"\"sazerac\",4,14.25,\"2020-02-02\"\n" +
+	"\"cosmopolitan\",4,11.00,\"2020-03-03\"\n" +
+	"\"bellini\",3,12.25,\"2020-04-04\"\n"
+
+// Test loading CSV data using default options.
+func TestLoadCSV(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample", sample, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample", nil, true)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rel := findRelation(rsp.Output, ":date")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":price")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"12.50", "14.25", "11.00", "12.25"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":quantity")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"2", "4", "4", "3"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":cocktail")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"martini", "sazerac", "cosmopolitan", "bellini"},
+	}, rel.Columns)
+}
+
+const sampleNoHeader = "" +
+	"\"martini\",2,12.50,\"2020-01-01\"\n" +
+	"\"sazerac\",4,14.25,\"2020-02-02\"\n" +
+	"\"cosmopolitan\",4,11.00,\"2020-03-03\"\n" +
+	"\"bellini\",3,12.25,\"2020-04-04\"\n"
+
+func TestLoadCSVNoHeader(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	opts := NewCSVOptions().WithHeaderRow(0)
+	rsp, err := client.LoadCSV(
+		databaseName, engineName, "sample_no_header", sampleNoHeader, opts)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample_no_header", nil, true)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rel := findRelation(rsp.Output, ":COL1")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{0., 31., 62., 98.},
+		{"martini", "sazerac", "cosmopolitan", "bellini"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":COL2")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{0., 31., 62., 98.},
+		{"2", "4", "4", "3"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":COL3")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{0., 31., 62., 98.},
+		{"12.50", "14.25", "11.00", "12.25"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":COL4")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{0., 31., 62., 98.},
+		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+	}, rel.Columns)
+}
+
+const sampleAltSyntax = "" +
+	"cocktail|quantity|price|date\n" +
+	"'martini'|2|12.50|'2020-01-01'\n" +
+	"'sazerac'|4|14.25|'2020-02-02'\n" +
+	"'cosmopolitan'|4|11.00|'2020-03-03'\n" +
+	"'bellini'|3|12.25|'2020-04-04'\n"
+
+func TestLoadCSVAltSyntax(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	opts := NewCSVOptions().WithDelim('|').WithQuoteChar('\'')
+	rsp, err := client.LoadCSV(
+		databaseName, engineName, "sample_alt_syntax", sampleAltSyntax, opts)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rsp, err = client.Execute(
+		databaseName, engineName, "def output = sample_alt_syntax", nil, true)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rel := findRelation(rsp.Output, ":date")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":price")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"12.50", "14.25", "11.00", "12.25"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":quantity")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"2", "4", "4", "3"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":cocktail")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"martini", "sazerac", "cosmopolitan", "bellini"},
+	}, rel.Columns)
+}
+
+func TestLoadCSVWithSchema(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	schema := map[string]string{
+		"cocktail": "string",
+		"quantity": "int",
+		"price":    "decimal(64,2)",
+		"date":     "date"}
+	opts := NewCSVOptions().WithSchema(schema)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", sample, opts)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample_with_schema", nil, true)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rel := findRelation(rsp.Output, ":date")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":price")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{12.50, 14.25, 11.00, 12.25},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":quantity")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{2., 4., 4., 3.},
+	}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":cocktail")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{
+		{29., 60., 91., 127.},
+		{"martini", "sazerac", "cosmopolitan", "bellini"},
+	}, rel.Columns)
+}

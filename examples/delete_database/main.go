@@ -32,11 +32,9 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.DeleteDatabase(opts.Database)
-	if err != nil {
+	if err = client.DeleteDatabase(opts.Database); err != nil {
 		return err
 	}
-	rai.Print(rsp, 4)
 	return nil
 }
 
