@@ -264,7 +264,7 @@ func findRelation(relations []Relation, colName string) *Relation {
 	return nil
 }
 
-const sample = "" +
+const sampleCSV = "" +
 	"cocktail,quantity,price,date\n" +
 	"\"martini\",2,12.50,\"2020-01-01\"\n" +
 	"\"sazerac\",4,14.25,\"2020-02-02\"\n" +
@@ -278,13 +278,13 @@ func TestLoadCSV(t *testing.T) {
 
 	ensureDatabase(t, client)
 
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample", sample, nil)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_csv", sampleCSV, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample", nil, true)
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample_csv", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -452,7 +452,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 		"price":    "decimal(64,2)",
 		"date":     "date"}
 	opts := NewCSVOptions().WithSchema(schema)
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", sample, opts)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", sampleCSV, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
@@ -494,4 +494,50 @@ func TestLoadCSVWithSchema(t *testing.T) {
 		{29., 60., 91., 127.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
+}
+
+const sampleJSON = "{" +
+	"\"name\":\"Amira\",\n" +
+	"\"age\":32,\n" +
+	"\"height\":null,\n" +
+	"\"pets\":[\"dog\",\"rabbit\"]}"
+
+func TestLoadJSON(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	rsp, err := client.LoadJSON(databaseName, engineName, "sample_json", sampleJSON)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rsp, err = client.Execute(
+		databaseName, engineName, "def output = sample_json", nil, true)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	rel := findRelation(rsp.Output, ":name")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 1, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{{"Amira"}}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":age")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 1, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{{32.}}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":height")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 1, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{{nil}}, rel.Columns)
+
+	rel = findRelation(rsp.Output, ":pets")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 2, len(rel.Columns))
+	assert.Equal(t, [][]interface{}{{1., 2.}, {"dog", "rabbit"}}, rel.Columns)
 }
