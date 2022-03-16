@@ -667,8 +667,14 @@ func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
 // Models
 //
 
-func (c *Client) DeleteModels(database, engine string, models []string) (interface{}, error) {
-	var result interface{}
+func (c *Client) DeleteModel(database, engine, name string) (*TransactionResult, error) {
+	return c.DeleteModels(database, engine, []string{name})
+}
+
+func (c *Client) DeleteModels(
+	database, engine string, models []string,
+) (*TransactionResult, error) {
+	var result TransactionResult
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -676,11 +682,11 @@ func (c *Client) DeleteModels(database, engine string, models []string) (interfa
 		Mode:     "OPEN",
 		Readonly: false}
 	data := tx.Payload(makeDeleteModelsAction(models))
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, result)
-	if err == nil {
+	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	if err != nil {
 		return nil, err
 	}
-	return result, err
+	return &result, err
 }
 
 func (c *Client) GetModel(database, engine, model string) (*Model, error) {
@@ -700,10 +706,16 @@ func (c *Client) GetModel(database, engine, model string) (*Model, error) {
 	return nil, ErrNotFound
 }
 
+func (c *Client) LoadModel(
+	database, engine, name, model string,
+) (*TransactionResult, error) {
+	return c.LoadModels(database, engine, map[string]string{name: model})
+}
+
 func (c *Client) LoadModels(
 	database, engine string, models map[string]string,
-) (interface{}, error) {
-	var result interface{}
+) (*TransactionResult, error) {
+	var result TransactionResult
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -719,7 +731,7 @@ func (c *Client) LoadModels(
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return &result, nil
 }
 
 // Returns a list of model names for the given database.

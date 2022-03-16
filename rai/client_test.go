@@ -541,3 +541,49 @@ func TestLoadJSON(t *testing.T) {
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{{1., 2.}, {"dog", "rabbit"}}, rel.Columns)
 }
+
+// Test model APIs.
+func TestModels(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	ensureDatabase(t, client)
+
+	const testModel = "def R = \"hello\", \"world\""
+
+	rsp, err := client.LoadModel(databaseName, engineName, "test_model", testModel)
+	assert.Nil(t, err)
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	model, err := client.GetModel(databaseName, engineName, "test_model")
+	assert.Nil(t, err)
+	assert.Equal(t, "test_model", model.Name)
+
+	modelNames, err := client.ListModelNames(databaseName, engineName)
+	assert.Nil(t, err)
+	assert.True(t, contains(modelNames, "test_model"))
+
+	models, err := client.ListModels(databaseName, engineName)
+	assert.Nil(t, err)
+	model = findModel(models, "test_model")
+	assert.NotNil(t, model)
+
+	rsp, err = client.DeleteModel(databaseName, engineName, "test_model")
+	assert.Equal(t, false, rsp.Aborted)
+	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, 0, len(rsp.Problems))
+
+	_, err = client.GetModel(databaseName, engineName, "test_model")
+	assert.Equal(t, ErrNotFound, err)
+
+	modelNames, err = client.ListModelNames(databaseName, engineName)
+	assert.Nil(t, err)
+	assert.False(t, contains(modelNames, "test_model"))
+
+	models, err = client.ListModels(databaseName, engineName)
+	assert.Nil(t, err)
+	model = findModel(models, "test_model")
+	assert.Nil(t, model)
+}
