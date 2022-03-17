@@ -60,7 +60,7 @@ type Model struct {
 }
 
 type OAuthClient struct {
-	Id          string    `json:"id"`
+	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	AccountName string    `json:"account_name"`
 	CreatedBy   string    `json:"created_by"`
@@ -76,8 +76,8 @@ type OAuthClientExtra struct {
 type User struct {
 	AccountName string   `json:"account_name"`
 	Email       string   `json:"email"`
-	Id          string   `json:"id"`
-	IdProviers  []string `json:"id_providers"`
+	ID          string   `json:"id"`
+	IDProviers  []string `json:"id_providers"`
 	Roles       []string `json:"roles"`
 	Status      string   `json:"status"`
 }
@@ -180,7 +180,7 @@ type DeleteEngineStatus struct {
 }
 
 type DeleteOAuthClientResponse struct {
-	Id      string `json:"client_id"`
+	ID      string `json:"client_id"`
 	Message string `json:"message"`
 }
 
@@ -225,7 +225,7 @@ type listModelsResponse struct {
 }
 
 type DeleteUserResponse struct {
-	Id      string `json:"user_id"`
+	ID      string `json:"user_id"`
 	Message string `json:"message"`
 }
 

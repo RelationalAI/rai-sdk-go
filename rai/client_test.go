@@ -15,13 +15,20 @@
 package rai
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-const databaseName = "sdk-test2"
-const engineName = "sdk-test"
+var databaseName string
+var engineName string
+
+// Generate unique names to avoid conflict with resources in zombie states.
+func init() {
+	name := fmt.Sprintf("sdk-test-%d", nowEpochSecs())
+	databaseName, engineName = name, name
+}
 
 // Answers if the given list contains the given value
 func contains(items []string, value string) bool {
@@ -594,7 +601,7 @@ func TestModels(t *testing.T) {
 
 func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 	for _, client := range clients {
-		if client.Id == id {
+		if client.ID == id {
 			return &client
 		}
 	}
@@ -611,7 +618,7 @@ func TestOAuthClient(t *testing.T) {
 	rsp, err := client.FindOAuthClient(clientName)
 	assert.Nil(t, err)
 	if rsp != nil {
-		_, err = client.DeleteOAuthClient(rsp.Id)
+		_, err = client.DeleteOAuthClient(rsp.ID)
 		assert.Nil(t, err)
 	}
 
@@ -623,32 +630,32 @@ func TestOAuthClient(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, clientName, rspExtra.Name)
 
-	clientId := rspExtra.Id
+	clientID := rspExtra.ID
 
 	rsp, err = client.FindOAuthClient(clientName)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
-	assert.Equal(t, clientId, rsp.Id)
+	assert.Equal(t, clientID, rsp.ID)
 	assert.Equal(t, clientName, rsp.Name)
 
-	rspExtra, err = client.GetOAuthClient(clientId)
+	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
-	assert.Equal(t, clientId, rspExtra.Id)
+	assert.Equal(t, clientID, rspExtra.ID)
 	assert.Equal(t, clientName, rspExtra.Name)
 
 	clients, err := client.ListOAuthClients()
 	assert.Nil(t, err)
-	item := findOAuthClient(clients, clientId)
+	item := findOAuthClient(clients, clientID)
 	assert.NotNil(t, item)
-	assert.Equal(t, clientId, item.Id)
+	assert.Equal(t, clientID, item.ID)
 	assert.Equal(t, clientName, item.Name)
 
-	deleteRsp, err := client.DeleteOAuthClient(clientId)
+	deleteRsp, err := client.DeleteOAuthClient(clientID)
 	assert.Nil(t, err)
-	assert.Equal(t, clientId, deleteRsp.Id)
+	assert.Equal(t, clientID, deleteRsp.ID)
 
-	rspExtra, err = client.GetOAuthClient(clientId)
+	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.Equal(t, ErrNotFound, err)
 
 	rsp, err = client.FindOAuthClient(clientName)
@@ -658,7 +665,7 @@ func TestOAuthClient(t *testing.T) {
 
 func findUser(users []User, id string) *User {
 	for _, user := range users {
-		if user.Id == id {
+		if user.ID == id {
 			return &user
 		}
 	}
@@ -675,7 +682,7 @@ func TestUser(t *testing.T) {
 	rsp, err := client.FindUser(userEmail)
 	assert.Nil(t, err)
 	if rsp != nil {
-		_, err = client.DeleteUser(rsp.Id)
+		_, err = client.DeleteUser(rsp.ID)
 		assert.Nil(t, err)
 	}
 
@@ -688,63 +695,63 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, "ACTIVE", rsp.Status)
 	assert.Equal(t, []string{"user"}, rsp.Roles)
 
-	var userId = rsp.Id
+	var userID = rsp.ID
 
 	rsp, err = client.FindUser(userEmail)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
-	assert.Equal(t, userId, rsp.Id)
+	assert.Equal(t, userID, rsp.ID)
 	assert.Equal(t, userEmail, rsp.Email)
 
-	rsp, err = client.GetUser(userId)
+	rsp, err = client.GetUser(userID)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
-	assert.Equal(t, userId, rsp.Id)
+	assert.Equal(t, userID, rsp.ID)
 	assert.Equal(t, userEmail, rsp.Email)
 
 	users, err := client.ListUsers()
 	assert.Nil(t, err)
-	user := findUser(users, userId)
+	user := findUser(users, userID)
 	assert.NotNil(t, user)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, userEmail, user.Email)
 
-	rsp, err = client.DisableUser(userId)
+	rsp, err = client.DisableUser(userID)
 	assert.Nil(t, err)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "INACTIVE", rsp.Status)
 
-	rsp, err = client.EnableUser(userId)
+	rsp, err = client.EnableUser(userID)
 	assert.Nil(t, err)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 
-	rsp, err = client.UpdateUser(userId, "INACTIVE", nil)
+	rsp, err = client.UpdateUser(userID, "INACTIVE", nil)
 	assert.Nil(t, err)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "INACTIVE", rsp.Status)
 
-	rsp, err = client.UpdateUser(userId, "ACTIVE", nil)
+	rsp, err = client.UpdateUser(userID, "ACTIVE", nil)
 	assert.Nil(t, err)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 
-	rsp, err = client.UpdateUser(userId, "", []string{"admin", "user"})
+	rsp, err = client.UpdateUser(userID, "", []string{"admin", "user"})
 	assert.Nil(t, err)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 	assert.Equal(t, []string{"admin", "user"}, rsp.Roles)
 
-	rsp, err = client.UpdateUser(userId, "INACTIVE", []string{"user"})
+	rsp, err = client.UpdateUser(userID, "INACTIVE", []string{"user"})
 	assert.Nil(t, err)
-	assert.Equal(t, userId, user.Id)
+	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "INACTIVE", rsp.Status)
 	assert.Equal(t, []string{"user"}, rsp.Roles)
 
 	// Cleanup
-	deleteRsp, err := client.DeleteUser(userId)
+	deleteRsp, err := client.DeleteUser(userID)
 	assert.Nil(t, err)
-	assert.Equal(t, userId, deleteRsp.Id)
+	assert.Equal(t, userID, deleteRsp.ID)
 
 	rsp, err = client.FindUser(userEmail)
 	assert.Nil(t, err)

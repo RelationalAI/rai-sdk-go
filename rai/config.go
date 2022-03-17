@@ -93,15 +93,15 @@ func LoadConfigFile(fname, profile string, cfg *Config) error {
 	if v := stanza.Key("port").String(); v != "" {
 		cfg.Port = v
 	}
-	clientId := stanza.Key("client_id").String()
+	clientID := stanza.Key("client_id").String()
 	clientSecret := stanza.Key("client_secret").String()
-	if clientId != "" && clientSecret != "" {
+	if clientID != "" && clientSecret != "" {
 		clientCredentialsUrl := defaultClientCredentialsUrl
 		if v := stanza.Key("client_credentials_url").String(); v != "" {
 			clientCredentialsUrl = v
 		}
 		cfg.Credentials = &ClientCredentials{
-			ClientId:             clientId,
+			ClientID:             clientID,
 			ClientSecret:         clientSecret,
 			ClientCredentialsUrl: clientCredentialsUrl}
 	}

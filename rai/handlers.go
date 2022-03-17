@@ -69,7 +69,7 @@ func readAccessToken(creds *ClientCredentials) (*AccessToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	if token, ok := cache[creds.ClientId]; ok {
+	if token, ok := cache[creds.ClientID]; ok {
 		return token, nil
 	}
 	return nil, nil // doesn't exit
@@ -99,7 +99,7 @@ func writeAccessToken(creds *ClientCredentials, token *AccessToken) {
 	if err != nil {
 		cache = map[string]*AccessToken{}
 	}
-	cache[creds.ClientId] = token
+	cache[creds.ClientID] = token
 	writeTokenCache(cache)
 }
 

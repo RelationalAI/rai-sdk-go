@@ -56,7 +56,7 @@ func (a *AccessToken) IsExpired() bool {
 
 type ClientCredentials struct {
 	AccessToken          *AccessToken `json:"accessToken"`
-	ClientId             string       `json:"clientId"`
+	ClientID             string       `json:"clientId"`
 	ClientSecret         string       `json:"-"`
 	ClientCredentialsUrl string       `json:"clientCredentialsUrl"`
 }

@@ -144,7 +144,7 @@ const getAccessTokenBody = `{
 // Retrieves a new access token using the configured client credentials.
 func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) {
 	audience := fmt.Sprintf("https://%s", c.Host)
-	body := fmt.Sprintf(getAccessTokenBody, creds.ClientId, creds.ClientSecret, audience)
+	body := fmt.Sprintf(getAccessTokenBody, creds.ClientID, creds.ClientSecret, audience)
 	req, err := http.NewRequest(http.MethodPost, creds.ClientCredentialsUrl, strings.NewReader(body))
 	if err != nil {
 		return nil, err
