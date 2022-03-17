@@ -644,6 +644,20 @@ func (c *Client) DeleteOAuthClient(id string) (*DeleteOAuthClientResponse, error
 	return &result, nil
 }
 
+// Returns the OAuth client with the given name or nil if it does not exist.
+func (c *Client) FindOAuthClient(name string) (*OAuthClient, error) {
+	clients, err := c.ListOAuthClients()
+	if err != nil {
+		return nil, err
+	}
+	for _, client := range clients {
+		if client.Name == name {
+			return &client, nil
+		}
+	}
+	return nil, nil
+}
+
 func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
 	var result getOAuthClientResponse
 	err := c.Get(makePath(PathOAuthClients, id), nil, &result)
@@ -1121,17 +1135,50 @@ func (c *Client) LoadJSON(
 // Users
 //
 
-func (c *Client) CreateUser(email string, roles []string) (interface{}, error) {
+func (c *Client) CreateUser(email string, roles []string) (*User, error) {
 	if len(roles) == 0 {
 		roles = append(roles, "user")
 	}
-	var result interface{}
+	var result createUserResponse
 	data := &CreateUserRequest{Email: email, Roles: roles}
 	err := c.Post(PathUsers, nil, data, &result)
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+	return &result.User, nil
+}
+
+func (c *Client) DeleteUser(id string) (*DeleteUserResponse, error) {
+	var result DeleteUserResponse
+	err := c.Delete(makePath(PathUsers, id), nil, nil, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *Client) DisableUser(id string) (*User, error) {
+	req := UpdateUserRequest{Status: "INACTIVE"}
+	return c.UpdateUser(id, &req)
+}
+
+func (c *Client) EnableUser(id string) (*User, error) {
+	req := UpdateUserRequest{Status: "ACTIVE"}
+	return c.UpdateUser(id, &req)
+}
+
+// Returns the User with the given email or nil if it does not exist.
+func (c *Client) FindUser(email string) (*User, error) {
+	users, err := c.ListUsers()
+	if err != nil {
+		return nil, err
+	}
+	for _, user := range users {
+		if user.Email == email {
+			return &user, nil
+		}
+	}
+	return nil, nil
 }
 
 func (c *Client) GetUser(id string) (*User, error) {
@@ -1152,9 +1199,9 @@ func (c *Client) ListUsers() ([]User, error) {
 	return result.Users, nil
 }
 
-func (c *Client) UpdateUser(id string, update *UpdateUserRequest) (*User, error) {
+func (c *Client) UpdateUser(id string, req *UpdateUserRequest) (*User, error) {
 	var result updateUserResponse
-	err := c.Patch(makePath(PathUsers, id), nil, update, &result)
+	err := c.Patch(makePath(PathUsers, id), nil, req, &result)
 	if err != nil {
 		return nil, err
 	}

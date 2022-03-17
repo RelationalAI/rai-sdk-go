@@ -78,7 +78,7 @@ func findModel(models []Model, name string) *Model {
 	return nil
 }
 
-// Test the database management APIs.
+// Test database management APIs.
 func TestDatabase(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -169,7 +169,7 @@ func findEngine(engines []Engine, name string) *Engine {
 	return nil
 }
 
-// Test the engine management APIs.
+// Test engine management APIs.
 func TestEngine(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -328,6 +328,7 @@ const sampleNoHeader = "" +
 	"\"cosmopolitan\",4,11.00,\"2020-03-03\"\n" +
 	"\"bellini\",3,12.25,\"2020-04-04\"\n"
 
+// Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -387,6 +388,7 @@ const sampleAltSyntax = "" +
 	"'cosmopolitan'|4|11.00|'2020-03-03'\n" +
 	"'bellini'|3|12.25|'2020-04-04'\n"
 
+// Test loading CSV data with alternate syntax options.
 func TestLoadCSVAltSyntax(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -440,6 +442,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	}, rel.Columns)
 }
 
+// Test loading CSV data with a schema definition.
 func TestLoadCSVWithSchema(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -502,6 +505,7 @@ const sampleJSON = "{" +
 	"\"height\":null,\n" +
 	"\"pets\":[\"dog\",\"rabbit\"]}"
 
+// Test loading JSON data.
 func TestLoadJSON(t *testing.T) {
 	client, err := NewDefaultClient()
 	assert.Nil(t, err)
@@ -586,4 +590,68 @@ func TestModels(t *testing.T) {
 	assert.Nil(t, err)
 	model = findModel(models, "test_model")
 	assert.Nil(t, model)
+}
+
+func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
+	for _, client := range clients {
+		if client.Id == id {
+			return &client
+		}
+	}
+	return nil
+}
+
+// Test OAuth Client APIs.
+func TestOAuthClient(t *testing.T) {
+	client, err := NewDefaultClient()
+	assert.Nil(t, err)
+
+	const clientName = "sdk-test-client"
+
+	rsp, err := client.FindOAuthClient(clientName)
+	if err != nil {
+		assert.Equal(t, ErrNotFound, err)
+		_, err = client.DeleteOAuthClient(rsp.Id)
+		assert.Nil(t, err)
+	}
+
+	rsp, err = client.FindOAuthClient(clientName)
+	assert.Nil(t, err)
+	assert.Nil(t, rsp)
+
+	rspExtra, err := client.CreateOAuthClient(clientName, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, clientName, rspExtra.Name)
+
+	clientId := rspExtra.Id
+
+	rsp, err = client.FindOAuthClient(clientName)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+	assert.Equal(t, clientId, rsp.Id)
+	assert.Equal(t, clientName, rsp.Name)
+
+	rspExtra, err = client.GetOAuthClient(clientId)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+	assert.Equal(t, clientId, rspExtra.Id)
+	assert.Equal(t, clientName, rspExtra.Name)
+
+	clients, err := client.ListOAuthClients()
+	assert.Nil(t, err)
+	item := findOAuthClient(clients, clientId)
+	assert.NotNil(t, item)
+	assert.Equal(t, clientId, item.Id)
+	assert.Equal(t, clientName, item.Name)
+
+	deleteRsp, err := client.DeleteOAuthClient(clientId)
+	assert.Nil(t, err)
+	assert.Equal(t, clientId, deleteRsp.Id)
+
+	rspExtra, err = client.GetOAuthClient(clientId)
+	assert.Equal(t, ErrNotFound, err)
+
+	rsp, err = client.FindOAuthClient(clientName)
+	assert.Nil(t, err)
+	assert.Nil(t, rsp)
 }

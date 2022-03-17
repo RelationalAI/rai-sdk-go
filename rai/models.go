@@ -152,6 +152,10 @@ type CreateUserRequest struct {
 	Roles []string `json:"roles"`
 }
 
+type createUserResponse struct {
+	User User `json:"user"`
+}
+
 type DeleteDatabaseRequest struct {
 	Name string `json:"name"`
 }
@@ -218,6 +222,11 @@ type listModelsResponse struct {
 			Models []Model `json:"sources"`
 		} `json:"result"`
 	} `json:"actions"`
+}
+
+type DeleteUserResponse struct {
+	Id      string `json:"user_id"`
+	Message string `json:"message"`
 }
 
 type listUsersResponse struct {
