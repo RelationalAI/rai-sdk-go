@@ -233,7 +233,7 @@ type listUsersResponse struct {
 	Users []User `json:"users"`
 }
 
-type UpdateUserRequest struct {
+type updateUserRequest struct {
 	Status string   `json:"status,omitempty"`
 	Roles  []string `json:"roles,omitempty"`
 }

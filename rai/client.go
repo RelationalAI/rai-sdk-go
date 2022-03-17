@@ -1158,13 +1158,11 @@ func (c *Client) DeleteUser(id string) (*DeleteUserResponse, error) {
 }
 
 func (c *Client) DisableUser(id string) (*User, error) {
-	req := UpdateUserRequest{Status: "INACTIVE"}
-	return c.UpdateUser(id, &req)
+	return c.UpdateUser(id, "INACTIVE", nil)
 }
 
 func (c *Client) EnableUser(id string) (*User, error) {
-	req := UpdateUserRequest{Status: "ACTIVE"}
-	return c.UpdateUser(id, &req)
+	return c.UpdateUser(id, "ACTIVE", nil)
 }
 
 // Returns the User with the given email or nil if it does not exist.
@@ -1199,9 +1197,10 @@ func (c *Client) ListUsers() ([]User, error) {
 	return result.Users, nil
 }
 
-func (c *Client) UpdateUser(id string, req *UpdateUserRequest) (*User, error) {
+func (c *Client) UpdateUser(id, status string, roles []string) (*User, error) {
 	var result updateUserResponse
-	err := c.Patch(makePath(PathUsers, id), nil, req, &result)
+	req := updateUserRequest{Status: status, Roles: roles}
+	err := c.Patch(makePath(PathUsers, id), nil, &req, &result)
 	if err != nil {
 		return nil, err
 	}
