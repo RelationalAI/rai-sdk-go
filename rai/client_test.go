@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const databaseName = "sdk-test"
+const databaseName = "sdk-test2"
 const engineName = "sdk-test"
 
 // Answers if the given list contains the given value

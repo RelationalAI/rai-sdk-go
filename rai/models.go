@@ -224,12 +224,6 @@ type listUsersResponse struct {
 	Users []User `json:"users"`
 }
 
-type UpdateDatabaseRequest struct {
-	Name          string `json:"name"`
-	DefaultEngine string `json:"default_compute_name,omitempty"`
-	RemoveEngine  bool   `json:"remove_default_compute,omitempty"`
-}
-
 type UpdateUserRequest struct {
 	Status string   `json:"status,omitempty"`
 	Roles  []string `json:"roles,omitempty"`

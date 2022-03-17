@@ -286,7 +286,9 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 }
 
 // Construct request, execute and unmarshal response.
-func (c *Client) request(method, path string, args url.Values, data, result interface{}) error {
+func (c *Client) request(
+	method, path string, args url.Values, data, result interface{},
+) error {
 	body, err := marshal(data)
 	if err != nil {
 		return err
@@ -453,7 +455,9 @@ func queryArgs(filters ...interface{}) (url.Values, error) {
 // Databases
 //
 
-func (c *Client) CloneDatabase(database, engine, source string, overwrite bool) (*Database, error) {
+func (c *Client) CloneDatabase(
+	database, engine, source string, overwrite bool,
+) (*Database, error) {
 	var result createDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
@@ -469,7 +473,9 @@ func (c *Client) CloneDatabase(database, engine, source string, overwrite bool) 
 	return c.GetDatabase(database)
 }
 
-func (c *Client) CreateDatabase(database, engine string, overwrite bool) (*Database, error) {
+func (c *Client) CreateDatabase(
+	database, engine string, overwrite bool,
+) (*Database, error) {
 	var result createDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
@@ -517,15 +523,6 @@ func (c *Client) ListDatabases(filters ...interface{}) ([]Database, error) {
 		return nil, err
 	}
 	return result.Databases, nil
-}
-
-func (c *Client) UpdateDatabase(database string, update *UpdateDatabaseRequest) (interface{}, error) {
-	var result interface{}
-	err := c.Post(PathDatabase, nil, update, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 //
@@ -626,7 +623,9 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 // OAuth Clients
 //
 
-func (c *Client) CreateOAuthClient(name string, perms []string) (*OAuthClientExtra, error) {
+func (c *Client) CreateOAuthClient(
+	name string, perms []string,
+) (*OAuthClientExtra, error) {
 	var result createOAuthClientResponse
 	data := CreateOAuthClientRequest{Name: name, Permissions: perms}
 	err := c.Post(PathOAuthClients, nil, data, &result)
@@ -667,7 +666,9 @@ func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
 // Models
 //
 
-func (c *Client) DeleteModel(database, engine, name string) (*TransactionResult, error) {
+func (c *Client) DeleteModel(
+	database, engine, name string,
+) (*TransactionResult, error) {
 	return c.DeleteModels(database, engine, []string{name})
 }
 
@@ -752,7 +753,7 @@ func (c *Client) ListModelNames(database, engine string) ([]string, error) {
 	return result, nil
 }
 
-// Returns a list of model names for the given database.
+// Returns the names of models installed in the given database.
 func (c *Client) ListModels(database, engine string) ([]Model, error) {
 	var models listModelsResponse
 	tx := NewTransaction(c.Region, database, engine, "OPEN")
@@ -1098,13 +1099,17 @@ func genLoadCSV(relation string, opts *CSVOptions) string {
 	return b.String()
 }
 
-func (c *Client) LoadCSV(database, engine, relation, data string, opts *CSVOptions) (*TransactionResult, error) {
+func (c *Client) LoadCSV(
+	database, engine, relation, data string, opts *CSVOptions,
+) (*TransactionResult, error) {
 	source := genLoadCSV(relation, opts)
 	inputs := map[string]string{"data": data}
 	return c.Execute(database, engine, source, inputs, false)
 }
 
-func (c *Client) LoadJSON(database, engine, relation, data string) (*TransactionResult, error) {
+func (c *Client) LoadJSON(
+	database, engine, relation, data string,
+) (*TransactionResult, error) {
 	b := new(strings.Builder)
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
