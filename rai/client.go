@@ -722,13 +722,13 @@ func (c *Client) GetModel(database, engine, model string) (*Model, error) {
 }
 
 func (c *Client) LoadModel(
-	database, engine, name, model string,
+	database, engine, name string, r io.Reader,
 ) (*TransactionResult, error) {
-	return c.LoadModels(database, engine, map[string]string{name: model})
+	return c.LoadModels(database, engine, map[string]io.Reader{name: r})
 }
 
 func (c *Client) LoadModels(
-	database, engine string, models map[string]string,
+	database, engine string, models map[string]io.Reader,
 ) (*TransactionResult, error) {
 	var result TransactionResult
 	tx := Transaction{
@@ -738,8 +738,13 @@ func (c *Client) LoadModels(
 		Mode:     "OPEN",
 		Readonly: false}
 	actions := []DbAction{}
-	for name, model := range models {
-		actions = append(actions, makeLoadModelAction(name, model))
+	for name, r := range models {
+		model, err := ioutil.ReadAll(r)
+		if err != nil {
+			return nil, err
+		}
+		action := makeLoadModelAction(name, string(model))
+		actions = append(actions, action)
 	}
 	data := tx.Payload(actions...)
 	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
@@ -915,7 +920,7 @@ func makeListModelsAction() DbAction {
 	return DbAction{"type": "ListSourceAction"}
 }
 
-func makeListEdbAction() DbAction {
+func makeListEDBAction() DbAction {
 	return DbAction{"type": "ListEdbAction"}
 }
 
@@ -974,21 +979,21 @@ func (c *Client) Execute(
 	return &result, nil
 }
 
-func (c *Client) ListEdbs(database, engine string) ([]Edb, error) {
-	var result listEdbsResponse
+func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
+	var result listEDBsResponse
 	tx := &Transaction{
 		Region:   c.Region,
 		Database: database,
 		Engine:   engine,
 		Mode:     "OPEN",
 		Readonly: true}
-	data := tx.Payload(makeListEdbAction())
+	data := tx.Payload(makeListEDBAction())
 	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
 	if err != nil {
 		return nil, err
 	}
 	if len(result.Actions) == 0 {
-		return []Edb{}, nil
+		return []EDB{}, nil
 	}
 	// assert len(result.Actions) == 1
 	return result.Actions[0].Result.Rels, nil
@@ -1114,20 +1119,28 @@ func genLoadCSV(relation string, opts *CSVOptions) string {
 }
 
 func (c *Client) LoadCSV(
-	database, engine, relation, data string, opts *CSVOptions,
+	database, engine, relation string, r io.Reader, opts *CSVOptions,
 ) (*TransactionResult, error) {
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
 	source := genLoadCSV(relation, opts)
-	inputs := map[string]string{"data": data}
+	inputs := map[string]string{"data": string(data)}
 	return c.Execute(database, engine, source, inputs, false)
 }
 
 func (c *Client) LoadJSON(
-	database, engine, relation, data string,
+	database, engine, relation string, r io.Reader,
 ) (*TransactionResult, error) {
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
 	b := new(strings.Builder)
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
-	inputs := map[string]string{"data": data}
+	inputs := map[string]string{"data": string(data)}
 	return c.Execute(database, engine, b.String(), inputs, false)
 }
 

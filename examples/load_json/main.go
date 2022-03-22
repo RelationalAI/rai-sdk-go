@@ -17,31 +17,44 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/relationalai/rai-sdk-go/rai"
 )
 
 type Options struct {
-	ID      string   `long:"id" required:"true" description:"user ID"`
-	Status  string   `short:"s" long:"status" description:"user status"`
-	Roles   []string `short:"r" long:"role" description:"user roles"`
-	Profile string   `long:"profile" default:"default" description:"config profile"`
+	Database string `short:"d" long:"database" required:"true" description:"database name"`
+	Engine   string `short:"e" long:"engine" required:"true" description:"engine name"`
+	File     string `short:"f" long:"file" required:"true" description:"rel source file"`
+	Relation string `short:"r" long:"relation" description:"relation name (default: file name)"`
+	Profile  string `long:"profile" default:"default" description:"config profile"`
+}
+
+// Returns the filename without path and extension.
+func sansext(fname string) string {
+	return strings.TrimSuffix(filepath.Base(fname), filepath.Ext(fname))
 }
 
 func run(opts *Options) error {
-	if opts.Status == "" && len(opts.Roles) == 0 {
-		return nil
-	}
 	client, err := rai.NewClientFromConfig(opts.Profile)
 	if err != nil {
 		return err
 	}
-	rsp, err := client.UpdateUser(opts.ID, opts.Status, opts.Roles)
+	r, err := os.Open(opts.File)
 	if err != nil {
 		return err
 	}
-	rai.Print(rsp, 4)
+	rel := opts.Relation
+	if rel == "" {
+		rel = sansext(opts.File)
+	}
+	rsp, err := client.LoadJSON(opts.Database, opts.Engine, rel, r)
+	if err != nil {
+		return err
+	}
+	rsp.Show()
 	return nil
 }
 

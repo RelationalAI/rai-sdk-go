@@ -36,7 +36,7 @@ type Database struct {
 	State         string `json:"state"`
 }
 
-type Edb struct {
+type EDB struct {
 	Name   string   `json:"name"`
 	Keys   []string `json:"keys"`
 	Values []string `json:"values"`
@@ -200,10 +200,10 @@ type listDatabasesResponse struct {
 	Databases []Database `json:"databases"`
 }
 
-type listEdbsResponse struct {
+type listEDBsResponse struct {
 	Actions []struct {
 		Result struct {
-			Rels []Edb `json:"rels"`
+			Rels []EDB `json:"rels"`
 		} `json:"result"`
 	} `json:"actions"`
 }

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#
+# Run a single SDK example.
+#
+# Usage:
+#
+#     ./run <sample-name> [options]
+#
+# Eg:
+#
+#     ./run get_database -d sdk-test
+#
+
+echo $* >&2
+go run $1/main.go ${@:2}

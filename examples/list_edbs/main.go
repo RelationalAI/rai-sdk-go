@@ -23,21 +23,17 @@ import (
 )
 
 type Options struct {
-	ID      string   `long:"id" required:"true" description:"user ID"`
-	Status  string   `short:"s" long:"status" description:"user status"`
-	Roles   []string `short:"r" long:"role" description:"user roles"`
-	Profile string   `long:"profile" default:"default" description:"config profile"`
+	Database string `short:"d" long:"database" required:"true" description:"database name"`
+	Engine   string `short:"e" long:"engine" required:"true" description:"engine name"`
+	Profile  string `long:"profile" default:"default" description:"config profile"`
 }
 
 func run(opts *Options) error {
-	if opts.Status == "" && len(opts.Roles) == 0 {
-		return nil
-	}
 	client, err := rai.NewClientFromConfig(opts.Profile)
 	if err != nil {
 		return err
 	}
-	rsp, err := client.UpdateUser(opts.ID, opts.Status, opts.Roles)
+	rsp, err := client.ListEDBs(opts.Database, opts.Engine)
 	if err != nil {
 		return err
 	}

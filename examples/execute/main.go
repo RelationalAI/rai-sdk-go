@@ -16,6 +16,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/jessevdk/go-flags"
@@ -23,25 +24,38 @@ import (
 )
 
 type Options struct {
-	ID      string   `long:"id" required:"true" description:"user ID"`
-	Status  string   `short:"s" long:"status" description:"user status"`
-	Roles   []string `short:"r" long:"role" description:"user roles"`
-	Profile string   `long:"profile" default:"default" description:"config profile"`
+	Database string `short:"d" long:"database" required:"true" description:"database name"`
+	Engine   string `short:"e" long:"engine" required:"true" description:"engine name"`
+	Source   string `short:"c" long:"code" description:"rel source code"`
+	File     string `short:"f" long:"file" description:"rel source file"`
+	Profile  string `long:"profile" default:"default" description:"config profile"`
+}
+
+func getSource(opts *Options) (string, error) {
+	if opts.Source != "" {
+		return opts.Source, nil
+	}
+	bytes, err := ioutil.ReadFile(opts.File)
+	if err != nil {
+		return "", nil
+	}
+	return string(bytes), nil
 }
 
 func run(opts *Options) error {
-	if opts.Status == "" && len(opts.Roles) == 0 {
-		return nil
-	}
 	client, err := rai.NewClientFromConfig(opts.Profile)
 	if err != nil {
 		return err
 	}
-	rsp, err := client.UpdateUser(opts.ID, opts.Status, opts.Roles)
+	source, err := getSource(opts)
 	if err != nil {
 		return err
 	}
-	rai.Print(rsp, 4)
+	rsp, err := client.Execute(opts.Database, opts.Engine, source, nil, true)
+	if err != nil {
+		return err
+	}
+	rsp.Show()
 	return nil
 }
 

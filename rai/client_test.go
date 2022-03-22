@@ -16,6 +16,7 @@ package rai
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -67,7 +68,7 @@ func findDatabase(databases []Database, name string) *Database {
 	return nil
 }
 
-func findEdb(edbs []Edb, name string) *Edb {
+func findEDB(edbs []EDB, name string) *EDB {
 	for _, edb := range edbs {
 		if edb.Name == name {
 			return &edb
@@ -134,9 +135,9 @@ func TestDatabase(t *testing.T) {
 	databases, err = client.ListDatabases("state")
 	assert.Equal(t, ErrMissingFilterValue, err)
 
-	edbs, err := client.ListEdbs(databaseName, engineName)
+	edbs, err := client.ListEDBs(databaseName, engineName)
 	assert.Nil(t, err)
-	edb := findEdb(edbs, "rel")
+	edb := findEDB(edbs, "rel")
 	assert.NotNil(t, edb)
 
 	modelNames, err := client.ListModelNames(databaseName, engineName)
@@ -285,7 +286,8 @@ func TestLoadCSV(t *testing.T) {
 
 	ensureDatabase(t, client)
 
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_csv", sampleCSV, nil)
+	r := strings.NewReader(sampleCSV)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_csv", r, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
@@ -329,12 +331,6 @@ func TestLoadCSV(t *testing.T) {
 	}, rel.Columns)
 }
 
-const sampleNoHeader = "" +
-	"\"martini\",2,12.50,\"2020-01-01\"\n" +
-	"\"sazerac\",4,14.25,\"2020-02-02\"\n" +
-	"\"cosmopolitan\",4,11.00,\"2020-03-03\"\n" +
-	"\"bellini\",3,12.25,\"2020-04-04\"\n"
-
 // Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
 	client, err := NewDefaultClient()
@@ -342,9 +338,15 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 	ensureDatabase(t, client)
 
+	const sampleNoHeader = "" +
+		"\"martini\",2,12.50,\"2020-01-01\"\n" +
+		"\"sazerac\",4,14.25,\"2020-02-02\"\n" +
+		"\"cosmopolitan\",4,11.00,\"2020-03-03\"\n" +
+		"\"bellini\",3,12.25,\"2020-04-04\"\n"
+
+	r := strings.NewReader(sampleNoHeader)
 	opts := NewCSVOptions().WithHeaderRow(0)
-	rsp, err := client.LoadCSV(
-		databaseName, engineName, "sample_no_header", sampleNoHeader, opts)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_no_header", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
@@ -388,13 +390,6 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	}, rel.Columns)
 }
 
-const sampleAltSyntax = "" +
-	"cocktail|quantity|price|date\n" +
-	"'martini'|2|12.50|'2020-01-01'\n" +
-	"'sazerac'|4|14.25|'2020-02-02'\n" +
-	"'cosmopolitan'|4|11.00|'2020-03-03'\n" +
-	"'bellini'|3|12.25|'2020-04-04'\n"
-
 // Test loading CSV data with alternate syntax options.
 func TestLoadCSVAltSyntax(t *testing.T) {
 	client, err := NewDefaultClient()
@@ -402,9 +397,16 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 	ensureDatabase(t, client)
 
+	const sampleAltSyntax = "" +
+		"cocktail|quantity|price|date\n" +
+		"'martini'|2|12.50|'2020-01-01'\n" +
+		"'sazerac'|4|14.25|'2020-02-02'\n" +
+		"'cosmopolitan'|4|11.00|'2020-03-03'\n" +
+		"'bellini'|3|12.25|'2020-04-04'\n"
+
+	r := strings.NewReader(sampleAltSyntax)
 	opts := NewCSVOptions().WithDelim('|').WithQuoteChar('\'')
-	rsp, err := client.LoadCSV(
-		databaseName, engineName, "sample_alt_syntax", sampleAltSyntax, opts)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_alt_syntax", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
@@ -461,8 +463,9 @@ func TestLoadCSVWithSchema(t *testing.T) {
 		"quantity": "int",
 		"price":    "decimal(64,2)",
 		"date":     "date"}
+	r := strings.NewReader(sampleCSV)
 	opts := NewCSVOptions().WithSchema(schema)
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", sampleCSV, opts)
+	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
@@ -506,12 +509,6 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	}, rel.Columns)
 }
 
-const sampleJSON = "{" +
-	"\"name\":\"Amira\",\n" +
-	"\"age\":32,\n" +
-	"\"height\":null,\n" +
-	"\"pets\":[\"dog\",\"rabbit\"]}"
-
 // Test loading JSON data.
 func TestLoadJSON(t *testing.T) {
 	client, err := NewDefaultClient()
@@ -519,7 +516,14 @@ func TestLoadJSON(t *testing.T) {
 
 	ensureDatabase(t, client)
 
-	rsp, err := client.LoadJSON(databaseName, engineName, "sample_json", sampleJSON)
+	const sampleJSON = "{" +
+		"\"name\":\"Amira\",\n" +
+		"\"age\":32,\n" +
+		"\"height\":null,\n" +
+		"\"pets\":[\"dog\",\"rabbit\"]}"
+
+	r := strings.NewReader(sampleJSON)
+	rsp, err := client.LoadJSON(databaseName, engineName, "sample_json", r)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
@@ -562,7 +566,8 @@ func TestModels(t *testing.T) {
 
 	const testModel = "def R = \"hello\", \"world\""
 
-	rsp, err := client.LoadModel(databaseName, engineName, "test_model", testModel)
+	r := strings.NewReader(testModel)
+	rsp, err := client.LoadModel(databaseName, engineName, "test_model", r)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))

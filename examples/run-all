@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# Run all SDK examples
+
+DATABASE="sdk-test"
+DATABASECLONE="$DATABASE-clone"
+ENGINE="sdk-test3"
+
+set -e
+
+# reset state
+./run delete_database -d $DATABASECLONE
+./run delete_database -d $DATABASE
+./run delete_engine -e $ENGINE
+
+# engines
+./run create_engine -e $ENGINE --size XS
+./run get_engine -e $ENGINE
+./run list_engines
+./run list_engines --state PROVISIONED
+./run list_engines --state NONSENSE
+
+# databases
+./run create_database -d $DATABASE -e $ENGINE --overwrite
+./run get_database -d $DATABASE
+./run list_databases
+./run list_databases --state CREATED
+./run list_databases --state NONSENSE
+./run list_edbs -d $DATABASE -e $ENGINE
+./run list_model_names -d $DATABASE -e $ENGINE
+./run list_models -d $DATABASE -e $ENGINE
+./run get_model -d $DATABASE -e $ENGINE -m stdlib
+
+# exec
+QUERY='x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}'
+./run execute -d $DATABASE -e $ENGINE -c "\"$QUERY\""
+./run execute  -d $DATABASE -e $ENGINE -c "\"$QUERY\"" --readonly
+
+# load model
+./run load_model -d $DATABASE -e $ENGINE -f hello.rel
+./run get_model -d $DATABASE -e $ENGINE -m hello
+./run list_models -d $DATABASE -e $ENGINE
+./run list_model_names -d $DATABASE -e $ENGINE
+./run delete_model -d $DATABASE -e $ENGINE -m hello
+./run list_model_names -d $DATABASE -e $ENGINE
+
+# load-csv
+./run list_edbs -d $DATABASE -e $ENGINE
+./run load_csv -d $DATABASE -e $ENGINE -r sample_csv -f sample.csv
+./run execute -d $DATABASE -e $ENGINE -c sample_csv
+./run load_csv -d $DATABASE -e $ENGINE -r sample_no_header_csv -f sample_no_header.csv --headerrow=0
+./run execute -d $DATABASE -e $ENGINE -c sample_no_header_csv
+./run load_csv -d $DATABASE -e $ENGINE -r sample_alt_syntax_csv -f sample_alt_syntax.csv --delim='|' --quotechar="\"'\"" 
+./run execute -d $DATABASE -e $ENGINE -c sample_alt_syntax_csv
+./run list_edbs -d $DATABASE -e $ENGINE
+
+# load-json
+./run load_json -d $DATABASE -e $ENGINE -r sample_json -f sample.json
+./run execute -d $DATABASE -e $ENGINE -c sample_json
+./run list_edbs -d $DATABASE -e $ENGINE
+
+# clone database
+./run create_database -d $DATABASE -e $ENGINE --overwrite
+./run load_json -d $DATABASE -e $ENGINE -r sample_json -f sample.json
+./run load_model -d $DATABASE -e $ENGINE -f hello.rel
+./run clone_database -d $DATABASECLONE -e $ENGINE -s $DATABASE
+./run list_databases
+./run get_database -d $DATABASECLONE
+./run list_edbs -d $DATABASECLONE -e $ENGINE
+./run list_models -d $DATABASECLONE -e $ENGINE
+./run get_model -d $DATABASECLONE -e $ENGINE -m hello
+
+# oauth-clients
+CLIENTNAME="sdk-test-client"
+CLIENTID=`./run find_oauth_client -n $CLIENTNAME | jq -r '.id'`
+if [[ "$CLIENTID" != null ]]; then
+./run delete_oauth_client --id $CLIENTID
+fi
+./run list_oauth_clients
+./run create_oauth_client -n $CLIENTNAME
+./run list_oauth_clients
+./run find_oauth_client -n $CLIENTNAME
+CLIENTID=`./run find_oauth_client -n $CLIENTNAME | jq -r '.id'`
+./run get_oauth_client --id $CLIENTID
+./run delete_oauth_client --id $CLIENTID
+./run list_oauth_clients
+
+# users
+EMAIL=sdk-test@relational.ai
+USERID=`./run find_user -e $EMAIL | jq -r '.id'`
+if [[ "$USERID" != null ]]; then
+./run delete_user --id "$USERID"
+fi
+./run list_users
+./run create_user -e $EMAIL
+./run list_users
+./run find_user -e $EMAIL
+USERID=`./run find_user -e $EMAIL | jq -r '.id'`
+./run get_user --id "$USERID"
+./run disable_user --id "$USERID"
+./run enable_user --id "$USERID"
+./run update_user --id "$USERID" --status INACTIVE
+./run update_user --id "$USERID" --status ACTIVE
+./run update_user --id "$USERID" --role admin --role user
+./run update_user --id "$USERID" --role user --status INACTIVE
+./run update_user --id "$USERID"
+./run delete_user --id "$USERID"
+./run list_users
+
+# cleanup
+./run delete_database -d $DATABASECLONE
+./run delete_database -d $DATABASE
+./run delete_engine -e $ENGINE
+CLIENTID=`./run find_oauth_client -n $CLIENTNAME | jq -r '.id'`
+if [[ "$CLIENTID" != null ]]; then
+./run delete_oauth_client --id $CLIENTID
+fi
+USERID=`./run find_user -e $EMAIL | jq -r '.id'`
+if [[ "$USERID" != null ]]; then
+./run delete_user --id "$USERID"
+fi
