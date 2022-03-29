@@ -48,8 +48,8 @@ type Client struct {
 	Scheme             string
 	Host               string
 	Port               string
-	Credentials        interface{}
 	http               *http.Client
+	accessToken        string
 	accessTokenHandler AccessTokenHandler
 }
 
@@ -59,6 +59,9 @@ const DefaultRegion = "us-east"
 const DefaultScheme = "https"
 
 func NewClient(ctx context.Context, opts *ClientOptions) *Client {
+	if opts == nil {
+		opts = &ClientOptions{}
+	}
 	host := opts.Host
 	if host == "" {
 		host = DefaultHost
@@ -79,19 +82,18 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 		opts.HTTPClient = &http.Client{}
 	}
 	client := &Client{
-		ctx:         ctx,
-		Region:      region,
-		Scheme:      scheme,
-		Host:        host,
-		Port:        port,
-		Credentials: opts.Credentials,
-		http:        opts.HTTPClient}
+		ctx:    ctx,
+		Region: region,
+		Scheme: scheme,
+		Host:   host,
+		Port:   port,
+		http:   opts.HTTPClient}
 	if opts.AccessTokenHandler != nil {
 		client.accessTokenHandler = *opts.AccessTokenHandler
 	} else if opts.Credentials == nil {
-		client.accessTokenHandler = NewNopAccessTokenHandler(client)
+		client.accessTokenHandler = NewNopAccessTokenHandler()
 	} else {
-		client.accessTokenHandler = NewDefaultAccessTokenHandler(client)
+		client.accessTokenHandler = NewClientCredentialsHandler(client, opts.Credentials)
 	}
 	return client
 }
@@ -167,36 +169,14 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 	return token, nil
 }
 
-// Returns the current access token if valid, otherwise requests a new one.
-func (c *Client) getAccessToken(creds *ClientCredentials) (*AccessToken, error) {
-	var err error
-	token := creds.AccessToken
-	if token == nil || token.IsExpired() {
-		handler := c.accessTokenHandler
-		token, err = handler.GetAccessToken(creds)
-		if err != nil {
-			return nil, err
-		}
-		creds.AccessToken = token
-	}
-	return creds.AccessToken, nil
-}
-
 // Authenticate the given request using the configured credentials.
 func (c *Client) authenticate(req *http.Request) (*http.Request, error) {
-	if c.Credentials == nil {
-		return req, nil
+	token, err := c.accessTokenHandler.GetAccessToken()
+	if err != nil || token == "" {
+		return nil, err // don't authenticate the request
 	}
-	switch creds := c.Credentials.(type) {
-	case *ClientCredentials:
-		token, err := c.getAccessToken(creds)
-		if err != nil || token == nil {
-			return nil, err // don't authenticate the request
-		}
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.String()))
-		return req, nil
-	}
-	return nil, errors.New("invalid credential type")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	return req, nil
 }
 
 // Add any missing headers to the given request.

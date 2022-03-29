@@ -14,6 +14,8 @@
 
 package rai
 
+// Implementation of the nop and client credentials token handlers.
+
 import (
 	"encoding/json"
 	"os"
@@ -21,36 +23,34 @@ import (
 	"path"
 )
 
-// Implementation of the nop and default access token handlers.
-
 type AccessTokenHandler interface {
-	GetAccessToken(creds *ClientCredentials) (*AccessToken, error)
+	GetAccessToken() (string, error)
 }
 
-// This handler always returns a nil token, which results in requests not being
-// authenticated.
-type NopAccessTokenHandler struct {
-	client *Client
+// This handler always returns an empty token, which results in requests not
+// being authenticated.
+type NopAccessTokenHandler struct{}
+
+func NewNopAccessTokenHandler() NopAccessTokenHandler {
+	return NopAccessTokenHandler{}
 }
 
-func NewNopAccessTokenHandler(c *Client) NopAccessTokenHandler {
-	return NopAccessTokenHandler{client: c}
+func (h NopAccessTokenHandler) GetAccessToken() (string, error) {
+	return "", nil
 }
 
-func (h NopAccessTokenHandler) GetAccessToken(_ *ClientCredentials) (*AccessToken, error) {
-	return nil, nil
+type ClientCredentialsHandler struct {
+	client      *Client
+	creds       *ClientCredentials
+	accessToken *AccessToken
 }
 
-type DefaultAccessTokenHandler struct {
-	client *Client
-}
-
-// This handler caches tokens in ~/.rai/tokens.json. It will attempt to load
-// a token from the cache file and if it is not found or has expired, it will
-// delegate to client.GetAccessToken to retrieve a new token and will save it
-// in the cache file.
-func NewDefaultAccessTokenHandler(c *Client) DefaultAccessTokenHandler {
-	return DefaultAccessTokenHandler{client: c}
+// This handler uses the given OAuth client credentials to retrieve access
+// tokens, as needed, and caches them locally in ~/.rai/tokens.json.
+func NewClientCredentialsHandler(
+	c *Client, creds *ClientCredentials,
+) ClientCredentialsHandler {
+	return ClientCredentialsHandler{client: c, creds: creds}
 }
 
 // Returns the name of the token cache file.
@@ -94,12 +94,12 @@ func readTokenCache() (map[string]*AccessToken, error) {
 }
 
 // Write the given token to the local token cache.
-func writeAccessToken(creds *ClientCredentials, token *AccessToken) {
+func writeAccessToken(clientID string, token *AccessToken) {
 	cache, err := readTokenCache()
 	if err != nil {
 		cache = map[string]*AccessToken{}
 	}
-	cache[creds.ClientID] = token
+	cache[clientID] = token
 	writeTokenCache(cache)
 }
 
@@ -116,15 +116,25 @@ func writeTokenCache(cache map[string]*AccessToken) {
 	f.Close()
 }
 
-func (h DefaultAccessTokenHandler) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) {
-	token, err := readAccessToken(creds)
-	if err == nil && token != nil && !token.IsExpired() {
-		return token, nil
+func (h ClientCredentialsHandler) GetAccessToken() (string, error) {
+	// 1. is it already loaded into the handler?
+	if h.accessToken != nil && !h.accessToken.IsExpired() {
+		return h.accessToken.Token, nil
 	}
-	token, err = h.client.GetAccessToken(creds)
+
+	// 2. is it available in the tokens.json cache on disk?
+	accessToken, err := readAccessToken(h.creds)
+	if err == nil && accessToken != nil && !accessToken.IsExpired() {
+		h.accessToken = accessToken
+		return accessToken.Token, nil
+	}
+
+	// 3. request a new token and save in tokens.json cache
+	accessToken, err = h.client.GetAccessToken(h.creds)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	writeAccessToken(creds, token)
-	return token, nil
+	h.accessToken = accessToken
+	writeAccessToken(h.creds.ClientID, accessToken)
+	return accessToken.Token, nil
 }

@@ -29,11 +29,11 @@ const DefaultConfigProfile = "default"
 const defaultClientCredentialsUrl = "https://login.relationalai.com/oauth/token"
 
 type Config struct {
-	Region      string      `json:"region"`
-	Scheme      string      `json:"scheme"`
-	Host        string      `json:"host"`
-	Port        string      `json:"port"`
-	Credentials interface{} `json:"credentials"`
+	Region      string             `json:"region"`
+	Scheme      string             `json:"scheme"`
+	Host        string             `json:"host"`
+	Port        string             `json:"port"`
+	Credentials *ClientCredentials `json:"credentials"`
 }
 
 // Expand the given file path if it start with a ~/
