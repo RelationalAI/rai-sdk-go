@@ -35,7 +35,7 @@ const userAgent = "raictl/" + Version
 type ClientOptions struct {
 	Config
 	HTTPClient         *http.Client
-	AccessTokenHandler *AccessTokenHandler
+	AccessTokenHandler AccessTokenHandler
 }
 
 func NewClientOptions(cfg *Config) *ClientOptions {
@@ -89,7 +89,7 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 		Port:   port,
 		http:   opts.HTTPClient}
 	if opts.AccessTokenHandler != nil {
-		client.accessTokenHandler = *opts.AccessTokenHandler
+		client.accessTokenHandler = opts.AccessTokenHandler
 	} else if opts.Credentials == nil {
 		client.accessTokenHandler = NewNopAccessTokenHandler()
 	} else {
