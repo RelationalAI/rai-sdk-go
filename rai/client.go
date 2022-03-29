@@ -117,6 +117,10 @@ func (c *Client) Context() context.Context {
 	return c.ctx
 }
 
+func (c *Client) SetContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
 func (c *Client) SetAccessTokenHandler(handler AccessTokenHandler) {
 	c.accessTokenHandler = handler
 }
