@@ -98,6 +98,10 @@ func showRow(row []interface{}) {
 	fmt.Println()
 }
 
+type Showable interface {
+	Show()
+}
+
 func (r *Relation) Show() {
 	fmt.Printf("# %s (%s)\n", r.Name(), r.Schema())
 	for i := 0; i < r.RowCount(); i++ {
