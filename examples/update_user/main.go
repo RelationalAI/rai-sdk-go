@@ -37,7 +37,8 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.UpdateUser(opts.ID, opts.Status, opts.Roles)
+	req := rai.UpdateUserRequest{Status: opts.Status, Roles: opts.Roles}
+	rsp, err := client.UpdateUser(opts.ID, req)
 	if err != nil {
 		return err
 	}
