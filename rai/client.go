@@ -303,7 +303,7 @@ type HTTPError struct {
 	Body       string
 }
 
-func (e *HTTPError) Error() string {
+func (e HTTPError) Error() string {
 	statusText := http.StatusText(e.StatusCode)
 	if e.Body != "" {
 		return fmt.Sprintf("%d %s\n%s", e.StatusCode, statusText, e.Body)
@@ -312,7 +312,7 @@ func (e *HTTPError) Error() string {
 }
 
 func newHTTPError(status int, body string) error {
-	return &HTTPError{StatusCode: status, Body: body}
+	return HTTPError{StatusCode: status, Body: body}
 }
 
 var ErrNotFound = newHTTPError(http.StatusNotFound, "")
@@ -1155,11 +1155,13 @@ func (c *Client) DeleteUser(id string) (*DeleteUserResponse, error) {
 }
 
 func (c *Client) DisableUser(id string) (*User, error) {
-	return c.UpdateUser(id, "INACTIVE", nil)
+	req := UpdateUserRequest{Status: "INACTIVE"}
+	return c.UpdateUser(id, req)
 }
 
 func (c *Client) EnableUser(id string) (*User, error) {
-	return c.UpdateUser(id, "ACTIVE", nil)
+	req := UpdateUserRequest{Status: "ACTIVE"}
+	return c.UpdateUser(id, req)
 }
 
 // Returns the User with the given email or nil if it does not exist.

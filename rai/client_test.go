@@ -16,6 +16,7 @@ package rai
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -41,6 +42,14 @@ func contains(items []string, value string) bool {
 	return false
 }
 
+func isErrNotFound(err error) bool {
+	e, ok := err.(HTTPError)
+	if !ok {
+		return false
+	}
+	return e.StatusCode == http.StatusNotFound
+}
+
 // Ensure that the test database exists.
 func ensureDatabase(t *testing.T, client *Client) {
 	ensureEngine(t, client)
@@ -53,7 +62,7 @@ func ensureEngine(t *testing.T, client *Client) {
 	var err error
 	_, err = client.GetEngine(engineName)
 	if err != nil {
-		assert.Equal(t, ErrNotFound, err)
+		assert.True(t, isErrNotFound(err))
 		_, err = client.CreateEngine(engineName, "XS")
 		assert.Nil(t, err)
 	}
@@ -94,7 +103,7 @@ func TestDatabase(t *testing.T) {
 	ensureEngine(t, client)
 
 	if err := client.DeleteDatabase(databaseName); err != nil {
-		assert.Equal(t, ErrNotFound, err)
+		assert.True(t, isErrNotFound(err))
 	}
 
 	database, err := client.CreateDatabase(databaseName, engineName, false)
@@ -160,7 +169,7 @@ func TestDatabase(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, err = client.GetDatabase(databaseName)
-	assert.Equal(t, err, ErrNotFound)
+	assert.True(t, isErrNotFound(err))
 
 	databases, err = client.ListDatabases()
 	assert.Nil(t, err)
@@ -222,7 +231,7 @@ func TestEngine(t *testing.T) {
 	assert.Nil(t, err)
 
 	_, err = client.GetEngine(engineName)
-	assert.Equal(t, ErrNotFound, err)
+	assert.True(t, isErrNotFound(err))
 
 	engines, err = client.ListEngines()
 	assert.Nil(t, err)
@@ -592,7 +601,7 @@ func TestModels(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	_, err = client.GetModel(databaseName, engineName, "test_model")
-	assert.Equal(t, ErrNotFound, err)
+	assert.True(t, isErrNotFound(err))
 
 	modelNames, err = client.ListModelNames(databaseName, engineName)
 	assert.Nil(t, err)
@@ -661,7 +670,7 @@ func TestOAuthClient(t *testing.T) {
 	assert.Equal(t, clientID, deleteRsp.ID)
 
 	rspExtra, err = client.GetOAuthClient(clientID)
-	assert.Equal(t, ErrNotFound, err)
+	assert.True(t, isErrNotFound(err))
 
 	rsp, err = client.FindOAuthClient(clientName)
 	assert.Nil(t, err)
@@ -731,23 +740,27 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 
-	rsp, err = client.UpdateUser(userID, "INACTIVE", nil)
+	req := UpdateUserRequest{Status: "INACTIVE"}
+	rsp, err = client.UpdateUser(userID, req)
 	assert.Nil(t, err)
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "INACTIVE", rsp.Status)
 
-	rsp, err = client.UpdateUser(userID, "ACTIVE", nil)
+	req = UpdateUserRequest{Status: "ACTIVE"}
+	rsp, err = client.UpdateUser(userID, req)
 	assert.Nil(t, err)
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 
-	rsp, err = client.UpdateUser(userID, "", []string{"admin", "user"})
+	req = UpdateUserRequest{Roles: []string{"admin", "user"}}
+	rsp, err = client.UpdateUser(userID, req)
 	assert.Nil(t, err)
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 	assert.Equal(t, []string{"admin", "user"}, rsp.Roles)
 
-	rsp, err = client.UpdateUser(userID, "INACTIVE", []string{"user"})
+	req = UpdateUserRequest{Status: "INACTIVE", Roles: []string{"user"}}
+	rsp, err = client.UpdateUser(userID, req)
 	assert.Nil(t, err)
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, "INACTIVE", rsp.Status)
