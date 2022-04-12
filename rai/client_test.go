@@ -15,7 +15,6 @@
 package rai
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -23,14 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var databaseName string
-var engineName string
-
-// Generate unique names to avoid conflict with resources in zombie states.
-func init() {
-	name := fmt.Sprintf("sdk-test-%d", nowEpochSecs())
-	databaseName, engineName = name, name
-}
+const databaseName = "sdk-test"
+const engineName = "sdk-test3"
 
 // Answers if the given list contains the given value
 func contains(items []string, value string) bool {
