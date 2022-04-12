@@ -15,10 +15,35 @@
 package rai
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 )
+
+func makeIndent(indent int) string {
+	result := make([]rune, indent)
+	for i := 0; i < indent; i++ {
+		result[i] = ' '
+	}
+	return string(result)
+}
+
+// Encode the given item as JSON to the given writer.
+func Encode(w io.Writer, item interface{}, indent int) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", makeIndent(indent))
+	return enc.Encode(item)
+}
+
+// Print the given item as JSON to stdout.
+func Print(item interface{}, indent int) error {
+	return Encode(os.Stdout, item, indent)
+}
+
+// Pretty printers for Relation and TransactionResult
 
 func (r *Relation) Name() string {
 	return r.RelKey.Name

@@ -300,19 +300,19 @@ func (c *Client) request(
 
 type HTTPError struct {
 	StatusCode int
-	StatusText string
 	Body       string
 }
 
 func (e *HTTPError) Error() string {
+	statusText := http.StatusText(e.StatusCode)
 	if e.Body != "" {
-		return fmt.Sprintf("%d %s\n%s", e.StatusCode, e.StatusText, e.Body)
+		return fmt.Sprintf("%d %s\n%s", e.StatusCode, statusText, e.Body)
 	}
-	return fmt.Sprintf("%d %s", e.StatusCode, e.StatusText)
+	return fmt.Sprintf("%d %s", e.StatusCode, statusText)
 }
 
 func newHTTPError(status int, body string) error {
-	return &HTTPError{StatusCode: status, StatusText: http.StatusText(status)}
+	return &HTTPError{StatusCode: status, Body: body}
 }
 
 var ErrNotFound = newHTTPError(http.StatusNotFound, "")
@@ -1194,9 +1194,8 @@ func (c *Client) ListUsers() ([]User, error) {
 	return result.Users, nil
 }
 
-func (c *Client) UpdateUser(id, status string, roles []string) (*User, error) {
+func (c *Client) UpdateUser(id string, req UpdateUserRequest) (*User, error) {
 	var result updateUserResponse
-	req := updateUserRequest{Status: status, Roles: roles}
 	err := c.Patch(makePath(PathUsers, id), nil, &req, &result)
 	if err != nil {
 		return nil, err
