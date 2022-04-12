@@ -147,7 +147,12 @@ const getAccessTokenBody = `{
 	"grant_type": "client_credentials"
 }`
 
-// Retrieves a new access token using the configured client credentials.
+// Returns the current access token
+func (c *Client) AccessToken() (string, error) {
+	return c.accessTokenHandler.GetAccessToken()
+}
+
+// Fetch a new access token using the given client credentials.
 func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) {
 	audience := fmt.Sprintf("https://%s", c.Host)
 	body := fmt.Sprintf(getAccessTokenBody, creds.ClientID, creds.ClientSecret, audience)
@@ -171,7 +176,7 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 
 // Authenticate the given request using the configured credentials.
 func (c *Client) authenticate(req *http.Request) (*http.Request, error) {
-	token, err := c.accessTokenHandler.GetAccessToken()
+	token, err := c.AccessToken()
 	if err != nil || token == "" {
 		return nil, err // don't authenticate the request
 	}
