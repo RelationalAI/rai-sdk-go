@@ -106,6 +106,7 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 // the named profile.
 func NewClientFromConfig(profile string) (*Client, error) {
 	var cfg Config
+
 	if err := LoadConfigProfile(profile, &cfg); err != nil {
 		return nil, err
 	}
@@ -396,7 +397,7 @@ func newHTTPError(status int, body string) error {
 	return HTTPError{StatusCode: status, Body: body}
 }
 
-var ErrNotFound = newHTTPError(http.StatusNotFound, "")
+var ErrNotFound = newHTTPError(http.StatusNotFound, "{\"status\":\"Not Found\",\"message\":\"compute not found\"}\n")
 
 // Returns an HTTPError corresponding to the given response.
 func httpError(rsp *http.Response) error {
@@ -1099,6 +1100,39 @@ func (c *Client) ExecuteAsync(
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *Client) ExecuteAsyncWait(
+	database, engine, source string,
+	inputs map[string]string,
+	readonly bool,
+) (interface{}, error) {
+	rsp, err := c.ExecuteAsync(database, engine, source, inputs, readonly)
+	if err != nil {
+		return nil, err
+	}
+	var id string
+	mapRsp, ok := rsp.(map[string]interface{})
+	if ok {
+		id = mapRsp["id"].(string)
+	} else {
+		arrayRsp, _ := rsp.([]interface{})
+		id = arrayRsp[0].(map[string]interface{})["id"].(string)
+	}
+	for {
+		rsp, _ = c.GetTransaction(id)
+		transaction := rsp.(map[string]interface{})["transaction"]
+		state, _ := transaction.(map[string]interface{})["state"].(string)
+		if state == "COMPLETED" || state == "ABORTED" {
+			break
+		}
+		time.Sleep(2 * time.Second)
+	}
+	out := make(map[string]interface{})
+	out["results"], _ = c.GetTransactionResults(id)
+	out["metadata"], _ = c.GetTransactionMetadata(id)
+	out["problems"], _ = c.GetTransactionProblems(id)
+	return out, nil
 }
 
 func (c *Client) GetTransaction(id string) (interface{}, error) {

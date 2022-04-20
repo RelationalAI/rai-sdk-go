@@ -49,10 +49,24 @@ func expandUser(fname string) (string, error) {
 }
 
 // Load the named stanza from the named config file.
-func loadStanza(fname, profile string) (*ini.Section, error) {
+func loadStanzaFromFile(fname, profile string) (*ini.Section, error) {
 	info, err := ini.Load(fname)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading config file '%s'", fname)
+	}
+	stanza := info.Section(profile)
+	if stanza == nil {
+		return nil, errors.Errorf("config profile '%s' not found", profile)
+	}
+	return stanza, nil
+}
+
+// Load the named stanza from the provied config string.
+func loadStanzaFromString(source, profile string) (*ini.Section, error) {
+	byteSource := []byte(source)
+	info, err := ini.Load(byteSource)
+	if err != nil {
+		return nil, errors.Wrap(err, "error load config string")
 	}
 	stanza := info.Section(profile)
 	if stanza == nil {
@@ -71,16 +85,7 @@ func LoadConfigProfile(profile string, cfg *Config) error {
 	return LoadConfigFile(DefaultConfigFile, profile, cfg)
 }
 
-// Load settings from the given profile of the named config file.
-func LoadConfigFile(fname, profile string, cfg *Config) error {
-	fname, err := expandUser(fname)
-	if err != nil {
-		return err
-	}
-	stanza, err := loadStanza(fname, profile)
-	if err != nil {
-		return err
-	}
+func parseConfigStanza(stanza *ini.Section, cfg *Config) error {
 	if v := stanza.Key("region").String(); v != "" {
 		cfg.Region = v
 	}
@@ -105,5 +110,29 @@ func LoadConfigFile(fname, profile string, cfg *Config) error {
 			ClientSecret:         clientSecret,
 			ClientCredentialsUrl: clientCredentialsUrl}
 	}
+	return nil
+}
+
+// Load settings from the given profile of the provided config string.
+func LoadConfigString(source, profile string, cfg *Config) error {
+	stanza, err := loadStanzaFromString(source, profile)
+	if err != nil {
+		return err
+	}
+	parseConfigStanza(stanza, cfg)
+	return nil
+}
+
+// Load settings from the given profile of the named config file.
+func LoadConfigFile(fname, profile string, cfg *Config) error {
+	fname, err := expandUser(fname)
+	if err != nil {
+		return err
+	}
+	stanza, err := loadStanzaFromFile(fname, profile)
+	if err != nil {
+		return err
+	}
+	parseConfigStanza(stanza, cfg)
 	return nil
 }
