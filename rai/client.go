@@ -15,11 +15,14 @@
 package rai
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/apache/arrow/go/v7/arrow/ipc"
 	"github.com/pkg/errors"
 )
 
@@ -258,6 +262,71 @@ func marshal(item interface{}) (io.Reader, error) {
 	return strings.NewReader(string(data)), nil
 }
 
+// Parse arrow data
+func parse_arrow_data(data []byte, out *[]interface{}) error {
+	reader, err := ipc.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil
+	}
+	defer reader.Release()
+	for reader.Next() {
+		res := make(map[string]interface{})
+		rec := reader.Record()
+		for i := 0; i < int(rec.NumCols()); i++ {
+			key := rec.ColumnName(i)
+			value := rec.Column(i)
+			res[key] = value
+		}
+		rec.Retain()
+		*out = append(*out, res)
+	}
+	return nil
+}
+
+// Parse multipart response
+func parse_multipart_response(data []byte, rsp_content_type string, result *[]byte) error {
+	output := []interface{}{}
+	_, params, err := mime.ParseMediaType(rsp_content_type)
+	if err != nil {
+		return err
+	}
+	mr := multipart.NewReader(bytes.NewReader(data), params["boundary"])
+	for {
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+		content_type := part.Header.Get("Content-Type")
+		value, _ := ioutil.ReadAll(part)
+		if content_type == "application/json" {
+			var out interface{}
+			err = json.Unmarshal(value, &out)
+			if err != nil {
+				return err
+			}
+			output = append(output, out)
+		} else if content_type == "application/vnd.apache.arrow.stream" {
+			out := []interface{}{}
+			err := parse_arrow_data(value, &out)
+			if err != nil {
+				return err
+			}
+			output = append(output, out)
+		} else {
+			return errors.Errorf("unsupported content-type: %s\n", content_type)
+		}
+		outByte, err := json.Marshal(output)
+		if err != nil {
+			return err
+		}
+		*result = outByte
+	}
+
+	return nil
+}
+
 // Unmarshal the JSON object from the given response body.
 func unmarshal(rsp *http.Response, result interface{}) error {
 	data, err := ioutil.ReadAll(rsp.Body)
@@ -267,7 +336,14 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 	if len(data) == 0 {
 		return nil
 	}
-	err = json.Unmarshal(data, result)
+	content_type := rsp.Header.Get("Content-Type")
+	if strings.Contains(content_type, "application/json") {
+		err = json.Unmarshal(data, result)
+	} else if strings.Contains(content_type, "multipart/form-data") {
+		var res []byte
+		parse_multipart_response(data, content_type, &res)
+		err = json.Unmarshal(res, result)
+	}
 	if err != nil {
 		return err
 	}
@@ -360,6 +436,7 @@ const (
 	PathEngine       = "/compute"
 	PathOAuthClients = "/oauth-clients"
 	PathTransaction  = "/transaction"
+	PathTransactions = "/transactions"
 	PathUsers        = "/users"
 )
 
@@ -838,6 +915,43 @@ func (tx *Transaction) QueryArgs() url.Values {
 	return result
 }
 
+// The transaction async "request" envelope
+type TransactionAsync struct {
+	Database string
+	Engine   string
+	Source   string
+	Readonly bool
+}
+
+func NewTransactionAsync(database, engine string) *TransactionAsync {
+	return &TransactionAsync{
+		Database: database,
+		Engine:   engine}
+}
+
+func (tx *TransactionAsync) Payload(inputs map[string]string) map[string]interface{} {
+	queryActionInputs := make([]interface{}, 0)
+	for k, v := range inputs {
+		queryActionInput, _ := makeQueryActionInput(k, v)
+		queryActionInputs = append(queryActionInputs, queryActionInput)
+	}
+	data := map[string]interface{}{
+		"dbname":      tx.Database,
+		"readonly":    tx.Readonly,
+		"engine_name": tx.Engine,
+		"query":       tx.Source,
+		"inputs":      queryActionInputs}
+	return data
+}
+
+func (tx *TransactionAsync) QueryArgs() url.Values {
+	result := url.Values{}
+	result.Add("dbname", tx.Database)
+	result.Add("engine_name", tx.Engine)
+
+	return result
+}
+
 // Wrap each of the given actions in a LabeledAction.
 func makeActions(actions ...DbAction) []DbAction {
 	result := []DbAction{}
@@ -966,6 +1080,61 @@ func (c *Client) Execute(
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (c *Client) ExecuteAsync(
+	database, engine, source string,
+	inputs map[string]string,
+	readonly bool,
+) (interface{}, error) {
+	var result interface{}
+	tx := TransactionAsync{
+		Database: database,
+		Engine:   engine,
+		Source:   source,
+		Readonly: readonly}
+	data := tx.Payload(inputs)
+	err := c.Post(PathTransactions, tx.QueryArgs(), data, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *Client) GetTransaction(id string) (interface{}, error) {
+	var result interface{}
+	err := c.Get(makePath(PathTransactions, id), nil, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *Client) GetTransactionResults(id string) (interface{}, error) {
+	var result interface{}
+	err := c.Get(makePath(PathTransactions, id, "results"), nil, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *Client) GetTransactionMetadata(id string) (interface{}, error) {
+	var result interface{}
+	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *Client) GetTransactionProblems(id string) (interface{}, error) {
+	var result interface{}
+	err := c.Get(makePath(PathTransactions, id, "problems"), nil, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
