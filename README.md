@@ -1,3 +1,9 @@
+# General
+
+| Workflow | Status |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Continuous Integration (CI) | ![build](https://github.com/RelationalAI/rai-sdk-go/actions/workflows/go-build.yaml/badge.svg) |
+
 # rai-sdk-go
 
 The RelationalAI Software Development Kit for Go enables developers to access the RAI REST APIs from Go.
