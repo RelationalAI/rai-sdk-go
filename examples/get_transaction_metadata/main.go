@@ -23,7 +23,7 @@ import (
 )
 
 type Options struct {
-	Id      string `long:"id" required:"true" description:"transaction id"`
+	Id      string `long:"ID" required:"true" description:"transaction id"`
 	Profile string `long:"profile" default:"default" description:"config profile"`
 }
 

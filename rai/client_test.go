@@ -32,32 +32,32 @@ var engineName = fmt.Sprintf("go-sdk-%s", uid)
 var userEmail = fmt.Sprintf("go-sdk-%s@relational.ai", uid)
 var clientName = fmt.Sprintf("go-sdk-%s", uid)
 
-func CreateClient() (*Client, error) {
+func newTestClient() (*Client, error) {
 	configPath, _ := expandUser(DefaultConfigFile)
 	if _, err := os.Stat(configPath); err == nil {
 		return NewDefaultClient()
-	} else {
-		var cfg Config
-
-		clientId := os.Getenv("CLIENT_ID")
-		clientSecret := os.Getenv("CLIENT_SECRET")
-		clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
-
-		placeHolderConfig := `
-			[default]
-			host=azure.relationalai.com
-			region=us-east
-			port=443
-			scheme=https
-			client_id=%s
-			client_secret=%s
-			client_credentials_url=%s
-		`
-		configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
-		LoadConfigString(configSrc, "default", &cfg)
-		opts := ClientOptions{Config: cfg}
-		return NewClient(context.Background(), &opts), nil
 	}
+
+	var cfg Config
+
+	clientId := os.Getenv("CLIENT_ID")
+	clientSecret := os.Getenv("CLIENT_SECRET")
+	clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
+
+	placeHolderConfig := `
+		[default]
+		host=azure.relationalai.com
+		region=us-east
+		port=443
+		scheme=https
+		client_id=%s
+		client_secret=%s
+		client_credentials_url=%s
+	`
+	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
+	LoadConfigString(configSrc, "default", &cfg)
+	opts := ClientOptions{Config: cfg}
+	return NewClient(context.Background(), &opts), nil
 }
 
 // Answers if the given list contains the given value
@@ -140,7 +140,7 @@ func findModel(models []Model, name string) *Model {
 
 // Test database management APIs.
 func TestDatabase(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -232,7 +232,7 @@ func findEngine(engines []Engine, name string) *Engine {
 
 // Test engine management APIs.
 func TestEngine(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -286,7 +286,7 @@ func TestEngine(t *testing.T) {
 
 // Test transaction execution.
 func TestExecute(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -315,7 +315,7 @@ func TestExecute(t *testing.T) {
 
 // Test transaction asynchronous execution
 func TestExecuteAsync(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -377,7 +377,7 @@ const sampleCSV = "" +
 
 // Test loading CSV data using default options.
 func TestLoadCSV(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -430,7 +430,7 @@ func TestLoadCSV(t *testing.T) {
 
 // Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -490,7 +490,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 // Test loading CSV data with alternate syntax options.
 func TestLoadCSVAltSyntax(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -552,7 +552,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 // Test loading CSV data with a schema definition.
 func TestLoadCSVWithSchema(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -611,7 +611,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 
 // Test loading JSON data.
 func TestLoadJSON(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -660,7 +660,7 @@ func TestLoadJSON(t *testing.T) {
 
 // Test model APIs.
 func TestModels(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -717,7 +717,7 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 
 // Test OAuth Client APIs.
 func TestOAuthClient(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 
@@ -780,7 +780,7 @@ func findUser(users []User, id string) *User {
 
 // Test User APIs.
 func TestUser(t *testing.T) {
-	client, err := CreateClient()
+	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
 

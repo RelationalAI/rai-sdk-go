@@ -263,12 +263,14 @@ func marshal(item interface{}) (io.Reader, error) {
 	return strings.NewReader(string(data)), nil
 }
 
-// Parse arrow data
-func parse_arrow_data(data []byte, out *[]interface{}) error {
+// parseArrowData parses arrow data
+func parseArrowData(data []byte) ([]interface{}, error) {
+	out := []interface{}{}
 	reader, err := ipc.NewReader(bytes.NewReader(data))
 	if err != nil {
-		return nil
+		return nil, nil
 	}
+
 	defer reader.Release()
 	for reader.Next() {
 		res := make(map[string]interface{})
@@ -279,53 +281,48 @@ func parse_arrow_data(data []byte, out *[]interface{}) error {
 			res[key] = value
 		}
 		rec.Retain()
-		*out = append(*out, res)
+		out = append(out, res)
 	}
-	return nil
+	return out, nil
 }
 
-// Parse multipart response
-func parse_multipart_response(data []byte, rsp_content_type string, result *[]byte) error {
+// parseMultipartResponse parses multipart response
+func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
 	output := []interface{}{}
-	_, params, err := mime.ParseMediaType(rsp_content_type)
-	if err != nil {
-		return err
-	}
-	mr := multipart.NewReader(bytes.NewReader(data), params["boundary"])
+
+	mr := multipart.NewReader(bytes.NewReader(data), boundary)
 	for {
 		part, err := mr.NextPart()
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return err
+			return nil, err
 		}
-		content_type := part.Header.Get("Content-Type")
+
+		contentType := part.Header.Get("Content-Type")
 		value, _ := ioutil.ReadAll(part)
-		if content_type == "application/json" {
-			var out interface{}
+		if contentType == "application/json" {
+			var out map[string]interface{}
 			err = json.Unmarshal(value, &out)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			output = append(output, out)
-		} else if content_type == "application/vnd.apache.arrow.stream" {
-			out := []interface{}{}
-			err := parse_arrow_data(value, &out)
+		} else if contentType == "application/vnd.apache.arrow.stream" {
+			out, err := parseArrowData(value)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			output = append(output, out)
 		} else {
-			return errors.Errorf("unsupported content-type: %s\n", content_type)
+			return nil, errors.Errorf("unsupported content-type: %s\n", contentType)
 		}
-		outByte, err := json.Marshal(output)
-		if err != nil {
-			return err
-		}
-		*result = outByte
 	}
-
-	return nil
+	outByte, err := json.Marshal(output)
+	if err != nil {
+		return nil, err
+	}
+	return outByte, nil
 }
 
 // Unmarshal the JSON object from the given response body.
@@ -337,13 +334,21 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 	if len(data) == 0 {
 		return nil
 	}
-	content_type := rsp.Header.Get("Content-Type")
-	if strings.Contains(content_type, "application/json") {
+
+	mediatype, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
+	boundary := params["boundary"]
+
+	if mediatype == "application/json" {
 		err = json.Unmarshal(data, result)
-	} else if strings.Contains(content_type, "multipart/form-data") {
-		var res []byte
-		parse_multipart_response(data, content_type, &res)
+	} else if mediatype == "multipart/form-data" {
+		res, err := parseMultipartResponse(data, boundary)
+		if err != nil {
+			return err
+		}
 		err = json.Unmarshal(res, result)
+		if err != nil {
+			return err
+		}
 	}
 	if err != nil {
 		return err
@@ -916,7 +921,7 @@ func (tx *Transaction) QueryArgs() url.Values {
 	return result
 }
 
-// The transaction async "request" envelope
+// TransactionAsync is the envelope for an async transaction
 type TransactionAsync struct {
 	Database string
 	Engine   string
@@ -1133,6 +1138,15 @@ func (c *Client) ExecuteAsyncWait(
 	out["metadata"], _ = c.GetTransactionMetadata(id)
 	out["problems"], _ = c.GetTransactionProblems(id)
 	return out, nil
+}
+
+func (c *Client) GetTransactions() (interface{}, error) {
+	var result interface{}
+	err := c.Get(makePath(PathTransactions), nil, &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (c *Client) GetTransaction(id string) (interface{}, error) {

@@ -23,7 +23,6 @@ import (
 )
 
 type Options struct {
-	Id      string `long:"ID" required:"true" description:"transaction id"`
 	Profile string `long:"profile" default:"default" description:"config profile"`
 }
 
@@ -32,7 +31,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.GetTransaction(opts.Id)
+	rsp, err := client.GetTransactions()
 	if err != nil {
 		return err
 	}
