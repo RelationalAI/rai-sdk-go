@@ -23,7 +23,7 @@ import (
 )
 
 type Options struct {
-	ID      string   `long:"ID" required:"true" description:"user ID"`
+	ID      string   `long:"id" required:"true" description:"user ID"`
 	Status  string   `short:"s" long:"status" description:"user status"`
 	Roles   []string `short:"r" long:"role" description:"user roles"`
 	Profile string   `long:"profile" default:"default" description:"config profile"`
