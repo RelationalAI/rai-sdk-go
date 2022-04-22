@@ -315,7 +315,7 @@ func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
 			}
 			output = append(output, out)
 		} else {
-			return nil, errors.Errorf("unsupported content-type: %s\n", contentType)
+			return nil, errors.Errorf("unsupported content-type: %s", contentType)
 		}
 	}
 	outByte, err := json.Marshal(output)
