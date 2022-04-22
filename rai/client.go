@@ -268,7 +268,7 @@ func parseArrowData(data []byte) ([]interface{}, error) {
 	out := []interface{}{}
 	reader, err := ipc.NewReader(bytes.NewReader(data))
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	defer reader.Release()
