@@ -270,8 +270,8 @@ func parseArrowData(data []byte) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	defer reader.Release()
+
 	for reader.Next() {
 		res := make(map[string]interface{})
 		rec := reader.Record()
@@ -283,6 +283,7 @@ func parseArrowData(data []byte) ([]interface{}, error) {
 		rec.Retain()
 		out = append(out, res)
 	}
+
 	return out, nil
 }
 
@@ -318,6 +319,7 @@ func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
 			return nil, errors.Errorf("unsupported content-type: %s", contentType)
 		}
 	}
+
 	return json.Marshal(output)
 }
 
@@ -331,24 +333,24 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 		return nil
 	}
 
-	mediatype, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
+	mediaType, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
 	boundary := params["boundary"]
 
-	if mediatype == "application/json" {
-		err = json.Unmarshal(data, result)
-	} else if mediatype == "multipart/form-data" {
+	if mediaType == "application/json" {
+		if err := json.Unmarshal(data, result); err != nil {
+			return err
+		}
+	} else if mediaType == "multipart/form-data" {
 		res, err := parseMultipartResponse(data, boundary)
 		if err != nil {
 			return err
 		}
-		err = json.Unmarshal(res, result)
-		if err != nil {
+
+		if err := json.Unmarshal(res, result); err != nil {
 			return err
 		}
 	}
-	if err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -375,6 +377,7 @@ func (c *Client) request(
 		return err
 	}
 	defer rsp.Body.Close()
+
 	if result == nil {
 		return nil
 	}
@@ -937,12 +940,14 @@ func (tx *TransactionAsync) Payload(inputs map[string]string) map[string]interfa
 		queryActionInput, _ := makeQueryActionInput(k, v)
 		queryActionInputs = append(queryActionInputs, queryActionInput)
 	}
+
 	data := map[string]interface{}{
 		"dbname":      tx.Database,
 		"readonly":    tx.Readonly,
 		"engine_name": tx.Engine,
 		"query":       tx.Source,
-		"inputs":      queryActionInputs}
+		"inputs":      queryActionInputs,
+	}
 	return data
 }
 
@@ -1071,7 +1076,8 @@ func (c *Client) Execute(
 		Database: database,
 		Engine:   engine,
 		Mode:     "OPEN",
-		Readonly: readonly}
+		Readonly: readonly,
+	}
 	queryAction, err := makeQueryAction(source, inputs)
 	if err != nil {
 		return nil, err
@@ -1094,7 +1100,8 @@ func (c *Client) ExecuteAsync(
 		Database: database,
 		Engine:   engine,
 		Source:   source,
-		Readonly: readonly}
+		Readonly: readonly,
+	}
 	data := tx.Payload(inputs)
 	err := c.Post(PathTransactions, tx.QueryArgs(), data, &result)
 	if err != nil {
