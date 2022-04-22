@@ -50,7 +50,7 @@ func expandUser(fname string) (string, error) {
 
 // Load the named stanza from the source.
 // Source can be either filename or config string
-func loadStanza(source, profile string) (*ini.Section, error) {
+func loadStanza(source interface{}, profile string) (*ini.Section, error) {
 	info, err := ini.Load(source)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading config")
@@ -102,7 +102,7 @@ func parseConfigStanza(stanza *ini.Section, cfg *Config) error {
 
 // Load settings from the given profile of the provided config source.
 func LoadConfigString(source, profile string, cfg *Config) error {
-	stanza, err := loadStanza(source, profile)
+	stanza, err := loadStanza([]byte(source), profile)
 	if err != nil {
 		return err
 	}
