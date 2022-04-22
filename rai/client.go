@@ -265,7 +265,7 @@ func marshal(item interface{}) (io.Reader, error) {
 
 // parseArrowData parses arrow data
 func parseArrowData(data []byte) ([]interface{}, error) {
-	out := []interface{}{}
+	var out []interface{}
 	reader, err := ipc.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
@@ -288,7 +288,7 @@ func parseArrowData(data []byte) ([]interface{}, error) {
 
 // parseMultipartResponse parses multipart response
 func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
-	var out []interface{}{}
+	var output []interface{}
 
 	mr := multipart.NewReader(bytes.NewReader(data), boundary)
 	for {
