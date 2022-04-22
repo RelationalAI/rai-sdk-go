@@ -288,7 +288,7 @@ func parseArrowData(data []byte) ([]interface{}, error) {
 
 // parseMultipartResponse parses multipart response
 func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
-	output := []interface{}{}
+	var out []interface{}{}
 
 	mr := multipart.NewReader(bytes.NewReader(data), boundary)
 	for {
@@ -315,7 +315,7 @@ func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
 			}
 			output = append(output, out)
 		} else {
-			return nil, errors.Errorf("unsupported content-type: %s\n", contentType)
+			return nil, errors.Errorf("unsupported content-type: %s", contentType)
 		}
 	}
 	outByte, err := json.Marshal(output)
