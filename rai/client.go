@@ -288,7 +288,7 @@ func parseArrowData(data []byte) ([]interface{}, error) {
 
 // parseMultipartResponse parses multipart response
 func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
-	output := []interface{}{}
+	var out []interface{}{}
 
 	mr := multipart.NewReader(bytes.NewReader(data), boundary)
 	for {
