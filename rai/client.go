@@ -1139,46 +1139,36 @@ func (c *Client) ExecuteAsyncWait(
 func (c *Client) GetTransactions() (interface{}, error) {
 	var result interface{}
 	err := c.Get(makePath(PathTransactions), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+
+	return result, err
 }
 
 func (c *Client) GetTransaction(id string) (interface{}, error) {
 	var result interface{}
 	err := c.Get(makePath(PathTransactions, id), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+
+	return result, err
 }
 
 func (c *Client) GetTransactionResults(id string) (interface{}, error) {
 	var result interface{}
 	err := c.Get(makePath(PathTransactions, id, "results"), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+
+	return result, err
 }
 
 func (c *Client) GetTransactionMetadata(id string) (interface{}, error) {
 	var result interface{}
 	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+
+	return result, err
 }
 
 func (c *Client) GetTransactionProblems(id string) (interface{}, error) {
 	var result interface{}
 	err := c.Get(makePath(PathTransactions, id, "problems"), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+
+	return result, err
 }
 
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {

@@ -48,25 +48,12 @@ func expandUser(fname string) (string, error) {
 	return fname, nil
 }
 
-// Load the named stanza from the named config file.
-func loadStanzaFromFile(fname, profile string) (*ini.Section, error) {
-	info, err := ini.Load(fname)
+// Load the named stanza from the source.
+// Source can be either filename or config string
+func loadStanza(source, profile string) (*ini.Section, error) {
+	info, err := ini.Load(source)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading config file '%s'", fname)
-	}
-	stanza := info.Section(profile)
-	if stanza == nil {
-		return nil, errors.Errorf("config profile '%s' not found", profile)
-	}
-	return stanza, nil
-}
-
-// Load the named stanza from the provied config string.
-func loadStanzaFromString(source, profile string) (*ini.Section, error) {
-	byteSource := []byte(source)
-	info, err := ini.Load(byteSource)
-	if err != nil {
-		return nil, errors.Wrap(err, "error load config string")
+		return nil, errors.Wrapf(err, "error loading config")
 	}
 	stanza := info.Section(profile)
 	if stanza == nil {
@@ -113,9 +100,9 @@ func parseConfigStanza(stanza *ini.Section, cfg *Config) error {
 	return nil
 }
 
-// Load settings from the given profile of the provided config string.
+// Load settings from the given profile of the provided config source.
 func LoadConfigString(source, profile string, cfg *Config) error {
-	stanza, err := loadStanzaFromString(source, profile)
+	stanza, err := loadStanza(source, profile)
 	if err != nil {
 		return err
 	}
@@ -129,7 +116,7 @@ func LoadConfigFile(fname, profile string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	stanza, err := loadStanzaFromFile(fname, profile)
+	stanza, err := loadStanza(fname, profile)
 	if err != nil {
 		return err
 	}
