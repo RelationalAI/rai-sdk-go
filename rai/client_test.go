@@ -28,13 +28,10 @@ import (
 
 var uid = uuid.New().String()
 
-//var databaseName = fmt.Sprintf("go-sdk-%s", uid)
-//var engineName = fmt.Sprintf("go-sdk-%s", uid)
+var databaseName = fmt.Sprintf("go-sdk-%s", uid)
+var engineName = fmt.Sprintf("go-sdk-%s", uid)
 var userEmail = fmt.Sprintf("go-sdk-%s@example.com", uid)
 var clientName = fmt.Sprintf("go-sdk-%s", uid)
-
-var databaseName = "sdk-test"
-var engineName = "sdk-test"
 
 func newTestClient() (*Client, error) {
 	configPath, _ := expandUser(DefaultConfigFile)
@@ -321,9 +318,9 @@ func TestExecute(t *testing.T) {
 func TestExecuteAsync(t *testing.T) {
 	client, err := newTestClient()
 	assert.Nil(t, err)
-	//defer tearDown(client)
+	defer tearDown(client)
 
-	//ensureDatabase(t, client)
+	ensureDatabase(t, client)
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 	rsp, err := client.ExecuteAsyncWait(databaseName, engineName, query, nil, true)
