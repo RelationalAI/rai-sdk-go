@@ -214,24 +214,24 @@ func (c *Client) newRequest(method, path string, args url.Values, body io.Reader
 	return req, nil
 }
 
-func (c *Client) Delete(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodDelete, path, args, data, result)
+func (c *Client) Delete(path string, args url.Values, data interface{}) (interface{}, error) {
+	return c.request(http.MethodDelete, path, args, data)
 }
 
-func (c *Client) Get(path string, args url.Values, result interface{}) error {
-	return c.request(http.MethodGet, path, args, nil, result)
+func (c *Client) Get(path string, args url.Values) (interface{}, error) {
+	return c.request(http.MethodGet, path, args, nil)
 }
 
-func (c *Client) Patch(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodPatch, path, args, data, result)
+func (c *Client) Patch(path string, args url.Values, data interface{}) (interface{}, error) {
+	return c.request(http.MethodPatch, path, args, data)
 }
 
-func (c *Client) Post(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodPost, path, args, data, result)
+func (c *Client) Post(path string, args url.Values, data interface{}) (interface{}, error) {
+	return c.request(http.MethodPost, path, args, data)
 }
 
-func (c *Client) Put(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodPut, path, args, data, result)
+func (c *Client) Put(path string, args url.Values, data interface{}) (interface{}, error) {
+	return c.request(http.MethodPut, path, args, data)
 }
 
 // Show the given value as JSON data.
@@ -263,35 +263,95 @@ func marshal(item interface{}) (io.Reader, error) {
 	return strings.NewReader(string(data)), nil
 }
 
-// parseArrowData parses arrow data
-func parseArrowData(data []byte) ([]interface{}, error) {
-	var out []interface{}
-	reader, err := ipc.NewReader(bytes.NewReader(data))
+// readArrowFiles read arrow files content and returns a list of ArrowRelations
+func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
+	var out []ArrowRelation
+	for _, file := range files {
+
+		if file.ContentType == "application/vnd.apache.arrow.stream" {
+
+			if reader, err := ipc.NewReader(bytes.NewReader(file.Data)); err == nil {
+				defer reader.Release()
+
+				for reader.Next() {
+					rec := reader.Record()
+
+					for i := 0; i < int(rec.NumCols()); i++ {
+
+						values, _ := rec.Column(i).MarshalJSON()
+
+						var data []interface{}
+						json.Unmarshal(values, &data)
+
+						out = append(out, ArrowRelation{rec.ColumnName(i), data})
+					}
+
+					rec.Retain()
+				}
+			} else {
+				return out, errors.Errorf("failed to read arrow file %s", file.Filename)
+			}
+		}
+	}
+
+	return out, nil
+}
+
+// readProblemResults unmarshall the given string into list of ClientProblem and IntegrityConstraintViolation
+func readProblemResults(rsp []byte) ([]interface{}, error) {
+	out := make([]interface{}, 0)
+
+	var problems []interface{}
+	err := json.Unmarshal(rsp, &problems)
+
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Release()
 
-	for reader.Next() {
-		res := make(map[string]interface{})
-		rec := reader.Record()
-		for i := 0; i < int(rec.NumCols()); i++ {
-			key := rec.ColumnName(i)
-			value := rec.Column(i)
-			res[key] = value
+	if len(problems) == 0 {
+		return out, nil
+	}
+
+	for _, p := range problems {
+		data, _ := json.Marshal(p)
+
+		var problem IntegrityConstraintViolation
+
+		err = json.Unmarshal(data, &problem)
+
+		if err != nil {
+			return out, err
 		}
-		rec.Retain()
-		out = append(out, res)
+
+		if problem.Type == "IntegrityConstraintViolation" {
+
+			out = append(out, problem)
+
+		} else if problem.Type == "ClientProblem" {
+
+			var problem ClientProblem
+			err = json.Unmarshal(data, &problem)
+
+			if err != nil {
+				return out, err
+			}
+
+			out = append(out, problem)
+		} else {
+
+			return out, errors.Errorf("unknow error type: %s", problem.Type)
+		}
 	}
 
 	return out, nil
 }
 
 // parseMultipartResponse parses multipart response
-func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
-	var output []interface{}
+func parseMultipartResponse(data []byte, boundary string) ([]TransactionAsyncFile, error) {
+	var out []TransactionAsyncFile
 
 	mr := multipart.NewReader(bytes.NewReader(data), boundary)
+
 	for {
 		part, err := mr.NextPart()
 		if err == io.EOF {
@@ -300,88 +360,130 @@ func parseMultipartResponse(data []byte, boundary string) ([]byte, error) {
 			return nil, err
 		}
 
+		name := part.FormName()
+		filename := part.FileName()
 		contentType := part.Header.Get("Content-Type")
-		value, _ := ioutil.ReadAll(part)
-		if contentType == "application/json" {
-			var out map[string]interface{}
-			err = json.Unmarshal(value, &out)
-			if err != nil {
-				return nil, err
-			}
-			output = append(output, out)
-		} else if contentType == "application/vnd.apache.arrow.stream" {
-			out, err := parseArrowData(value)
-			if err != nil {
-				return nil, err
-			}
-			output = append(output, out)
-		} else {
-			return nil, errors.Errorf("unsupported content-type: %s", contentType)
-		}
+		data, _ := ioutil.ReadAll(part)
+		txnFile := TransactionAsyncFile{Name: name, Filename: filename, ContentType: contentType, Data: data}
+
+		out = append(out, txnFile)
 	}
 
-	return json.Marshal(output)
+	return out, nil
 }
 
-// Unmarshal the JSON object from the given response body.
-func unmarshal(rsp *http.Response, result interface{}) error {
+// pareseHttpResponse parses the response body from the given http.Response
+func pareseHttpResponse(rsp *http.Response) (interface{}, error) {
 	data, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(data) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	mediaType, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
-	boundary := params["boundary"]
 
 	if mediaType == "application/json" {
-		if err := json.Unmarshal(data, result); err != nil {
-			return err
-		}
+		return data, nil
 	} else if mediaType == "multipart/form-data" {
-		res, err := parseMultipartResponse(data, boundary)
-		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(res, result); err != nil {
-			return err
-		}
+		boundary := params["boundary"]
+		return parseMultipartResponse(data, boundary)
+	} else {
+		return nil, errors.Errorf("unsupported Media-Type: %s", mediaType)
 	}
-
-	return nil
 }
 
 // Construct request, execute and unmarshal response.
 func (c *Client) request(
-	method, path string, args url.Values, data, result interface{},
-) error {
+	method, path string, args url.Values, data interface{},
+) (interface{}, error) {
 	body, err := marshal(data)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req, err := c.newRequest(method, path, args, body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req = c.ensureHeaders(req)
 	req, err = c.authenticate(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// showRequest(req, data)
 	rsp, err := c.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rsp.Body.Close()
 
-	if result == nil {
-		return nil
+	return pareseHttpResponse(rsp)
+}
+
+// search searchs for an element index in a slice
+func search(length int, f func(index int) bool) int {
+	for index := 0; index < length; index++ {
+		if f(index) {
+			return index
+		}
 	}
-	return unmarshal(rsp, &result)
+	return -1
+}
+
+// readTransactionAsyncFiles reads the transaction async results from TransactionAsyncFiles
+func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncResult, error) {
+	txnIndex := search(len(files), func(i int) bool {
+		return files[i].Name == "transaction"
+	})
+
+	if txnIndex == -1 {
+		return nil, errors.Errorf("transaction part is missing")
+	}
+
+	metadataIndex := search(len(files), func(i int) bool {
+		return files[i].Name == "metadata"
+	})
+
+	if metadataIndex == -1 {
+		return nil, errors.Errorf("metadata part is missing")
+	}
+
+	problemsIndex := search(len(files), func(i int) bool {
+		return files[i].Name == "problems"
+	})
+
+	if problemsIndex == -1 {
+		return nil, errors.Errorf("problems part is missing")
+	}
+
+	var txn TransactionAsyncResponse
+	err := json.Unmarshal(files[txnIndex].Data, &txn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var metadata []TransactionAsyncMetadataResponse
+	err = json.Unmarshal(files[metadataIndex].Data, &metadata)
+
+	if err != nil {
+		return nil, err
+	}
+
+	results, err := readArrowFiles(files)
+
+	if err != nil {
+		return nil, err
+	}
+
+	problems, err := readProblemResults(files[problemsIndex].Data)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &TransactionAsyncResult{txn, results, metadata, problems}, nil
 }
 
 type HTTPError struct {
@@ -529,42 +631,45 @@ func queryArgs(filters ...interface{}) (url.Values, error) {
 func (c *Client) CloneDatabase(
 	database, engine, source string, overwrite bool,
 ) (*Database, error) {
-	var result createDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
 		Engine:   engine,
 		Mode:     createMode(source, overwrite),
 		Source:   source}
+
 	data := tx.Payload()
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+
+	_, err := c.Post(PathTransaction, tx.QueryArgs(), data)
 	if err != nil {
 		return nil, err
 	}
+
 	return c.GetDatabase(database)
 }
 
 func (c *Client) CreateDatabase(
 	database, engine string, overwrite bool,
 ) (*Database, error) {
-	var result createDatabaseResponse
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
 		Engine:   engine,
 		Mode:     createMode("", overwrite)}
+
 	data := tx.Payload()
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	_, err := c.Post(PathTransaction, tx.QueryArgs(), data)
 	if err != nil {
 		return nil, err
 	}
+
 	return c.GetDatabase(database)
 }
 
 func (c *Client) DeleteDatabase(database string) error {
-	var result deleteDatabaseResponse
 	data := &DeleteDatabaseRequest{Name: database}
-	return c.Delete(PathDatabase, nil, data, &result)
+	_, err := c.Delete(PathDatabase, nil, data)
+	return err
 }
 
 func (c *Client) GetDatabase(database string) (*Database, error) {
@@ -572,14 +677,20 @@ func (c *Client) GetDatabase(database string) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result getDatabaseResponse
-	err = c.Get(PathDatabase, args, &result)
+	rsp, err := c.Get(PathDatabase, args)
 	if err != nil {
 		return nil, err
 	}
+
+	var result getDatabaseResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	if len(result.Databases) == 0 {
 		return nil, ErrNotFound
 	}
+
 	return &result.Databases[0], nil
 }
 
@@ -588,11 +699,17 @@ func (c *Client) ListDatabases(filters ...interface{}) ([]Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result listDatabasesResponse
-	err = c.Get(PathDatabase, args, &result)
+
+	rsp, err := c.Get(PathDatabase, args)
 	if err != nil {
 		return nil, err
 	}
+
+	var result listDatabasesResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return result.Databases, nil
 }
 
@@ -624,12 +741,18 @@ func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
 // Request the creation of an engine, and immediately return. The process
 // of provisioning a new engine can take up to a minute.
 func (c *Client) CreateEngineAsync(engine, size string) (*Engine, error) {
-	var result createEngineResponse
 	data := &CreateEngineRequest{Region: c.Region, Name: engine, Size: size}
-	err := c.Put(PathEngine, nil, data, &result)
+	rsp, err := c.Put(PathEngine, nil, data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result createEngineResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result.Engine, nil
 }
 
@@ -652,12 +775,17 @@ func (c *Client) DeleteEngine(engine string) error {
 }
 
 func (c *Client) DeleteEngineAsync(engine string) (*Engine, error) {
-	var result deleteEngineResponse
 	data := &DeleteEngineRequest{Name: engine}
-	err := c.Delete(PathEngine, nil, data, &result)
+	rsp, err := c.Delete(PathEngine, nil, data)
 	if err != nil {
 		return nil, err
 	}
+
+	var result deleteEngineResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return c.GetEngine(engine) // normalize return type
 }
 
@@ -666,14 +794,21 @@ func (c *Client) GetEngine(engine string) (*Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result getEngineResponse
-	err = c.Get(PathEngine, args, &result)
+
+	rsp, err := c.Get(PathEngine, args)
 	if err != nil {
 		return nil, err
 	}
+
+	var result getEngineResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	if len(result.Engines) == 0 {
 		return nil, ErrNotFound
 	}
+
 	return &result.Engines[0], nil
 }
 
@@ -682,11 +817,19 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result listEnginesResponse
-	err = c.Get(PathEngine, args, &result)
+
+	rsp, err := c.Get(PathEngine, args)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println(rsp)
+
+	var result listEnginesResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return result.Engines, nil
 }
 
@@ -697,21 +840,33 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 func (c *Client) CreateOAuthClient(
 	name string, perms []string,
 ) (*OAuthClientExtra, error) {
-	var result createOAuthClientResponse
 	data := CreateOAuthClientRequest{Name: name, Permissions: perms}
-	err := c.Post(PathOAuthClients, nil, data, &result)
+	rsp, err := c.Post(PathOAuthClients, nil, data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result createOAuthClientResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result.Client, nil
 }
 
 func (c *Client) DeleteOAuthClient(id string) (*DeleteOAuthClientResponse, error) {
-	var result DeleteOAuthClientResponse
-	err := c.Delete(makePath(PathOAuthClients, id), nil, nil, &result)
+	rsp, err := c.Delete(makePath(PathOAuthClients, id), nil, nil)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result DeleteOAuthClientResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result, nil
 }
 
@@ -730,20 +885,32 @@ func (c *Client) FindOAuthClient(name string) (*OAuthClient, error) {
 }
 
 func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
-	var result getOAuthClientResponse
-	err := c.Get(makePath(PathOAuthClients, id), nil, &result)
+	rsp, err := c.Get(makePath(PathOAuthClients, id), nil)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result getOAuthClientResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result.Client, nil
 }
 
 func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
-	var result listOAuthClientsResponse
-	err := c.Get(PathOAuthClients, nil, &result)
+	rsp, err := c.Get(PathOAuthClients, nil)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result listOAuthClientsResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return result.Clients, nil
 }
 
@@ -760,35 +927,49 @@ func (c *Client) DeleteModel(
 func (c *Client) DeleteModels(
 	database, engine string, models []string,
 ) (*TransactionResult, error) {
-	var result TransactionResult
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
 		Engine:   engine,
 		Mode:     "OPEN",
 		Readonly: false}
+
 	data := tx.Payload(makeDeleteModelsAction(models))
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result TransactionResult
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result, err
 }
 
 func (c *Client) GetModel(database, engine, model string) (*Model, error) {
-	var result listModelsResponse
 	tx := NewTransaction(c.Region, database, engine, "OPEN")
 	data := tx.Payload(makeListModelsAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result listModelsResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	// assert len(result.Actions) == 1
 	for _, item := range result.Actions[0].Result.Models {
 		if item.Name == model {
 			return &item, nil
 		}
 	}
+
 	return nil, ErrNotFound
 }
 
@@ -801,7 +982,6 @@ func (c *Client) LoadModel(
 func (c *Client) LoadModels(
 	database, engine string, models map[string]io.Reader,
 ) (*TransactionResult, error) {
-	var result TransactionResult
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -809,51 +989,79 @@ func (c *Client) LoadModels(
 		Mode:     "OPEN",
 		Readonly: false}
 	actions := []DbAction{}
+
 	for name, r := range models {
 		model, err := ioutil.ReadAll(r)
+
 		if err != nil {
 			return nil, err
 		}
+
 		action := makeLoadModelAction(name, string(model))
 		actions = append(actions, action)
 	}
+
 	data := tx.Payload(actions...)
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result TransactionResult
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result, nil
 }
 
 // Returns a list of model names for the given database.
 func (c *Client) ListModelNames(database, engine string) ([]string, error) {
-	var models listModelsResponse
 	tx := NewTransaction(c.Region, database, engine, "OPEN")
 	data := tx.Payload(makeListModelsAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &models)
+
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var models listModelsResponse
+	if err := json.Unmarshal(rsp.([]byte), &models); err != nil {
+		return nil, err
+	}
+
 	actions := models.Actions
 	// assert len(actions) == 1
 	result := []string{}
+
 	for _, model := range actions[0].Result.Models {
 		result = append(result, model.Name)
 	}
+
 	return result, nil
 }
 
 // Returns the names of models installed in the given database.
 func (c *Client) ListModels(database, engine string) ([]Model, error) {
-	var models listModelsResponse
 	tx := NewTransaction(c.Region, database, engine, "OPEN")
 	data := tx.Payload(makeListModelsAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &models)
+
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var models listModelsResponse
+	if err := json.Unmarshal(rsp.([]byte), &models); err != nil {
+		return nil, err
+	}
+
 	actions := models.Actions
 	// assert len(actions) == 1
+
 	return actions[0].Result.Models, nil
 }
 
@@ -1070,7 +1278,6 @@ func (c *Client) Execute(
 	inputs map[string]string,
 	readonly bool,
 ) (*TransactionResult, error) {
-	var result TransactionResult
 	tx := Transaction{
 		Region:   c.Region,
 		Database: database,
@@ -1078,15 +1285,25 @@ func (c *Client) Execute(
 		Mode:     "OPEN",
 		Readonly: readonly,
 	}
+
 	queryAction, err := makeQueryAction(source, inputs)
+
 	if err != nil {
 		return nil, err
 	}
+
 	data := tx.Payload(queryAction)
-	err = c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result TransactionResult
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result, nil
 }
 
@@ -1094,106 +1311,160 @@ func (c *Client) ExecuteAsync(
 	database, engine, source string,
 	inputs map[string]string,
 	readonly bool,
-) (interface{}, error) {
-	var result interface{}
+) (*TransactionAsyncResult, error) {
 	tx := TransactionAsync{
 		Database: database,
 		Engine:   engine,
 		Source:   source,
 		Readonly: readonly,
 	}
+
 	data := tx.Payload(inputs)
-	err := c.Post(PathTransactions, tx.QueryArgs(), data, &result)
+	rsp, err := c.Post(PathTransactions, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
-	return result, nil
+
+	switch rsp.(type) {
+
+	case []byte:
+		var txn TransactionAsyncResponse
+		err := json.Unmarshal(rsp.([]byte), &txn)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &TransactionAsyncResult{
+			txn,
+			make([]ArrowRelation, 0),
+			make([]TransactionAsyncMetadataResponse, 0),
+			make([]interface{}, 0),
+		}, nil
+
+	case []TransactionAsyncFile:
+		return readTransactionAsyncFiles(rsp.([]TransactionAsyncFile))
+
+	default:
+		return nil, errors.Errorf("unsupported result type")
+	}
 }
 
 func (c *Client) ExecuteAsyncWait(
 	database, engine, source string,
 	inputs map[string]string,
 	readonly bool,
-) (interface{}, error) {
+) (*TransactionAsyncResult, error) {
 	rsp, err := c.ExecuteAsync(database, engine, source, inputs, readonly)
+
 	if err != nil {
 		return nil, err
 	}
-	var id string
-	mapRsp, ok := rsp.(map[string]interface{})
-	if ok {
-		id = mapRsp["id"].(string)
-	} else {
-		arrayRsp, _ := rsp.([]interface{})
-		id = arrayRsp[0].(map[string]interface{})["id"].(string)
-	}
+
+	id := rsp.Transaction.ID
+
 	for {
-		rsp, _ = c.GetTransaction(id)
-		transaction := rsp.(map[string]interface{})["transaction"]
-		state, _ := transaction.(map[string]interface{})["state"].(string)
-		if state == "COMPLETED" || state == "ABORTED" {
+		txn, _ := c.GetTransaction(id)
+
+		if txn.Transaction.State == "COMPLETED" || txn.Transaction.State == "ABORTED" {
 			break
 		}
-		time.Sleep(2 * time.Second)
+
+		time.Sleep(2000)
 	}
-	out := make(map[string]interface{})
-	out["results"], _ = c.GetTransactionResults(id)
-	out["metadata"], _ = c.GetTransactionMetadata(id)
-	out["problems"], _ = c.GetTransactionProblems(id)
-	return out, nil
+
+	txn, _ := c.GetTransaction(id)
+	results, _ := c.GetTransactionResults(id)
+	metadata, _ := c.GetTransactionMetadata(id)
+	problems, _ := c.GetTransactionProblems(id)
+
+	return &TransactionAsyncResult{txn.Transaction, results, metadata, problems}, nil
 }
 
-func (c *Client) GetTransactions() (interface{}, error) {
-	var result interface{}
-	err := c.Get(makePath(PathTransactions), nil, &result)
+func (c *Client) GetTransactions() (*TransactionAsyncMultipleResponses, error) {
+	rsp, err := c.Get(makePath(PathTransactions), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result TransactionAsyncMultipleResponses
+	err = json.Unmarshal(rsp.([]byte), &result)
+
+	return &result, err
+}
+
+func (c *Client) GetTransaction(id string) (*TransactionAsyncSingleResponse, error) {
+	rsp, err := c.Get(makePath(PathTransactions, id), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result TransactionAsyncSingleResponse
+	err = json.Unmarshal(rsp.([]byte), &result)
+
+	return &result, err
+}
+
+func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
+	files, err := c.Get(makePath(PathTransactions, id, "results"), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return readArrowFiles(files.([]TransactionAsyncFile))
+}
+
+func (c *Client) GetTransactionMetadata(id string) ([]TransactionAsyncMetadataResponse, error) {
+	rsp, err := c.Get(makePath(PathTransactions, id, "metadata"), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result []TransactionAsyncMetadataResponse
+	err = json.Unmarshal(rsp.([]byte), &result)
 
 	return result, err
 }
 
-func (c *Client) GetTransaction(id string) (interface{}, error) {
-	var result interface{}
-	err := c.Get(makePath(PathTransactions, id), nil, &result)
+func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
+	rsp, err := c.Get(makePath(PathTransactions, id, "problems"), nil)
 
-	return result, err
-}
+	if err != nil {
+		return nil, err
+	}
 
-func (c *Client) GetTransactionResults(id string) (interface{}, error) {
-	var result interface{}
-	err := c.Get(makePath(PathTransactions, id, "results"), nil, &result)
-
-	return result, err
-}
-
-func (c *Client) GetTransactionMetadata(id string) (interface{}, error) {
-	var result interface{}
-	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, &result)
-
-	return result, err
-}
-
-func (c *Client) GetTransactionProblems(id string) (interface{}, error) {
-	var result interface{}
-	err := c.Get(makePath(PathTransactions, id, "problems"), nil, &result)
-
-	return result, err
+	return readProblemResults(rsp.([]byte))
 }
 
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
-	var result listEDBsResponse
 	tx := &Transaction{
 		Region:   c.Region,
 		Database: database,
 		Engine:   engine,
 		Mode:     "OPEN",
 		Readonly: true}
+
 	data := tx.Payload(makeListEDBAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	rsp, err := c.Post(PathTransaction, tx.QueryArgs(), data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result listEDBsResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	if len(result.Actions) == 0 {
 		return []EDB{}, nil
 	}
+
 	// assert len(result.Actions) == 1
 	return result.Actions[0].Result.Rels, nil
 }
@@ -1351,21 +1622,33 @@ func (c *Client) CreateUser(email string, roles []string) (*User, error) {
 	if len(roles) == 0 {
 		roles = append(roles, "user")
 	}
-	var result createUserResponse
 	data := &CreateUserRequest{Email: email, Roles: roles}
-	err := c.Post(PathUsers, nil, data, &result)
+	rsp, err := c.Post(PathUsers, nil, data)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result createUserResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result.User, nil
 }
 
 func (c *Client) DeleteUser(id string) (*DeleteUserResponse, error) {
-	var result DeleteUserResponse
-	err := c.Delete(makePath(PathUsers, id), nil, nil, &result)
+	rsp, err := c.Delete(makePath(PathUsers, id), nil, nil)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result DeleteUserResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result, nil
 }
 
@@ -1394,28 +1677,46 @@ func (c *Client) FindUser(email string) (*User, error) {
 }
 
 func (c *Client) GetUser(id string) (*User, error) {
-	var result getUserResponse
-	err := c.Get(makePath(PathUsers, id), nil, &result)
+	rsp, err := c.Get(makePath(PathUsers, id), nil)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result getUserResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result.User, nil
 }
 
 func (c *Client) ListUsers() ([]User, error) {
-	var result listUsersResponse
-	err := c.Get(PathUsers, nil, &result)
+	rsp, err := c.Get(PathUsers, nil)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result listUsersResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return result.Users, nil
 }
 
 func (c *Client) UpdateUser(id string, req UpdateUserRequest) (*User, error) {
-	var result updateUserResponse
-	err := c.Patch(makePath(PathUsers, id), nil, &req, &result)
+	rsp, err := c.Patch(makePath(PathUsers, id), nil, &req)
+
 	if err != nil {
 		return nil, err
 	}
+
+	var result updateUserResponse
+	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
+		return nil, err
+	}
+
 	return &result.User, nil
 }

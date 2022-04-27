@@ -86,7 +86,7 @@ type User struct {
 // Transaction results
 //
 
-type Problem struct {
+type ClientProblem struct {
 	Type        string `json:"type"`
 	ErrorCode   string `json:"error_code"`
 	IsError     bool   `json:"is_error"`
@@ -107,9 +107,9 @@ type Relation struct {
 }
 
 type TransactionResult struct {
-	Aborted  bool       `json:"aborted"`
-	Output   []Relation `json:"output"`
-	Problems []Problem  `json:"problems"`
+	Aborted  bool            `json:"aborted"`
+	Output   []Relation      `json:"output"`
+	Problems []ClientProblem `json:"problems"`
 }
 
 //
@@ -240,4 +240,63 @@ type UpdateUserRequest struct {
 
 type updateUserResponse struct {
 	User User `json:"user"`
+}
+
+//
+// Transaction async models
+//
+
+type TransactionAsyncFile struct {
+	Name        string
+	Filename    string
+	ContentType string
+	Data        []byte
+}
+
+type ArrowRelation struct {
+	RelationID string
+	Table      interface{}
+}
+
+type TransactionAsyncSingleResponse struct {
+	Transaction TransactionAsyncResponse `json:"transaction"`
+}
+
+type TransactionAsyncMultipleResponses struct {
+	Transactions []TransactionAsyncResponse `json:"transactions"`
+}
+
+type TransactionAsyncResponse struct {
+	ID                    string `json:"id"`
+	State                 string `json:"state"`
+	AccountName           string `json:"account_name,omitempty"`
+	CreatedBy             string `json:"created_by,omitempty"`
+	CreatedOn             string `json:"created_on,omitempty"`
+	DatabaseName          string `json:"database_name,omitempty"`
+	ReadOnly              bool   `json:"read_only,omitempty"`
+	Query                 string `json:"query,omitempty"`
+	LastRequestedInterval string `json:"last_requested_interval,omitempty"`
+}
+
+type TransactionAsyncMetadataResponse struct {
+	RelationId string   `json:"relationId"`
+	Types      []string `json:"types"`
+}
+
+type IntegrityConstraintViolation struct {
+	Type    string   `json:"type"`
+	Sources []Source `json:"sources"`
+}
+
+type Source struct {
+	RelKey RelKey `json:"rel_key"`
+	Source string `json:"source"`
+	Type   string `json:"type"`
+}
+
+type TransactionAsyncResult struct {
+	Transaction TransactionAsyncResponse
+	Results     []ArrowRelation
+	Metadata    []TransactionAsyncMetadataResponse
+	Problems    []interface{}
 }
