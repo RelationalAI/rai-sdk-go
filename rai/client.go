@@ -735,6 +735,7 @@ func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
 			return nil, err
 		}
 	}
+
 	return rsp, nil
 }
 
@@ -822,8 +823,6 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(rsp)
 
 	var result listEnginesResponse
 	if err := json.Unmarshal(rsp.([]byte), &result); err != nil {
