@@ -270,7 +270,9 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 
 		if file.ContentType == "application/vnd.apache.arrow.stream" {
 
-			if reader, err := ipc.NewReader(bytes.NewReader(file.Data)); err == nil {
+			if reader, err := ipc.NewReader(bytes.NewReader(file.Data)); err != nil {
+				return out, err
+			} else {
 				defer reader.Release()
 
 				for reader.Next() {
@@ -288,8 +290,6 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 
 					rec.Retain()
 				}
-			} else {
-				return out, errors.Errorf("failed to read arrow file %s", file.Filename)
 			}
 		}
 	}
