@@ -364,7 +364,6 @@ func readProblemResults(rsp []byte) ([]interface{}, error) {
 
 			out = append(out, problem)
 		} else {
-
 			return out, errors.Errorf("unknow error type: %s", problem.Type)
 		}
 	}
@@ -440,7 +439,6 @@ func (c *Client) request(
 	}
 	defer rsp.Body.Close()
 
-	//return pareseHttpResponse(rsp)
 	return unmarshal(rsp, result)
 }
 
@@ -1254,7 +1252,6 @@ func (c *Client) ExecuteAsyncWait(
 
 	id := rsp.Transaction.ID
 	count := 0
-
 	for {
 		txn, err := c.GetTransaction(id)
 		if err != nil {
