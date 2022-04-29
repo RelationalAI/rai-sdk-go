@@ -286,22 +286,23 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 			srcValues := reflect.ValueOf(rsp.Transaction)
 			dstValues.Set(srcValues)
 			return err
-		} else if dstValues.Type() == reflect.TypeOf([]TransactionAsyncFile{}) {
-			srcValues := reflect.ValueOf(data)
-			dstValues.Set(srcValues)
-		} else if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
+		}
+
+		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
 			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
 			srcValues := reflect.ValueOf(rsp)
 			dstValues.Set(srcValues)
 			return err
-		} else if dstValues.Type() == reflect.TypeOf([]ArrowRelation{}) {
+		}
+
+		if dstValues.Type() == reflect.TypeOf([]ArrowRelation{}) {
 			rsp, err := readArrowFiles(data.([]TransactionAsyncFile))
 			srcValues := reflect.ValueOf(rsp)
 			dstValues.Set(srcValues)
 			return err
-		} else {
-			return errors.Errorf("unhandled unmarshal type %T", result)
 		}
+
+		return errors.Errorf("unhandled unmarshal type %T", result)
 	default:
 		return errors.Errorf("unsupported result type")
 	}
