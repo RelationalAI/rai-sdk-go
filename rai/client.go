@@ -294,6 +294,11 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 			srcValues := reflect.ValueOf(rsp)
 			dstValues.Set(srcValues)
 			return err
+		} else if dstValues.Type() == reflect.TypeOf([]ArrowRelation{}) {
+			rsp, err := readArrowFiles(data.([]TransactionAsyncFile))
+			srcValues := reflect.ValueOf(rsp)
+			dstValues.Set(srcValues)
+			return err
 		} else {
 			return errors.Errorf("unhandled unmarshal type %T", result)
 		}
@@ -1292,13 +1297,10 @@ func (c *Client) GetTransaction(id string) (*TransactionAsyncSingleResponse, err
 }
 
 func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
-	var result []TransactionAsyncFile
+	var result []ArrowRelation
 	err := c.Get(makePath(PathTransactions, id, "results"), nil, &result)
-	if err != nil {
-		return nil, err
-	}
 
-	return readArrowFiles(result)
+	return result, err
 }
 
 func (c *Client) GetTransactionMetadata(id string) ([]TransactionAsyncMetadataResponse, error) {
