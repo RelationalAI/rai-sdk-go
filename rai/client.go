@@ -107,10 +107,10 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 // the named profile.
 func NewClientFromConfig(profile string) (*Client, error) {
 	var cfg Config
-
 	if err := LoadConfigProfile(profile, &cfg); err != nil {
 		return nil, err
 	}
+
 	opts := ClientOptions{Config: cfg}
 	return NewClient(context.Background(), &opts), nil
 }
@@ -308,7 +308,6 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 	var out []ArrowRelation
 	for _, file := range files {
-
 		if file.ContentType == "application/vnd.apache.arrow.stream" {
 			reader, err := ipc.NewReader(bytes.NewReader(file.Data))
 			if err != nil {
@@ -450,7 +449,6 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 	var txn TransactionAsyncResponse
 	var metadata []TransactionAsyncMetadataResponse
 	var problems []interface{}
-
 	for _, file := range files {
 		if file.Name == "transaction" {
 			err := json.Unmarshal(file.Data, &txn)
@@ -484,7 +482,6 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 	}
 
 	results, err := readArrowFiles(files)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1212,7 +1209,6 @@ func (c *Client) ExecuteAsync(
 	var txn TransactionAsyncResponse
 	data := tx.payload(inputs)
 	err := c.Post(PathTransactions, tx.QueryArgs(), data, &txn)
-
 	if txn.State == "CREATED" {
 		return &TransactionAsyncResult{
 			Transaction: txn,
