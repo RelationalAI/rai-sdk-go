@@ -310,29 +310,23 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 	for _, file := range files {
 
 		if file.ContentType == "application/vnd.apache.arrow.stream" {
-
 			reader, err := ipc.NewReader(bytes.NewReader(file.Data))
 			if err != nil {
 				return out, err
 			}
 
 			defer reader.Release()
-
 			for reader.Next() {
 				rec := reader.Record()
-
 				for i := 0; i < int(rec.NumCols()); i++ {
 					data, _ := rec.Column(i).MarshalJSON()
-
 					var values []interface{}
 					json.Unmarshal(data, &values)
-
 					out = append(out, ArrowRelation{rec.ColumnName(i), values})
 				}
 
 				rec.Retain()
 			}
-
 		}
 	}
 
@@ -342,10 +336,8 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 // readProblemResults unmarshall the given string into list of ClientProblem and IntegrityConstraintViolation
 func readProblemResults(rsp []byte) ([]interface{}, error) {
 	out := make([]interface{}, 0)
-
 	var problems []interface{}
 	err := json.Unmarshal(rsp, &problems)
-
 	if err != nil {
 		return nil, err
 	}
@@ -356,11 +348,8 @@ func readProblemResults(rsp []byte) ([]interface{}, error) {
 
 	for _, p := range problems {
 		data, _ := json.Marshal(p)
-
 		var problem IntegrityConstraintViolation
-
 		err = json.Unmarshal(data, &problem)
-
 		if err != nil {
 			return out, err
 		}
@@ -368,7 +357,6 @@ func readProblemResults(rsp []byte) ([]interface{}, error) {
 		if problem.Type == "IntegrityConstraintViolation" {
 			out = append(out, problem)
 		} else if problem.Type == "ClientProblem" {
-
 			var problem ClientProblem
 			err = json.Unmarshal(data, &problem)
 			if err != nil {
@@ -388,9 +376,7 @@ func readProblemResults(rsp []byte) ([]interface{}, error) {
 // parseMultipartResponse parses multipart response
 func parseMultipartResponse(data []byte, boundary string) ([]TransactionAsyncFile, error) {
 	var out []TransactionAsyncFile
-
 	mr := multipart.NewReader(bytes.NewReader(data), boundary)
-
 	for {
 		part, err := mr.NextPart()
 		if err == io.EOF {
@@ -404,7 +390,6 @@ func parseMultipartResponse(data []byte, boundary string) ([]TransactionAsyncFil
 		contentType := part.Header.Get("Content-Type")
 		data, _ := ioutil.ReadAll(part)
 		txnFile := TransactionAsyncFile{Name: name, Filename: filename, ContentType: contentType, Data: data}
-
 		out = append(out, txnFile)
 	}
 
@@ -422,7 +407,6 @@ func pareseHttpResponse(rsp *http.Response) (interface{}, error) {
 	}
 
 	mediaType, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
-
 	if mediaType == "application/json" {
 		return data, nil
 	} else if mediaType == "multipart/form-data" {
