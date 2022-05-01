@@ -54,10 +54,10 @@ func loadStanza(fname, profile string) (*ini.Section, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error loading config file '%s'", fname)
 	}
-	stanza := info.Section(profile)
-	if stanza == nil {
+	if !info.HasSection(profile) {
 		return nil, errors.Errorf("config profile '%s' not found", profile)
 	}
+	stanza := info.Section(profile)
 	return stanza, nil
 }
 
