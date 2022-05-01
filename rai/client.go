@@ -988,19 +988,16 @@ func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
 	return result.Actions[0].Result.Rels, nil
 }
 
-// Note, the default LoadCSV value for HeaderRow is 1, so if you instantiate
-// this using initializer syntax instead of `NewCSVOptions` make sure you set
-// HeaderRow to the correct value, because the zero value means no header.
 type CSVOptions struct {
 	Schema     map[string]string
-	HeaderRow  int
+	HeaderRow  *int
 	Delim      rune
 	EscapeChar rune
 	QuoteChar  rune
 }
 
 func NewCSVOptions() *CSVOptions {
-	return &CSVOptions{HeaderRow: 1}
+	return &CSVOptions{}
 }
 
 func (opts *CSVOptions) WithDelim(delim rune) *CSVOptions {
@@ -1019,7 +1016,7 @@ func (opts *CSVOptions) WithQuoteChar(quoteChar rune) *CSVOptions {
 }
 
 func (opts *CSVOptions) WithHeaderRow(headerRow int) *CSVOptions {
-	opts.HeaderRow = headerRow
+	opts.HeaderRow = &headerRow
 	return opts
 }
 
@@ -1083,8 +1080,8 @@ func genSyntaxConfig(b *strings.Builder, opts *CSVOptions) {
 	if opts == nil {
 		return
 	}
-	if opts.HeaderRow != 1 { // default: 1
-		genSyntaxOption(b, "header_row", opts.HeaderRow)
+	if opts.HeaderRow != nil {
+		genSyntaxOption(b, "header_row", *opts.HeaderRow)
 	}
 	if opts.Delim != 0 {
 		genSyntaxOption(b, "delim", opts.Delim)

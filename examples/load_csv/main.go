@@ -62,7 +62,7 @@ func run(opts *Options) error {
 		rel = sansext(opts.File)
 	}
 	csv := &rai.CSVOptions{
-		HeaderRow:  opts.HeaderRow,
+		HeaderRow:  &opts.HeaderRow,
 		Delim:      asRune(opts.Delim),
 		EscapeChar: asRune(opts.EscapeChar),
 		QuoteChar:  asRune(opts.QuoteChar)}
