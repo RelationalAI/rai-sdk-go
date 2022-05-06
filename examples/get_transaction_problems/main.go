@@ -43,7 +43,7 @@ func run(opts *Options) error {
 func main() {
 	var opts Options
 	if _, err := flags.ParseArgs(&opts, os.Args); err != nil {
-		os.Exit(-1)
+		os.Exit(1)
 	}
 	if err := run(&opts); err != nil {
 		log.Fatal(err)
