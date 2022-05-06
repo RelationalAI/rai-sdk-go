@@ -444,44 +444,29 @@ func queryArgs(filters ...interface{}) (url.Values, error) {
 // Databases
 //
 
-func (c *Client) CloneDatabase(
-	database, engine, source string, overwrite bool,
-) (*Database, error) {
+func (c *Client) CloneDatabase(database, source string) (*Database, error) {
 	var result createDatabaseResponse
-	tx := Transaction{
-		Region:   c.Region,
-		Database: database,
-		Engine:   engine,
-		Mode:     createMode(source, overwrite),
-		Source:   source}
-	data := tx.Payload()
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	data := &createDatabaseRequest{Name: database, Source: source}
+	err := c.Put(PathDatabase, nil, data, &result)
 	if err != nil {
 		return nil, err
 	}
-	return c.GetDatabase(database)
+	return &result.Database, nil
 }
 
-func (c *Client) CreateDatabase(
-	database, engine string, overwrite bool,
-) (*Database, error) {
+func (c *Client) CreateDatabase(database string) (*Database, error) {
 	var result createDatabaseResponse
-	tx := Transaction{
-		Region:   c.Region,
-		Database: database,
-		Engine:   engine,
-		Mode:     createMode("", overwrite)}
-	data := tx.Payload()
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	data := &createDatabaseRequest{Name: database}
+	err := c.Put(PathDatabase, nil, data, &result)
 	if err != nil {
 		return nil, err
 	}
-	return c.GetDatabase(database)
+	return &result.Database, nil
 }
 
 func (c *Client) DeleteDatabase(database string) error {
 	var result deleteDatabaseResponse
-	data := &DeleteDatabaseRequest{Name: database}
+	data := &deleteDatabaseRequest{Name: database}
 	return c.Delete(PathDatabase, nil, data, &result)
 }
 
@@ -543,7 +528,7 @@ func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
 // of provisioning a new engine can take up to a minute.
 func (c *Client) CreateEngineAsync(engine, size string) (*Engine, error) {
 	var result createEngineResponse
-	data := &CreateEngineRequest{Region: c.Region, Name: engine, Size: size}
+	data := &createEngineRequest{Region: c.Region, Name: engine, Size: size}
 	err := c.Put(PathEngine, nil, data, &result)
 	if err != nil {
 		return nil, err
@@ -571,7 +556,7 @@ func (c *Client) DeleteEngine(engine string) error {
 
 func (c *Client) DeleteEngineAsync(engine string) (*Engine, error) {
 	var result deleteEngineResponse
-	data := &DeleteEngineRequest{Name: engine}
+	data := &deleteEngineRequest{Name: engine}
 	err := c.Delete(PathEngine, nil, data, &result)
 	if err != nil {
 		return nil, err
@@ -616,7 +601,7 @@ func (c *Client) CreateOAuthClient(
 	name string, perms []string,
 ) (*OAuthClientExtra, error) {
 	var result createOAuthClientResponse
-	data := CreateOAuthClientRequest{Name: name, Permissions: perms}
+	data := createOAuthClientRequest{Name: name, Permissions: perms}
 	err := c.Post(PathOAuthClients, nil, data, &result)
 	if err != nil {
 		return nil, err
@@ -1139,7 +1124,7 @@ func (c *Client) CreateUser(email string, roles []string) (*User, error) {
 		roles = append(roles, "user")
 	}
 	var result createUserResponse
-	data := &CreateUserRequest{Email: email, Roles: roles}
+	data := &createUserRequest{Email: email, Roles: roles}
 	err := c.Post(PathUsers, nil, data, &result)
 	if err != nil {
 		return nil, err

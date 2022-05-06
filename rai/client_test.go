@@ -46,15 +46,16 @@ func isErrNotFound(err error) bool {
 // Ensure that the test database exists.
 func ensureDatabase(t *testing.T, client *Client) {
 	ensureEngine(t, client)
-	_, err := client.CreateDatabase(databaseName, engineName, true)
-	assert.Nil(t, err)
+	if _, err := client.GetDatabase(databaseName); err != nil {
+		assert.True(t, isErrNotFound(err))
+		_, err := client.CreateDatabase(databaseName)
+		assert.Nil(t, err)
+	}
 }
 
 // Ensure that the test engine exists.
 func ensureEngine(t *testing.T, client *Client) {
-	var err error
-	_, err = client.GetEngine(engineName)
-	if err != nil {
+	if _, err := client.GetEngine(engineName); err != nil {
 		assert.True(t, isErrNotFound(err))
 		_, err = client.CreateEngine(engineName, "XS")
 		assert.Nil(t, err)
@@ -99,12 +100,7 @@ func TestDatabase(t *testing.T) {
 		assert.True(t, isErrNotFound(err))
 	}
 
-	database, err := client.CreateDatabase(databaseName, engineName, false)
-	assert.Nil(t, err)
-	assert.Equal(t, databaseName, database.Name)
-	assert.Equal(t, "CREATED", database.State)
-
-	database, err = client.CreateDatabase(databaseName, engineName, true) // overwrite
+	database, err := client.CreateDatabase(databaseName)
 	assert.Nil(t, err)
 	assert.Equal(t, databaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
