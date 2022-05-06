@@ -161,7 +161,7 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 		return nil, err
 	}
 	req = req.WithContext(c.ctx)
-	req = c.ensureHeaders(req)
+	c.ensureHeaders(req)
 	rsp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
@@ -175,17 +175,17 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 }
 
 // Authenticate the given request using the configured credentials.
-func (c *Client) authenticate(req *http.Request) (*http.Request, error) {
+func (c *Client) authenticate(req *http.Request) error {
 	token, err := c.AccessToken()
 	if err != nil || token == "" {
-		return nil, err // don't authenticate the request
+		return err // don't authenticate the request
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	return req, nil
+	return nil
 }
 
 // Add any missing headers to the given request.
-func (c *Client) ensureHeaders(req *http.Request) *http.Request {
+func (c *Client) ensureHeaders(req *http.Request) {
 	if v := req.Header.Get("accept"); v == "" {
 		req.Header.Set("Accept", "application/json")
 	}
@@ -195,7 +195,6 @@ func (c *Client) ensureHeaders(req *http.Request) *http.Request {
 	if v := req.Header.Get("user-agent"); v == "" {
 		req.Header.Set("User-Agent", userAgent)
 	}
-	return req
 }
 
 func (c *Client) newRequest(method, path string, args url.Values, body io.Reader) (*http.Request, error) {
@@ -286,9 +285,8 @@ func (c *Client) request(
 	if err != nil {
 		return err
 	}
-	req = c.ensureHeaders(req)
-	req, err = c.authenticate(req)
-	if err != nil {
+	c.ensureHeaders(req)
+	if err := c.authenticate(req); err != nil {
 		return err
 	}
 	// showRequest(req, data)
