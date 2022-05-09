@@ -167,7 +167,7 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 		return nil, err
 	}
 	req = req.WithContext(c.ctx)
-	req = c.ensureHeaders(req)
+	c.ensureHeaders(req)
 	rsp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
@@ -181,17 +181,17 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 }
 
 // Authenticate the given request using the configured credentials.
-func (c *Client) authenticate(req *http.Request) (*http.Request, error) {
+func (c *Client) authenticate(req *http.Request) error {
 	token, err := c.AccessToken()
 	if err != nil || token == "" {
-		return nil, err // don't authenticate the request
+		return err // don't authenticate the request
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	return req, nil
+	return nil
 }
 
 // Add any missing headers to the given request.
-func (c *Client) ensureHeaders(req *http.Request) *http.Request {
+func (c *Client) ensureHeaders(req *http.Request) {
 	if v := req.Header.Get("accept"); v == "" {
 		req.Header.Set("Accept", "application/json")
 	}
@@ -201,7 +201,6 @@ func (c *Client) ensureHeaders(req *http.Request) *http.Request {
 	if v := req.Header.Get("user-agent"); v == "" {
 		req.Header.Set("User-Agent", userAgent)
 	}
-	return req
 }
 
 func (c *Client) newRequest(method, path string, args url.Values, body io.Reader) (*http.Request, error) {
@@ -433,9 +432,8 @@ func (c *Client) request(
 	if err != nil {
 		return err
 	}
-	req = c.ensureHeaders(req)
-	req, err = c.authenticate(req)
-	if err != nil {
+	c.ensureHeaders(req)
+	if err := c.authenticate(req); err != nil {
 		return err
 	}
 	// showRequest(req, data)
@@ -635,44 +633,29 @@ func queryArgs(filters ...interface{}) (url.Values, error) {
 // Databases
 //
 
-func (c *Client) CloneDatabase(
-	database, engine, source string, overwrite bool,
-) (*Database, error) {
+func (c *Client) CloneDatabase(database, source string) (*Database, error) {
 	var result createDatabaseResponse
-	tx := Transaction{
-		Region:   c.Region,
-		Database: database,
-		Engine:   engine,
-		Mode:     createMode(source, overwrite),
-		Source:   source}
-	data := tx.Payload()
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	data := &createDatabaseRequest{Name: database, Source: source}
+	err := c.Put(PathDatabase, nil, data, &result)
 	if err != nil {
 		return nil, err
 	}
-	return c.GetDatabase(database)
+	return &result.Database, nil
 }
 
-func (c *Client) CreateDatabase(
-	database, engine string, overwrite bool,
-) (*Database, error) {
+func (c *Client) CreateDatabase(database string) (*Database, error) {
 	var result createDatabaseResponse
-	tx := Transaction{
-		Region:   c.Region,
-		Database: database,
-		Engine:   engine,
-		Mode:     createMode("", overwrite)}
-	data := tx.Payload()
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
+	data := &createDatabaseRequest{Name: database}
+	err := c.Put(PathDatabase, nil, data, &result)
 	if err != nil {
 		return nil, err
 	}
-	return c.GetDatabase(database)
+	return &result.Database, nil
 }
 
 func (c *Client) DeleteDatabase(database string) error {
 	var result deleteDatabaseResponse
-	data := &DeleteDatabaseRequest{Name: database}
+	data := &deleteDatabaseRequest{Name: database}
 	return c.Delete(PathDatabase, nil, data, &result)
 }
 
@@ -734,7 +717,7 @@ func (c *Client) CreateEngine(engine, size string) (*Engine, error) {
 // of provisioning a new engine can take up to a minute.
 func (c *Client) CreateEngineAsync(engine, size string) (*Engine, error) {
 	var result createEngineResponse
-	data := &CreateEngineRequest{Region: c.Region, Name: engine, Size: size}
+	data := &createEngineRequest{Region: c.Region, Name: engine, Size: size}
 	err := c.Put(PathEngine, nil, data, &result)
 	if err != nil {
 		return nil, err
@@ -762,7 +745,7 @@ func (c *Client) DeleteEngine(engine string) error {
 
 func (c *Client) DeleteEngineAsync(engine string) (*Engine, error) {
 	var result deleteEngineResponse
-	data := &DeleteEngineRequest{Name: engine}
+	data := &deleteEngineRequest{Name: engine}
 	err := c.Delete(PathEngine, nil, data, &result)
 	if err != nil {
 		return nil, err
@@ -807,7 +790,7 @@ func (c *Client) CreateOAuthClient(
 	name string, perms []string,
 ) (*OAuthClientExtra, error) {
 	var result createOAuthClientResponse
-	data := CreateOAuthClientRequest{Name: name, Permissions: perms}
+	data := createOAuthClientRequest{Name: name, Permissions: perms}
 	err := c.Post(PathOAuthClients, nil, data, &result)
 	if err != nil {
 		return nil, err
@@ -1343,19 +1326,16 @@ func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
 	return result.Actions[0].Result.Rels, nil
 }
 
-// Note, the default LoadCSV value for HeaderRow is 1, so if you instantiate
-// this using initializer syntax instead of `NewCSVOptions` make sure you set
-// HeaderRow to the correct value, because the zero value means no header.
 type CSVOptions struct {
 	Schema     map[string]string
-	HeaderRow  int
+	HeaderRow  *int
 	Delim      rune
 	EscapeChar rune
 	QuoteChar  rune
 }
 
 func NewCSVOptions() *CSVOptions {
-	return &CSVOptions{HeaderRow: 1}
+	return &CSVOptions{}
 }
 
 func (opts *CSVOptions) WithDelim(delim rune) *CSVOptions {
@@ -1374,7 +1354,7 @@ func (opts *CSVOptions) WithQuoteChar(quoteChar rune) *CSVOptions {
 }
 
 func (opts *CSVOptions) WithHeaderRow(headerRow int) *CSVOptions {
-	opts.HeaderRow = headerRow
+	opts.HeaderRow = &headerRow
 	return opts
 }
 
@@ -1438,8 +1418,8 @@ func genSyntaxConfig(b *strings.Builder, opts *CSVOptions) {
 	if opts == nil {
 		return
 	}
-	if opts.HeaderRow != 1 { // default: 1
-		genSyntaxOption(b, "header_row", opts.HeaderRow)
+	if opts.HeaderRow != nil {
+		genSyntaxOption(b, "header_row", *opts.HeaderRow)
 	}
 	if opts.Delim != 0 {
 		genSyntaxOption(b, "delim", opts.Delim)
@@ -1497,7 +1477,7 @@ func (c *Client) CreateUser(email string, roles []string) (*User, error) {
 		roles = append(roles, "user")
 	}
 	var result createUserResponse
-	data := &CreateUserRequest{Email: email, Roles: roles}
+	data := &createUserRequest{Email: email, Roles: roles}
 	err := c.Post(PathUsers, nil, data, &result)
 	if err != nil {
 		return nil, err

@@ -25,15 +25,14 @@ import (
 //
 
 type Database struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Region        string `json:"region"`
-	AccountName   string `json:"account_name"`
-	CreatedBy     string `json:"created_by"`
-	DeletedOn     string `json:"deleted_on"`
-	DeletedBy     string `json:"deleted_by,omitempty"`
-	DefaultEngine string `json:"default_compute_name,omitempty"`
-	State         string `json:"state"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Region      string `json:"region"`
+	AccountName string `json:"account_name"`
+	CreatedBy   string `json:"created_by"`
+	DeletedOn   string `json:"deleted_on"`
+	DeletedBy   string `json:"deleted_by,omitempty"`
+	State       string `json:"state"`
 }
 
 type EDB struct {
@@ -116,15 +115,16 @@ type TransactionResult struct {
 // Request/response payloads
 //
 
-type createDatabaseResponse struct {
-	Aborted  bool          `json:"aborted"`
-	Actions  []interface{} `json:"actions"`
-	Output   []interface{} `json:"output"`
-	Problems []interface{} `json:"problems"`
-	Version  int           `json:"version"` // todo: gone
+type createDatabaseRequest struct {
+	Name   string `json:"name"`
+	Source string `json:"source_name"`
 }
 
-type CreateEngineRequest struct {
+type createDatabaseResponse struct {
+	Database Database `json:"database"`
+}
+
+type createEngineRequest struct {
 	Name   string `json:"name"`
 	Size   string `json:"size"`
 	Region string `json:"region"` // todo: isnt region part of the context?
@@ -134,7 +134,7 @@ type createEngineResponse struct {
 	Engine Engine `json:"compute"`
 }
 
-type CreateOAuthClientRequest struct {
+type createOAuthClientRequest struct {
 	Name        string   `json:"name"`
 	Permissions []string `json:"permissions"`
 }
@@ -147,7 +147,7 @@ type getOAuthClientResponse struct {
 	createOAuthClientResponse
 }
 
-type CreateUserRequest struct {
+type createUserRequest struct {
 	Email string   `json:"email"`
 	Roles []string `json:"roles"`
 }
@@ -156,7 +156,7 @@ type createUserResponse struct {
 	User User `json:"user"`
 }
 
-type DeleteDatabaseRequest struct {
+type deleteDatabaseRequest struct {
 	Name string `json:"name"`
 }
 
@@ -165,7 +165,7 @@ type deleteDatabaseResponse struct {
 	Message string `json:"message"`
 }
 
-type DeleteEngineRequest struct {
+type deleteEngineRequest struct {
 	Name string `json:"name"`
 }
 

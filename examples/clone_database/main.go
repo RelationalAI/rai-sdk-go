@@ -23,11 +23,9 @@ import (
 )
 
 type Options struct {
-	Database  string `short:"d" long:"database" required:"true" description:"database name"`
-	Engine    string `short:"e" long:"engine" required:"true" description:"engine name"`
-	Source    string `short:"s" long:"source" required:"true" description:"source database name"`
-	Overwrite bool   `long:"overwrite" description:"overwrite existing database"`
-	Profile   string `long:"profile" default:"default" description:"config profile"`
+	Database string `short:"d" long:"database" required:"true" description:"database name"`
+	Source   string `short:"s" long:"source" required:"true" description:"source database name"`
+	Profile  string `long:"profile" default:"default" description:"config profile"`
 }
 
 func run(opts *Options) error {
@@ -35,7 +33,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.CloneDatabase(opts.Database, opts.Engine, opts.Source, opts.Overwrite)
+	rsp, err := client.CloneDatabase(opts.Database, opts.Source)
 	if err != nil {
 		return err
 	}
