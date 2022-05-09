@@ -271,11 +271,13 @@ type TransactionAsyncResponse struct {
 	State                 string `json:"state"`
 	AccountName           string `json:"account_name,omitempty"`
 	CreatedBy             string `json:"created_by,omitempty"`
-	CreatedOn             string `json:"created_on,omitempty"`
+	CreatedOn             int64  `json:"created_on,omitempty"`
+	FinishedAt            int64  `json:"finished_at,omitempty"`
 	DatabaseName          string `json:"database_name,omitempty"`
 	ReadOnly              bool   `json:"read_only,omitempty"`
+	UserAgent             string `json:"user_agent,omitempty"`
 	Query                 string `json:"query,omitempty"`
-	LastRequestedInterval string `json:"last_requested_interval,omitempty"`
+	LastRequestedInterval int64  `json:"last_requested_interval,omitempty"`
 }
 
 type TransactionAsyncMetadataResponse struct {
