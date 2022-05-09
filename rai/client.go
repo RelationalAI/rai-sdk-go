@@ -1039,7 +1039,7 @@ func (tx *TransactionAsync) payload(inputs map[string]string) map[string]interfa
 		"readonly":    tx.Readonly,
 		"engine_name": tx.Engine,
 		"query":       tx.Source,
-		"inputs":      queryActionInputs,
+		"v1_inputs":   queryActionInputs,
 	}
 	return data
 }
