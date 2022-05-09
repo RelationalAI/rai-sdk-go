@@ -15,18 +15,23 @@
 package rai
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/apache/arrow/go/v7/arrow/ipc"
 	"github.com/pkg/errors"
 )
 
@@ -105,6 +110,7 @@ func NewClientFromConfig(profile string) (*Client, error) {
 	if err := LoadConfigProfile(profile, &cfg); err != nil {
 		return nil, err
 	}
+
 	opts := ClientOptions{Config: cfg}
 	return NewClient(context.Background(), &opts), nil
 }
@@ -259,18 +265,159 @@ func marshal(item interface{}) (io.Reader, error) {
 
 // Unmarshal the JSON object from the given response body.
 func unmarshal(rsp *http.Response, result interface{}) error {
-	data, err := ioutil.ReadAll(rsp.Body)
+	data, err := pareseHttpResponse(rsp)
 	if err != nil {
-		return err
-	}
-	if len(data) == 0 {
 		return nil
 	}
-	err = json.Unmarshal(data, result)
-	if err != nil {
-		return err
+
+	switch data.(type) {
+
+	case []byte:
+		err := json.Unmarshal(data.([]byte), &result)
+		if err != nil {
+			return err
+		}
+
+	case []TransactionAsyncFile:
+		dstValues := reflect.ValueOf(result).Elem()
+		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResponse{}) {
+			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
+			srcValues := reflect.ValueOf(rsp.Transaction)
+			dstValues.Set(srcValues)
+			return err
+		}
+
+		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
+			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
+			srcValues := reflect.ValueOf(rsp)
+			dstValues.Set(srcValues)
+			return err
+		}
+
+		if dstValues.Type() == reflect.TypeOf([]ArrowRelation{}) {
+			rsp, err := readArrowFiles(data.([]TransactionAsyncFile))
+			srcValues := reflect.ValueOf(rsp)
+			dstValues.Set(srcValues)
+			return err
+		}
+
+		return errors.Errorf("unhandled unmarshal type %T", result)
+	default:
+		return errors.Errorf("unsupported result type")
 	}
+
 	return nil
+}
+
+// readArrowFiles read arrow files content and returns a list of ArrowRelations
+func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
+	var out []ArrowRelation
+	for _, file := range files {
+		if file.ContentType == "application/vnd.apache.arrow.stream" {
+			reader, err := ipc.NewReader(bytes.NewReader(file.Data))
+			if err != nil {
+				return out, err
+			}
+
+			defer reader.Release()
+			for reader.Next() {
+				rec := reader.Record()
+				for i := 0; i < int(rec.NumCols()); i++ {
+					data, _ := rec.Column(i).MarshalJSON()
+					var values []interface{}
+					json.Unmarshal(data, &values)
+					out = append(out, ArrowRelation{rec.ColumnName(i), values})
+				}
+
+				rec.Retain()
+			}
+		}
+	}
+
+	return out, nil
+}
+
+// readProblemResults unmarshall the given string into list of ClientProblem and IntegrityConstraintViolation
+func readProblemResults(rsp []byte) ([]interface{}, error) {
+	out := make([]interface{}, 0)
+	var problems []interface{}
+	err := json.Unmarshal(rsp, &problems)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(problems) == 0 {
+		return out, nil
+	}
+
+	for _, p := range problems {
+		data, _ := json.Marshal(p)
+		var problem IntegrityConstraintViolation
+		err = json.Unmarshal(data, &problem)
+		if err != nil {
+			return out, err
+		}
+
+		if problem.Type == "IntegrityConstraintViolation" {
+			out = append(out, problem)
+		} else if problem.Type == "ClientProblem" {
+			var problem ClientProblem
+			err = json.Unmarshal(data, &problem)
+			if err != nil {
+				return out, err
+			}
+
+			out = append(out, problem)
+		} else {
+			return out, errors.Errorf("unknow error type: %s", problem.Type)
+		}
+	}
+
+	return out, nil
+}
+
+// parseMultipartResponse parses multipart response
+func parseMultipartResponse(data []byte, boundary string) ([]TransactionAsyncFile, error) {
+	var out []TransactionAsyncFile
+	mr := multipart.NewReader(bytes.NewReader(data), boundary)
+	for {
+		part, err := mr.NextPart()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+
+		name := part.FormName()
+		filename := part.FileName()
+		contentType := part.Header.Get("Content-Type")
+		data, _ := ioutil.ReadAll(part)
+		txnFile := TransactionAsyncFile{Name: name, Filename: filename, ContentType: contentType, Data: data}
+		out = append(out, txnFile)
+	}
+
+	return out, nil
+}
+
+// pareseHttpResponse parses the response body from the given http.Response
+func pareseHttpResponse(rsp *http.Response) (interface{}, error) {
+	data, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	mediaType, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
+	if mediaType == "application/json" {
+		return data, nil
+	} else if mediaType == "multipart/form-data" {
+		boundary := params["boundary"]
+		return parseMultipartResponse(data, boundary)
+	} else {
+		return nil, errors.Errorf("unsupported Media-Type: %s", mediaType)
+	}
 }
 
 // Construct request, execute and unmarshal response.
@@ -295,10 +442,53 @@ func (c *Client) request(
 		return err
 	}
 	defer rsp.Body.Close()
-	if result == nil {
-		return nil
+
+	return unmarshal(rsp, result)
+}
+
+// readTransactionAsyncFiles reads the transaction async results from TransactionAsyncFiles
+func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncResult, error) {
+	var txn TransactionAsyncResponse
+	var metadata []TransactionAsyncMetadataResponse
+	var problems []interface{}
+	for _, file := range files {
+		if file.Name == "transaction" {
+			err := json.Unmarshal(file.Data, &txn)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if file.Name == "metadata" {
+			err := json.Unmarshal(file.Data, &metadata)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if file.Name == "problems" {
+			problems, _ = readProblemResults(file.Data)
+		}
 	}
-	return unmarshal(rsp, &result)
+
+	if txn == (TransactionAsyncResponse{ID: "", State: "", ReadOnly: false}) {
+		return nil, errors.Errorf("transaction part is missing")
+	}
+
+	if metadata == nil {
+		return nil, errors.Errorf("metadata part is missing")
+	}
+
+	if problems == nil {
+		return nil, errors.Errorf("problems part is missing")
+	}
+
+	results, err := readArrowFiles(files)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TransactionAsyncResult{txn, results, metadata, problems}, nil
 }
 
 type HTTPError struct {
@@ -318,7 +508,7 @@ func newHTTPError(status int, body string) error {
 	return HTTPError{StatusCode: status, Body: body}
 }
 
-var ErrNotFound = newHTTPError(http.StatusNotFound, "")
+var ErrNotFound = newHTTPError(http.StatusNotFound, "{\"status\":\"Not Found\",\"message\":\"compute not found\"}\n")
 
 // Returns an HTTPError corresponding to the given response.
 func httpError(rsp *http.Response) error {
@@ -358,6 +548,7 @@ const (
 	PathEngine       = "/compute"
 	PathOAuthClients = "/oauth-clients"
 	PathTransaction  = "/transaction"
+	PathTransactions = "/transactions"
 	PathUsers        = "/users"
 )
 
@@ -821,6 +1012,46 @@ func (tx *Transaction) QueryArgs() url.Values {
 	return result
 }
 
+// TransactionAsync is the envelope for an async transaction
+type TransactionAsync struct {
+	Database string
+	Engine   string
+	Source   string
+	Readonly bool
+}
+
+func NewTransactionAsync(database, engine string) *TransactionAsync {
+	return &TransactionAsync{
+		Database: database,
+		Engine:   engine}
+}
+
+// payload constructs the transaction async request payload.
+func (tx *TransactionAsync) payload(inputs map[string]string) map[string]interface{} {
+	var queryActionInputs []interface{}
+	for k, v := range inputs {
+		queryActionInput, _ := makeQueryActionInput(k, v)
+		queryActionInputs = append(queryActionInputs, queryActionInput)
+	}
+
+	data := map[string]interface{}{
+		"dbname":      tx.Database,
+		"readonly":    tx.Readonly,
+		"engine_name": tx.Engine,
+		"query":       tx.Source,
+		"v1_inputs":   queryActionInputs,
+	}
+	return data
+}
+
+func (tx *TransactionAsync) QueryArgs() url.Values {
+	result := url.Values{}
+	result.Add("dbname", tx.Database)
+	result.Add("engine_name", tx.Engine)
+
+	return result
+}
+
 // Wrap each of the given actions in a LabeledAction.
 func makeActions(actions ...DbAction) []DbAction {
 	result := []DbAction{}
@@ -951,6 +1182,128 @@ func (c *Client) Execute(
 	return &result, nil
 }
 
+func (c *Client) ExecuteAsync(
+	database, engine, source string,
+	inputs map[string]string,
+	readonly bool,
+) (*TransactionAsyncResult, error) {
+	tx := TransactionAsync{
+		Database: database,
+		Engine:   engine,
+		Source:   source,
+		Readonly: readonly,
+	}
+	var txn TransactionAsyncResponse
+	data := tx.payload(inputs)
+	err := c.Post(PathTransactions, tx.QueryArgs(), data, &txn)
+	if txn.State == "CREATED" {
+		return &TransactionAsyncResult{
+			Transaction: txn,
+			Results:     make([]ArrowRelation, 0),
+			Metadata:    make([]TransactionAsyncMetadataResponse, 0),
+			Problems:    make([]interface{}, 0),
+		}, err
+	}
+
+	results, err := c.GetTransactionResults(txn.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata, err := c.GetTransactionMetadata(txn.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	problems, err := c.GetTransactionProblems(txn.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TransactionAsyncResult{
+		Transaction: txn,
+		Results:     results,
+		Metadata:    metadata,
+		Problems:    problems,
+	}, nil
+
+}
+
+func (c *Client) ExecuteAsyncWait(
+	database, engine, source string,
+	inputs map[string]string,
+	readonly bool,
+) (*TransactionAsyncResult, error) {
+	rsp, err := c.ExecuteAsync(database, engine, source, inputs, readonly)
+	if err != nil {
+		return nil, err
+	}
+
+	id := rsp.Transaction.ID
+	count := 0
+	for {
+		txn, err := c.GetTransaction(id)
+		if err != nil {
+			count++
+		}
+
+		if count > 5 {
+			return nil, err
+		}
+
+		if txn.Transaction.State == "COMPLETED" || txn.Transaction.State == "ABORTED" {
+			break
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	txn, _ := c.GetTransaction(id)
+	results, _ := c.GetTransactionResults(id)
+	metadata, _ := c.GetTransactionMetadata(id)
+	problems, _ := c.GetTransactionProblems(id)
+
+	return &TransactionAsyncResult{txn.Transaction, results, metadata, problems}, nil
+}
+
+func (c *Client) GetTransactions() (*TransactionAsyncMultipleResponses, error) {
+	var result TransactionAsyncMultipleResponses
+	err := c.Get(makePath(PathTransactions), nil, &result)
+
+	return &result, err
+}
+
+func (c *Client) GetTransaction(id string) (*TransactionAsyncSingleResponse, error) {
+	var result TransactionAsyncSingleResponse
+	err := c.Get(makePath(PathTransactions, id), nil, &result)
+
+	return &result, err
+}
+
+func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
+	var result []ArrowRelation
+	err := c.Get(makePath(PathTransactions, id, "results"), nil, &result)
+
+	return result, err
+}
+
+func (c *Client) GetTransactionMetadata(id string) ([]TransactionAsyncMetadataResponse, error) {
+	var result []TransactionAsyncMetadataResponse
+	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, &result)
+
+	return result, err
+}
+
+func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
+	var result []interface{}
+	err := c.Get(makePath(PathTransactions, id, "problems"), nil, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
 	var result listEDBsResponse
 	tx := &Transaction{
@@ -964,9 +1317,11 @@ func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if len(result.Actions) == 0 {
 		return []EDB{}, nil
 	}
+
 	// assert len(result.Actions) == 1
 	return result.Actions[0].Result.Rels, nil
 }

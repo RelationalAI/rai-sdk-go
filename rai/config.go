@@ -48,11 +48,12 @@ func expandUser(fname string) (string, error) {
 	return fname, nil
 }
 
-// Load the named stanza from the named config file.
-func loadStanza(fname, profile string) (*ini.Section, error) {
-	info, err := ini.Load(fname)
+// Load the named stanza from the source.
+// Source can be either filename or config string
+func loadStanza(source interface{}, profile string) (*ini.Section, error) {
+	info, err := ini.Load(source)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading config file '%s'", fname)
+		return nil, errors.Wrapf(err, "error loading config")
 	}
 	if !info.HasSection(profile) {
 		return nil, errors.Errorf("config profile '%s' not found", profile)
@@ -71,16 +72,7 @@ func LoadConfigProfile(profile string, cfg *Config) error {
 	return LoadConfigFile(DefaultConfigFile, profile, cfg)
 }
 
-// Load settings from the given profile of the named config file.
-func LoadConfigFile(fname, profile string, cfg *Config) error {
-	fname, err := expandUser(fname)
-	if err != nil {
-		return err
-	}
-	stanza, err := loadStanza(fname, profile)
-	if err != nil {
-		return err
-	}
+func parseConfigStanza(stanza *ini.Section, cfg *Config) error {
 	if v := stanza.Key("region").String(); v != "" {
 		cfg.Region = v
 	}
@@ -105,5 +97,29 @@ func LoadConfigFile(fname, profile string, cfg *Config) error {
 			ClientSecret:         clientSecret,
 			ClientCredentialsUrl: clientCredentialsUrl}
 	}
+	return nil
+}
+
+// Load settings from the given profile of the provided config source.
+func LoadConfigString(source, profile string, cfg *Config) error {
+	stanza, err := loadStanza([]byte(source), profile)
+	if err != nil {
+		return err
+	}
+	parseConfigStanza(stanza, cfg)
+	return nil
+}
+
+// Load settings from the given profile of the named config file.
+func LoadConfigFile(fname, profile string, cfg *Config) error {
+	fname, err := expandUser(fname)
+	if err != nil {
+		return err
+	}
+	stanza, err := loadStanza(fname, profile)
+	if err != nil {
+		return err
+	}
+	parseConfigStanza(stanza, cfg)
 	return nil
 }

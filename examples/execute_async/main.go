@@ -15,6 +15,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -23,8 +24,23 @@ import (
 )
 
 type Options struct {
-	Name    string `short:"n" long:"name" required:"true" description:"OAuth client name"`
-	Profile string `long:"profile" default:"default" description:"config profile"`
+	Database string `short:"d" long:"database" required:"true" description:"database name"`
+	Engine   string `short:"e" long:"engine" required:"true" descriptio:"engine name"`
+	Code     string `short:"c" long:"code" description:"rel source code"`
+	File     string `short:"f" long:"file" description:"rel source file"`
+	Readonly bool   `long:"readonly" description:"readonly query (default: false)"`
+	Profile  string `long:"profile" default:"default" description:"config profile"`
+}
+
+func getCode(opts *Options) (string, error) {
+	if opts.Code != "" {
+		return opts.Code, nil
+	}
+	bytes, err := ioutil.ReadFile(opts.File)
+	if err != nil {
+		return "", nil
+	}
+	return string(bytes), nil
 }
 
 func run(opts *Options) error {
@@ -32,7 +48,11 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.FindOAuthClient(opts.Name)
+	source, err := getCode(opts)
+	if err != nil {
+		return err
+	}
+	rsp, err := client.ExecuteAsync(opts.Database, opts.Engine, source, nil, opts.Readonly)
 	if err != nil {
 		return err
 	}

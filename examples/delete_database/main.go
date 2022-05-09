@@ -15,7 +15,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/jessevdk/go-flags"
@@ -41,9 +41,9 @@ func run(opts *Options) error {
 func main() {
 	var opts Options
 	if _, err := flags.ParseArgs(&opts, os.Args); err != nil {
-		os.Exit(0)
+		os.Exit(1)
 	}
 	if err := run(&opts); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 }

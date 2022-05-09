@@ -23,7 +23,7 @@ import (
 )
 
 type Options struct {
-	Name    string `short:"n" long:"name" required:"true" description:"OAuth client name"`
+	ID      string `long:"id" required:"true" description:"transaction id"`
 	Profile string `long:"profile" default:"default" description:"config profile"`
 }
 
@@ -32,7 +32,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.FindOAuthClient(opts.Name)
+	rsp, err := client.GetTransactionResults(opts.ID)
 	if err != nil {
 		return err
 	}
