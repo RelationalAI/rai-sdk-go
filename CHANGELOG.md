@@ -2,14 +2,16 @@
 
 ## latest
 
-* Added support to the asynchronous protocol including:
-    - `ExecuteAsync`: runs an asynchronous transaction.
-    - `ExecuteAsyncWait`: runs an asynchronous transaction and wait of its completion.
-    - `GetTransaction`: gets information about transaction.
-    - `GetTransactions`: gets the list of transactions.
-    - `GetTransactionResults`: gets transaction execution results.
-    - `GetTransactionMetadata`: gets transaction metadata.
-    - `GetTransactionProblems`: gets transaction execution problems.
+* Added v2 predefined results formats:
+  - `GetTransactions` returns `TransactionsAsyncMultipleResponses`.
+  - `GetTransaction` returns `TransactionAsyncSingleResponse`.
+  - `GetTransactionResults` returns `[]ArrowRelation`.
+  - `GetTransactionMetadata` returns `[]TransactionAsyncMetadataResponse`.
+  - `GetTransactionProblems` returns `[](ClientProblem|IntegrityConstraintViolation)`.
+  - `ExecuteAsync` returns `TransactionAsyncResult`.
+
+* `Problem` model is changed to `ClientProblem` and `IntegrityConstraintViolation`
+problem type is introduced.
 
 ## v0.1.1-alpha
 
