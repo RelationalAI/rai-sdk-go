@@ -58,4 +58,5 @@ type ClientCredentials struct {
 	ClientID             string `json:"clientId"`
 	ClientSecret         string `json:"-"`
 	ClientCredentialsUrl string `json:"clientCredentialsUrl"`
+	Audience             string `json:"audience"`
 }

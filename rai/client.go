@@ -160,7 +160,7 @@ func (c *Client) AccessToken() (string, error) {
 
 // Fetch a new access token using the given client credentials.
 func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) {
-	audience := fmt.Sprintf("https://%s", c.Host)
+	audience := creds.Audience
 	body := fmt.Sprintf(getAccessTokenBody, creds.ClientID, creds.ClientSecret, audience)
 	req, err := http.NewRequest(http.MethodPost, creds.ClientCredentialsUrl, strings.NewReader(body))
 	if err != nil {
