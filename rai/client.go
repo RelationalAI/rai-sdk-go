@@ -1304,6 +1304,26 @@ func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
 	return result, nil
 }
 
+func (c *Client) DeleteTransaction(id string) (*TransactionAsyncDeleteResponse, error) {
+	var result TransactionAsyncDeleteResponse
+	err := c.Delete(makePath(PathTransactions, id), nil, nil, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
+func (c *Client) CancelTransaction(id string) (interface{}, error) {
+	var result interface{}
+	err := c.Post(makePath(PathTransactions, id, "cancel"), nil, nil, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
 	var result listEDBsResponse
 	tx := &Transaction{

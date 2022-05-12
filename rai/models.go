@@ -280,6 +280,11 @@ type TransactionAsyncResponse struct {
 	LastRequestedInterval int64  `json:"last_requested_interval,omitempty"`
 }
 
+type TransactionAsyncDeleteResponse struct {
+	ID      string `json:"txn_id"`
+	Message string `json:"message"`
+}
+
 type TransactionAsyncMetadataResponse struct {
 	RelationId string   `json:"relationId"`
 	Types      []string `json:"types"`
