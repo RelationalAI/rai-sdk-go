@@ -769,12 +769,7 @@ func findUser(users []User, id string) *User {
 	return nil
 }
 
-// Test User APIs.
-// Created users are deleted from the account
-// but not deleted from the database.
-// We should enable back this test when
-// the behavior is addressed (delete also users from the database).
-/*func TestUser(t *testing.T) {
+func TestUser(t *testing.T) {
 	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
@@ -860,4 +855,4 @@ func findUser(users []User, id string) *User {
 	rsp, err = client.FindUser(userEmail)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
-}*/
+}
