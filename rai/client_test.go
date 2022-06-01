@@ -234,7 +234,7 @@ func TestEngine(t *testing.T) {
 	defer tearDown(client)
 
 	if err := client.DeleteEngine(engineName); err != nil {
-		assert.Equal(t, ErrNotFound, err)
+		assert.True(t, isErrNotFound(err))
 	}
 
 	engine, err := client.CreateEngine(engineName, "XS")

@@ -508,7 +508,7 @@ func newHTTPError(status int, body string) error {
 	return HTTPError{StatusCode: status, Body: body}
 }
 
-var ErrNotFound = newHTTPError(http.StatusNotFound, "{\"status\":\"Not Found\",\"message\":\"engine not found\"}\n")
+var ErrNotFound = newHTTPError(http.StatusNotFound, "")
 
 // Returns an HTTPError corresponding to the given response.
 func httpError(rsp *http.Response) error {
