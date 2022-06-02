@@ -16,6 +16,8 @@ package rai
 
 import (
 	"time"
+
+	"github.com/relationalai/rai-sdk-go/protos"
 )
 
 // REST API v1
@@ -297,8 +299,9 @@ type Source struct {
 }
 
 type TransactionAsyncResult struct {
-	Transaction TransactionAsyncResponse
-	Results     []ArrowRelation
-	Metadata    []TransactionAsyncMetadataResponse
-	Problems    []interface{}
+	Transaction        TransactionAsyncResponse
+	Results            []ArrowRelation
+	Metadata           []TransactionAsyncMetadataResponse
+	MetadataInfoResult protos.MetadataInfoResult
+	Problems           []interface{}
 }
