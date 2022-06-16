@@ -21,7 +21,7 @@ go run list_engines/main.go --state PROVISIONED
 go run list_engines/main.go --state NONSENSE
 
 # databases
-go run create_database/main.go -d $DATABASE -e $ENGINE --overwrite
+go run create_database/main.go -d $DATABASE
 go run get_database/main.go -d $DATABASE
 go run list_databases/main.go
 go run list_databases/main.go --state CREATED
@@ -60,10 +60,11 @@ go run execute/main.go -d $DATABASE -e $ENGINE -c sample_json
 go run list_edbs/main.go -d $DATABASE -e $ENGINE
 
 # clone database
-go run create_database/main.go -d $DATABASE -e $ENGINE --overwrite
+go run delete_database/main.go -d $DATABASE
+go run create_database/main.go -d $DATABASE
 go run load_json/main.go -d $DATABASE -e $ENGINE -r sample_json -f sample.json
 go run load_model/main.go -d $DATABASE -e $ENGINE -f hello.rel
-go run clone_database/main.go -d $DATABASECLONE -e $ENGINE -s $DATABASE
+go run clone_database/main.go -d $DATABASECLONE
 go run list_databases/main.go
 go run get_database/main.go -d $DATABASECLONE
 go run list_edbs/main.go -d $DATABASECLONE -e $ENGINE

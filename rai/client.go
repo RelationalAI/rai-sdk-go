@@ -508,7 +508,7 @@ func newHTTPError(status int, body string) error {
 	return HTTPError{StatusCode: status, Body: body}
 }
 
-var ErrNotFound = newHTTPError(http.StatusNotFound, "{\"status\":\"Not Found\",\"message\":\"compute not found\"}\n")
+var ErrNotFound = newHTTPError(http.StatusNotFound, "")
 
 // Returns an HTTPError corresponding to the given response.
 func httpError(rsp *http.Response) error {
@@ -1028,7 +1028,7 @@ func NewTransactionAsync(database, engine string) *TransactionAsync {
 
 // payload constructs the transaction async request payload.
 func (tx *TransactionAsync) payload(inputs map[string]string) map[string]interface{} {
-	var queryActionInputs []interface{}
+	var queryActionInputs = make([]interface{}, 0)
 	for k, v := range inputs {
 		queryActionInput, _ := makeQueryActionInput(k, v)
 		queryActionInputs = append(queryActionInputs, queryActionInput)
