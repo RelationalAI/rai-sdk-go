@@ -343,11 +343,6 @@ func TestExecuteAsync(t *testing.T) {
 	expectedProblems := []interface{}{}
 
 	assert.Equal(t, rsp.Problems, expectedProblems)
-
-	deleteRsp, err := client.DeleteTransaction(rsp.Transaction.ID)
-	assert.Nil(t, err)
-
-	assert.Equal(t, rsp.Transaction.ID, deleteRsp.ID)
 }
 
 func findRelation(relations []Relation, colName string) *Relation {
