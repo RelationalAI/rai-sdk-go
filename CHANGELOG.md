@@ -1,6 +1,10 @@
 # Changelog
 
-## latest
+## v0.2.1-alpha
+
+* Added `CancelTransaction` feature.
+
+## v0.2.0-alpha
 
 * Added v2 predefined results formats:
   - `GetTransactions` returns `TransactionsAsyncMultipleResponses`.

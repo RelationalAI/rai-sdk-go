@@ -266,11 +266,19 @@ func marshal(item interface{}) (io.Reader, error) {
 // Unmarshal the JSON object from the given response body.
 func unmarshal(rsp *http.Response, result interface{}) error {
 	data, err := pareseHttpResponse(rsp)
+
 	if err != nil {
 		return nil
 	}
 
 	switch data.(type) {
+
+	// Cancel request response body is nil
+	case nil:
+		err := json.Unmarshal([]byte("{}"), &result)
+		if err != nil {
+			return err
+		}
 
 	case []byte:
 		err := json.Unmarshal(data.([]byte), &result)
@@ -303,7 +311,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 
 		return errors.Errorf("unhandled unmarshal type %T", result)
 	default:
-		return errors.Errorf("unsupported result type")
+		return errors.Errorf("unsupported result type %T", reflect.TypeOf(data))
 	}
 
 	return nil
@@ -1304,18 +1312,8 @@ func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
 	return result, nil
 }
 
-func (c *Client) DeleteTransaction(id string) (*TransactionAsyncDeleteResponse, error) {
-	var result TransactionAsyncDeleteResponse
-	err := c.Delete(makePath(PathTransactions, id), nil, nil, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &result, nil
-}
-
 func (c *Client) CancelTransaction(id string) (interface{}, error) {
-	var result interface{}
+	var result CancelResponse
 	err := c.Post(makePath(PathTransactions, id, "cancel"), nil, nil, &result)
 	if err != nil {
 		return nil, err
