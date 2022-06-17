@@ -193,16 +193,16 @@ func TestDatabase(t *testing.T) {
 	modelNames, err := client.ListModelNames(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
-	assert.True(t, contains(modelNames, "stdlib"))
+	assert.True(t, contains(modelNames, "rel/stdlib"))
 
 	models, err := client.ListModels(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(models) > 0)
-	model := findModel(models, "stdlib")
+	model := findModel(models, "rel/stdlib")
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
-	model, err = client.GetModel(databaseName, engineName, "stdlib")
+	model, err = client.GetModel(databaseName, engineName, "rel/stdlib")
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
