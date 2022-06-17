@@ -1313,7 +1313,7 @@ func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
 }
 
 func (c *Client) CancelTransaction(id string) (interface{}, error) {
-	var result CancelResponse
+	var result TransactionAsyncCancelResponse
 	err := c.Post(makePath(PathTransactions, id, "cancel"), nil, nil, &result)
 	if err != nil {
 		return nil, err
