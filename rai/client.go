@@ -1065,7 +1065,7 @@ func NewTransactionAsync(database, engine string) *TransactionAsync {
 
 // payload constructs the transaction async request payload.
 func (tx *TransactionAsync) payload(inputs map[string]string) map[string]interface{} {
-	var queryActionInputs []interface{}
+	var queryActionInputs = make([]interface{}, 0)
 	for k, v := range inputs {
 		queryActionInput, _ := makeQueryActionInput(k, v)
 		queryActionInputs = append(queryActionInputs, queryActionInput)
