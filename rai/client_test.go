@@ -390,7 +390,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 
@@ -398,7 +398,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"12.50", "14.25", "11.00", "12.25"},
 	}, rel.Columns)
 
@@ -406,7 +406,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2", "4", "4", "3"},
 	}, rel.Columns)
 
@@ -414,7 +414,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 }
@@ -450,7 +450,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 
@@ -458,7 +458,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"2", "4", "4", "3"},
 	}, rel.Columns)
 
@@ -466,7 +466,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"12.50", "14.25", "11.00", "12.25"},
 	}, rel.Columns)
 
@@ -474,7 +474,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 }
@@ -512,7 +512,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 
@@ -520,7 +520,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"12.50", "14.25", "11.00", "12.25"},
 	}, rel.Columns)
 
@@ -528,7 +528,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2", "4", "4", "3"},
 	}, rel.Columns)
 
@@ -536,7 +536,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 }
@@ -571,7 +571,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 
@@ -579,7 +579,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{12.50, 14.25, 11.00, 12.25},
 	}, rel.Columns)
 
@@ -587,7 +587,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{2., 4., 4., 3.},
 	}, rel.Columns)
 
@@ -595,7 +595,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 }
