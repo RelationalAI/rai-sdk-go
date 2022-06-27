@@ -273,13 +273,6 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 
 	switch data.(type) {
 
-	// Cancel request response body is nil
-	case nil:
-		err := json.Unmarshal([]byte("{}"), &result)
-		if err != nil {
-			return err
-		}
-
 	case []byte:
 		err := json.Unmarshal(data.([]byte), &result)
 		if err != nil {
