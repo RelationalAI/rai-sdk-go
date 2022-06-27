@@ -33,7 +33,6 @@ import (
 
 	"github.com/apache/arrow/go/v7/arrow/ipc"
 	"github.com/pkg/errors"
-	"github.com/relationalai/rai-sdk-go/protos"
 	"github.com/relationalai/rai-sdk-go/protos/generated"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -342,24 +341,24 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 }
 
 // readMetadataInfo read metadata info content from protobuf serialized response
-func readMetadataInfo(metadataInfo generated.MetadataInfo) (protos.MetadataInfoResult, error) {
-	var out protos.MetadataInfoResult
+// func readMetadataInfo(metadataInfo generated.MetadataInfo) (protos.MetadataInfoResult, error) {
+// 	var out protos.MetadataInfoResult
 
-	jsonbytes, err := protojson.Marshal(&metadataInfo)
-	if err != nil {
-		return out, err
-	}
+// 	jsonbytes, err := protojson.Marshal(&metadataInfo)
+// 	if err != nil {
+// 		return out, err
+// 	}
 
-	err = json.Unmarshal(jsonbytes, &out)
-	if err != nil {
-		return out, err
-	}
+// 	err = json.Unmarshal(jsonbytes, &out)
+// 	if err != nil {
+// 		return out, err
+// 	}
 
-	x, _ := json.Marshal(out)
-	fmt.Println(string(x))
+// 	x, _ := json.Marshal(out)
+// 	fmt.Println(string(x))
 
-	return out, nil
-}
+// 	return out, nil
+// }
 
 // readProblemResults unmarshall the given string into list of ClientProblem and IntegrityConstraintViolation
 func readProblemResults(rsp []byte) ([]interface{}, error) {
@@ -496,6 +495,8 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 			if err != nil {
 				return nil, err
 			}
+			jsonbytes, _ := protojson.Marshal(&metadataInfo)
+			fmt.Println(string(jsonbytes))
 		}
 
 		if file.Name == "problems" {
@@ -511,11 +512,6 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, errors.Errorf("metadata part is missing")
 	}
 
-	metadataInfoResult, err := readMetadataInfo(metadataInfo)
-	if err != nil {
-		return nil, err
-	}
-
 	if problems == nil {
 		return nil, errors.Errorf("problems part is missing")
 	}
@@ -525,7 +521,7 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, err
 	}
 
-	return &TransactionAsyncResult{txn, results, metadata, metadataInfoResult, problems}, nil
+	return &TransactionAsyncResult{txn, results, metadata, metadataInfo, problems}, nil
 }
 
 type HTTPError struct {
@@ -1298,9 +1294,10 @@ func (c *Client) ExecuteAsyncWait(
 	txn, _ := c.GetTransaction(id)
 	results, _ := c.GetTransactionResults(id)
 	metadata, _ := c.GetTransactionMetadata(id)
+	metadatainfo, _ := c.GetTransactionMetadataInfo(id)
 	problems, _ := c.GetTransactionProblems(id)
 
-	return &TransactionAsyncResult{txn.Transaction, results, metadata, protos.MetadataInfoResult{}, problems}, nil
+	return &TransactionAsyncResult{txn.Transaction, results, metadata, metadatainfo, problems}, nil
 }
 
 func (c *Client) GetTransactions() (*TransactionAsyncMultipleResponses, error) {
@@ -1329,6 +1326,10 @@ func (c *Client) GetTransactionMetadata(id string) ([]TransactionAsyncMetadataRe
 	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, &result)
 
 	return result, err
+}
+
+func (c *Client) GetTransactionMetadataInfo(id string) (generated.MetadataInfo, error) {
+	return generated.MetadataInfo{}, nil
 }
 
 func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
