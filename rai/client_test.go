@@ -95,7 +95,7 @@ func tearDown(client *Client) {
 
 	user, _ := client.FindUser(userEmail)
 	if user != nil {
-		defer client.DeleteUser(user.ID)
+		client.DeleteUser(user.ID)
 	}
 
 	c, _ := client.FindOAuthClient(clientName)
