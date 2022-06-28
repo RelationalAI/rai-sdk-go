@@ -265,7 +265,8 @@ func marshal(item interface{}) (io.Reader, error) {
 
 // Unmarshal the JSON object from the given response body.
 func unmarshal(rsp *http.Response, result interface{}) error {
-	data, err := pareseHttpResponse(rsp)
+	data, err := parseHttpResponse(rsp)
+
 	if err != nil {
 		return nil
 	}
@@ -303,7 +304,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 
 		return errors.Errorf("unhandled unmarshal type %T", result)
 	default:
-		return errors.Errorf("unsupported result type")
+		return errors.Errorf("unsupported result type %T", reflect.TypeOf(data))
 	}
 
 	return nil
@@ -399,8 +400,8 @@ func parseMultipartResponse(data []byte, boundary string) ([]TransactionAsyncFil
 	return out, nil
 }
 
-// pareseHttpResponse parses the response body from the given http.Response
-func pareseHttpResponse(rsp *http.Response) (interface{}, error) {
+// parseHttpResponse parses the response body from the given http.Response
+func parseHttpResponse(rsp *http.Response) (interface{}, error) {
 	data, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
@@ -1302,6 +1303,16 @@ func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (c *Client) CancelTransaction(id string) (*TransactionAsyncCancelResponse, error) {
+	var result TransactionAsyncCancelResponse
+	err := c.Post(makePath(PathTransactions, id, "cancel"), nil, nil, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
 
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
