@@ -203,6 +203,7 @@ func TestDatabase(t *testing.T) {
 	assert.True(t, len(model.Value) > 0)
 
 	model, err = client.GetModel(databaseName, engineName, "rel/stdlib")
+	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
