@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -56,7 +57,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp.Show()
+	fmt.Println(rsp)
 	return nil
 }
 
