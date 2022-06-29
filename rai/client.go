@@ -1159,7 +1159,7 @@ func makeQueryActionInput(name, value string) (map[string]interface{}, error) {
 }
 
 // Execute the given query, with the given optional query inputs.
-func (c *Client) Execute(
+func (c *Client) ExecuteV1(
 	database, engine, source string,
 	inputs map[string]string,
 	readonly bool,
@@ -1230,7 +1230,7 @@ func (c *Client) ExecuteAsync(
 
 }
 
-func (c *Client) ExecuteAsyncWait(
+func (c *Client) Execute(
 	database, engine, source string,
 	inputs map[string]string,
 	readonly bool,
@@ -1462,7 +1462,7 @@ func (c *Client) LoadCSV(
 	}
 	source := genLoadCSV(relation, opts)
 	inputs := map[string]string{"data": string(data)}
-	return c.Execute(database, engine, source, inputs, false)
+	return c.ExecuteV1(database, engine, source, inputs, false)
 }
 
 func (c *Client) LoadJSON(
@@ -1476,7 +1476,7 @@ func (c *Client) LoadJSON(
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
 	inputs := map[string]string{"data": string(data)}
-	return c.Execute(database, engine, b.String(), inputs, false)
+	return c.ExecuteV1(database, engine, b.String(), inputs, false)
 }
 
 //

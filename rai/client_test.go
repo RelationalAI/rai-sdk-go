@@ -292,7 +292,7 @@ func TestExecute(t *testing.T) {
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
-	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
+	rsp, err := client.ExecuteV1(databaseName, engineName, query, nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	output := rsp.Output
@@ -320,7 +320,7 @@ func TestExecuteAsync(t *testing.T) {
 	ensureDatabase(t, client)
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-	rsp, err := client.ExecuteAsyncWait(databaseName, engineName, query, nil, true)
+	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
 	assert.Nil(t, err)
 
 	expectedResults := []ArrowRelation{
@@ -382,7 +382,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample_csv", nil, true)
+	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_csv", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -442,7 +442,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample_no_header", nil, true)
+	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_no_header", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -503,7 +503,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(
+	rsp, err = client.ExecuteV1(
 		databaseName, engineName, "def output = sample_alt_syntax", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
@@ -563,7 +563,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample_with_schema", nil, true)
+	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_with_schema", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -622,7 +622,7 @@ func TestLoadJSON(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(
+	rsp, err = client.ExecuteV1(
 		databaseName, engineName, "def output = sample_json", nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
