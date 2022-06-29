@@ -283,7 +283,7 @@ func TestEngine(t *testing.T) {
 }
 
 // Test transaction execution.
-func TestExecute(t *testing.T) {
+func TestExecuteV1(t *testing.T) {
 	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)

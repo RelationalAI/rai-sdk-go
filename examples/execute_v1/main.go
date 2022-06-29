@@ -53,7 +53,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.Execute(opts.Database, opts.Engine, source, nil, opts.Readonly)
+	rsp, err := client.ExecuteV1(opts.Database, opts.Engine, source, nil, opts.Readonly)
 	if err != nil {
 		return err
 	}

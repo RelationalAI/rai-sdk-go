@@ -33,8 +33,8 @@ go run get_model/main.go -d $DATABASE -e $ENGINE -m stdlib
 
 # exec
 QUERY='x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}'
-go run execute/main.go -d $DATABASE -e $ENGINE -c "$QUERY"
-go run execute/main.go  -d $DATABASE -e $ENGINE -c "$QUERY" --readonly
+go run execute_v1/main.go -d $DATABASE -e $ENGINE -c "$QUERY"
+go run execute_v1/main.go  -d $DATABASE -e $ENGINE -c "$QUERY" --readonly
 
 # load model
 go run load_model/main.go -d $DATABASE -e $ENGINE -f hello.rel
