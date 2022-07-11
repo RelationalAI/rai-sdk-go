@@ -56,6 +56,19 @@ https://console.relationalai.com/login
 
 You can copy `config.spec` from the root of this repo and modify as needed.
 
+## Generate golang sources from protobuf specification
+
+```shell
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+export PATH=$PATH:$HOME/go/bin
+protoc --proto_path=/path/to/rai-sdk-go/protos/proto \
+    --go_out=/path/to/rai-sdk-go/protos \
+    --go_opt=Mschema.proto=./generated \
+    --go_opt=Mmessage.proto=./generated \
+    --go_opt=Mmetadata.proto=./generated \
+    /path/to/rai-sdk-go/protos/proto/*.proto
+```
+
 ## Examples
 
 The SDK contains examples for every API, and various other SDK features. These

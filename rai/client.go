@@ -33,6 +33,8 @@ import (
 
 	"github.com/apache/arrow/go/v7/arrow/ipc"
 	"github.com/pkg/errors"
+	"github.com/relationalai/rai-sdk-go/protos/generated"
+	"google.golang.org/protobuf/proto"
 )
 
 const userAgent = "raictl/" + Version
@@ -167,7 +169,7 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 		return nil, err
 	}
 	req = req.WithContext(c.ctx)
-	c.ensureHeaders(req)
+	c.ensureHeaders(req, nil)
 	rsp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
@@ -191,7 +193,7 @@ func (c *Client) authenticate(req *http.Request) error {
 }
 
 // Add any missing headers to the given request.
-func (c *Client) ensureHeaders(req *http.Request) {
+func (c *Client) ensureHeaders(req *http.Request, headers map[string]string) {
 	if v := req.Header.Get("accept"); v == "" {
 		req.Header.Set("Accept", "application/json")
 	}
@@ -200,6 +202,11 @@ func (c *Client) ensureHeaders(req *http.Request) {
 	}
 	if v := req.Header.Get("user-agent"); v == "" {
 		req.Header.Set("User-Agent", userAgent)
+	}
+
+	// add extra headers
+	for h, v := range headers {
+		req.Header.Set(h, v)
 	}
 }
 
@@ -215,23 +222,23 @@ func (c *Client) newRequest(method, path string, args url.Values, body io.Reader
 }
 
 func (c *Client) Delete(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodDelete, path, args, data, result)
+	return c.request(http.MethodDelete, path, nil, args, data, result)
 }
 
-func (c *Client) Get(path string, args url.Values, result interface{}) error {
-	return c.request(http.MethodGet, path, args, nil, result)
+func (c *Client) Get(path string, headers map[string]string, args url.Values, result interface{}) error {
+	return c.request(http.MethodGet, path, headers, args, nil, result)
 }
 
 func (c *Client) Patch(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodPatch, path, args, data, result)
+	return c.request(http.MethodPatch, path, nil, args, data, result)
 }
 
 func (c *Client) Post(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodPost, path, args, data, result)
+	return c.request(http.MethodPost, path, nil, args, data, result)
 }
 
 func (c *Client) Put(path string, args url.Values, data, result interface{}) error {
-	return c.request(http.MethodPut, path, args, data, result)
+	return c.request(http.MethodPut, path, nil, args, data, result)
 }
 
 // Show the given value as JSON data.
@@ -303,6 +310,11 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 		}
 
 		return errors.Errorf("unhandled unmarshal type %T", result)
+	case generated.MetadataInfo:
+		dstValues := reflect.ValueOf(result).Elem()
+		srcValues := reflect.ValueOf(data)
+		dstValues.Set(srcValues)
+		return err
 	default:
 		return errors.Errorf("unsupported result type %T", reflect.TypeOf(data))
 	}
@@ -411,11 +423,20 @@ func parseHttpResponse(rsp *http.Response) (interface{}, error) {
 	}
 
 	mediaType, params, _ := mime.ParseMediaType(rsp.Header.Get("Content-Type"))
+
 	if mediaType == "application/json" {
 		return data, nil
 	} else if mediaType == "multipart/form-data" {
 		boundary := params["boundary"]
 		return parseMultipartResponse(data, boundary)
+	} else if mediaType == "application/x-protobuf" {
+		var metadataInfo generated.MetadataInfo
+		err := proto.Unmarshal(data, &metadataInfo)
+		if err != nil {
+			return nil, err
+		}
+
+		return metadataInfo, nil
 	} else {
 		return nil, errors.Errorf("unsupported Media-Type: %s", mediaType)
 	}
@@ -423,7 +444,7 @@ func parseHttpResponse(rsp *http.Response) (interface{}, error) {
 
 // Construct request, execute and unmarshal response.
 func (c *Client) request(
-	method, path string, args url.Values, data, result interface{},
+	method, path string, headers map[string]string, args url.Values, data, result interface{},
 ) error {
 	body, err := marshal(data)
 	if err != nil {
@@ -433,11 +454,11 @@ func (c *Client) request(
 	if err != nil {
 		return err
 	}
-	c.ensureHeaders(req)
+	c.ensureHeaders(req, headers)
 	if err := c.authenticate(req); err != nil {
 		return err
 	}
-	// showRequest(req, data)
+	//showRequest(req, data)
 	rsp, err := c.Do(req)
 	if err != nil {
 		return err
@@ -451,6 +472,7 @@ func (c *Client) request(
 func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncResult, error) {
 	var txn TransactionAsyncResponse
 	var metadata []TransactionAsyncMetadataResponse
+	var metadataInfo generated.MetadataInfo
 	var problems []interface{}
 	for _, file := range files {
 		if file.Name == "transaction" {
@@ -462,6 +484,13 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 
 		if file.Name == "metadata" {
 			err := json.Unmarshal(file.Data, &metadata)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if file.Name == "metadata_info" {
+			err := proto.Unmarshal(file.Data, &metadataInfo)
 			if err != nil {
 				return nil, err
 			}
@@ -489,7 +518,7 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, err
 	}
 
-	return &TransactionAsyncResult{txn, results, metadata, problems}, nil
+	return &TransactionAsyncResult{txn, results, metadata, metadataInfo, problems}, nil
 }
 
 type HTTPError struct {
@@ -666,7 +695,7 @@ func (c *Client) GetDatabase(database string) (*Database, error) {
 		return nil, err
 	}
 	var result getDatabaseResponse
-	err = c.Get(PathDatabase, args, &result)
+	err = c.Get(PathDatabase, nil, args, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -682,7 +711,7 @@ func (c *Client) ListDatabases(filters ...interface{}) ([]Database, error) {
 		return nil, err
 	}
 	var result listDatabasesResponse
-	err = c.Get(PathDatabase, args, &result)
+	err = c.Get(PathDatabase, nil, args, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -760,7 +789,7 @@ func (c *Client) GetEngine(engine string) (*Engine, error) {
 		return nil, err
 	}
 	var result getEngineResponse
-	err = c.Get(PathEngine, args, &result)
+	err = c.Get(PathEngine, nil, args, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -776,7 +805,7 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 		return nil, err
 	}
 	var result listEnginesResponse
-	err = c.Get(PathEngine, args, &result)
+	err = c.Get(PathEngine, nil, args, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -824,7 +853,7 @@ func (c *Client) FindOAuthClient(name string) (*OAuthClient, error) {
 
 func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
 	var result getOAuthClientResponse
-	err := c.Get(makePath(PathOAuthClients, id), nil, &result)
+	err := c.Get(makePath(PathOAuthClients, id), nil, nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -833,7 +862,7 @@ func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
 
 func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
 	var result listOAuthClientsResponse
-	err := c.Get(PathOAuthClients, nil, &result)
+	err := c.Get(PathOAuthClients, nil, nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -1216,6 +1245,11 @@ func (c *Client) ExecuteAsync(
 		return nil, err
 	}
 
+	metadataInfo, err := c.GetTransactionMetadataInfo(txn.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	problems, err := c.GetTransactionProblems(txn.ID)
 	if err != nil {
 		return nil, err
@@ -1225,6 +1259,7 @@ func (c *Client) ExecuteAsync(
 		Transaction: txn,
 		Results:     results,
 		Metadata:    metadata,
+		MetdataInfo: metadataInfo,
 		Problems:    problems,
 	}, nil
 
@@ -1262,42 +1297,53 @@ func (c *Client) Execute(
 	txn, _ := c.GetTransaction(id)
 	results, _ := c.GetTransactionResults(id)
 	metadata, _ := c.GetTransactionMetadata(id)
+	metadatainfo, _ := c.GetTransactionMetadataInfo(id)
 	problems, _ := c.GetTransactionProblems(id)
 
-	return &TransactionAsyncResult{txn.Transaction, results, metadata, problems}, nil
+	return &TransactionAsyncResult{txn.Transaction, results, metadata, metadatainfo, problems}, nil
 }
 
 func (c *Client) GetTransactions() (*TransactionAsyncMultipleResponses, error) {
 	var result TransactionAsyncMultipleResponses
-	err := c.Get(makePath(PathTransactions), nil, &result)
+	err := c.Get(makePath(PathTransactions), nil, nil, &result)
 
 	return &result, err
 }
 
 func (c *Client) GetTransaction(id string) (*TransactionAsyncSingleResponse, error) {
 	var result TransactionAsyncSingleResponse
-	err := c.Get(makePath(PathTransactions, id), nil, &result)
+	err := c.Get(makePath(PathTransactions, id), nil, nil, &result)
 
 	return &result, err
 }
 
 func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
 	var result []ArrowRelation
-	err := c.Get(makePath(PathTransactions, id, "results"), nil, &result)
+	err := c.Get(makePath(PathTransactions, id, "results"), nil, nil, &result)
 
 	return result, err
 }
 
 func (c *Client) GetTransactionMetadata(id string) ([]TransactionAsyncMetadataResponse, error) {
 	var result []TransactionAsyncMetadataResponse
-	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, &result)
+	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, nil, &result)
 
+	return result, err
+}
+
+func (c *Client) GetTransactionMetadataInfo(id string) (generated.MetadataInfo, error) {
+	var result generated.MetadataInfo
+	headers := map[string]string{
+		"Accept": "application/x-protobuf",
+	}
+
+	err := c.Get(makePath(PathTransactions, id, "metadata"), headers, nil, &result)
 	return result, err
 }
 
 func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
 	var result []interface{}
-	err := c.Get(makePath(PathTransactions, id, "problems"), nil, &result)
+	err := c.Get(makePath(PathTransactions, id, "problems"), nil, nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -1531,7 +1577,7 @@ func (c *Client) FindUser(email string) (*User, error) {
 
 func (c *Client) GetUser(id string) (*User, error) {
 	var result getUserResponse
-	err := c.Get(makePath(PathUsers, id), nil, &result)
+	err := c.Get(makePath(PathUsers, id), nil, nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -1540,7 +1586,7 @@ func (c *Client) GetUser(id string) (*User, error) {
 
 func (c *Client) ListUsers() ([]User, error) {
 	var result listUsersResponse
-	err := c.Get(PathUsers, nil, &result)
+	err := c.Get(PathUsers, nil, nil, &result)
 	if err != nil {
 		return nil, err
 	}
