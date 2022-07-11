@@ -272,7 +272,8 @@ func marshal(item interface{}) (io.Reader, error) {
 
 // Unmarshal the JSON object from the given response body.
 func unmarshal(rsp *http.Response, result interface{}) error {
-	data, err := pareseHttpResponse(rsp)
+	data, err := parseHttpResponse(rsp)
+
 	if err != nil {
 		return nil
 	}
@@ -315,7 +316,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 		dstValues.Set(srcValues)
 		return err
 	default:
-		return errors.Errorf("unsupported result type")
+		return errors.Errorf("unsupported result type %T", reflect.TypeOf(data))
 	}
 
 	return nil
@@ -411,8 +412,8 @@ func parseMultipartResponse(data []byte, boundary string) ([]TransactionAsyncFil
 	return out, nil
 }
 
-// pareseHttpResponse parses the response body from the given http.Response
-func pareseHttpResponse(rsp *http.Response) (interface{}, error) {
+// parseHttpResponse parses the response body from the given http.Response
+func parseHttpResponse(rsp *http.Response) (interface{}, error) {
 	data, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
@@ -1187,7 +1188,7 @@ func makeQueryActionInput(name, value string) (map[string]interface{}, error) {
 }
 
 // Execute the given query, with the given optional query inputs.
-func (c *Client) Execute(
+func (c *Client) ExecuteV1(
 	database, engine, source string,
 	inputs map[string]string,
 	readonly bool,
@@ -1264,7 +1265,7 @@ func (c *Client) ExecuteAsync(
 
 }
 
-func (c *Client) ExecuteAsyncWait(
+func (c *Client) Execute(
 	database, engine, source string,
 	inputs map[string]string,
 	readonly bool,
@@ -1348,6 +1349,16 @@ func (c *Client) GetTransactionProblems(id string) ([]interface{}, error) {
 	}
 
 	return result, nil
+}
+
+func (c *Client) CancelTransaction(id string) (*TransactionAsyncCancelResponse, error) {
+	var result TransactionAsyncCancelResponse
+	err := c.Post(makePath(PathTransactions, id, "cancel"), nil, nil, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
 
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
@@ -1497,7 +1508,7 @@ func (c *Client) LoadCSV(
 	}
 	source := genLoadCSV(relation, opts)
 	inputs := map[string]string{"data": string(data)}
-	return c.Execute(database, engine, source, inputs, false)
+	return c.ExecuteV1(database, engine, source, inputs, false)
 }
 
 func (c *Client) LoadJSON(
@@ -1511,7 +1522,7 @@ func (c *Client) LoadJSON(
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
 	inputs := map[string]string{"data": string(data)}
-	return c.Execute(database, engine, b.String(), inputs, false)
+	return c.ExecuteV1(database, engine, b.String(), inputs, false)
 }
 
 //

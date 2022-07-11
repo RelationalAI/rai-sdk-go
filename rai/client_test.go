@@ -95,7 +95,7 @@ func tearDown(client *Client) {
 
 	user, _ := client.FindUser(userEmail)
 	if user != nil {
-		defer client.DeleteUser(user.ID)
+		client.DeleteUser(user.ID)
 	}
 
 	c, _ := client.FindOAuthClient(clientName)
@@ -193,16 +193,17 @@ func TestDatabase(t *testing.T) {
 	modelNames, err := client.ListModelNames(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
-	assert.True(t, contains(modelNames, "stdlib"))
+	assert.True(t, contains(modelNames, "rel/stdlib"))
 
 	models, err := client.ListModels(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(models) > 0)
-	model := findModel(models, "stdlib")
+	model := findModel(models, "rel/stdlib")
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
-	model, err = client.GetModel(databaseName, engineName, "stdlib")
+	model, err = client.GetModel(databaseName, engineName, "rel/stdlib")
+	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
@@ -282,7 +283,7 @@ func TestEngine(t *testing.T) {
 }
 
 // Test transaction execution.
-func TestExecute(t *testing.T) {
+func TestExecuteV1(t *testing.T) {
 	client, err := newTestClient()
 	assert.Nil(t, err)
 	defer tearDown(client)
@@ -291,7 +292,7 @@ func TestExecute(t *testing.T) {
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
-	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
+	rsp, err := client.ExecuteV1(databaseName, engineName, query, nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	output := rsp.Output
@@ -319,7 +320,7 @@ func TestExecuteAsync(t *testing.T) {
 	ensureDatabase(t, client)
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-	rsp, err := client.ExecuteAsyncWait(databaseName, engineName, query, nil, true)
+	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
 	assert.Nil(t, err)
 
 	expectedResults := []ArrowRelation{
@@ -381,7 +382,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample_csv", nil, true)
+	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_csv", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -390,7 +391,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 
@@ -398,7 +399,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"12.50", "14.25", "11.00", "12.25"},
 	}, rel.Columns)
 
@@ -406,7 +407,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2", "4", "4", "3"},
 	}, rel.Columns)
 
@@ -414,7 +415,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 }
@@ -441,7 +442,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample_no_header", nil, true)
+	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_no_header", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -450,7 +451,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 
@@ -458,7 +459,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"2", "4", "4", "3"},
 	}, rel.Columns)
 
@@ -466,7 +467,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"12.50", "14.25", "11.00", "12.25"},
 	}, rel.Columns)
 
@@ -474,7 +475,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{0., 31., 62., 98.},
+		{1., 2., 3., 4.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 }
@@ -502,7 +503,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(
+	rsp, err = client.ExecuteV1(
 		databaseName, engineName, "def output = sample_alt_syntax", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
@@ -512,7 +513,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 
@@ -520,7 +521,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"12.50", "14.25", "11.00", "12.25"},
 	}, rel.Columns)
 
@@ -528,7 +529,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2", "4", "4", "3"},
 	}, rel.Columns)
 
@@ -536,7 +537,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 }
@@ -562,7 +563,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(databaseName, engineName, "def output = sample_with_schema", nil, true)
+	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_with_schema", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -571,7 +572,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
 	}, rel.Columns)
 
@@ -579,7 +580,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{12.50, 14.25, 11.00, 12.25},
 	}, rel.Columns)
 
@@ -587,7 +588,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{2., 4., 4., 3.},
 	}, rel.Columns)
 
@@ -595,7 +596,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.NotNil(t, rel)
 	assert.Equal(t, 2, len(rel.Columns))
 	assert.Equal(t, [][]interface{}{
-		{29., 60., 91., 127.},
+		{2., 3., 4., 5.},
 		{"martini", "sazerac", "cosmopolitan", "bellini"},
 	}, rel.Columns)
 }
@@ -621,7 +622,7 @@ func TestLoadJSON(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.Execute(
+	rsp, err = client.ExecuteV1(
 		databaseName, engineName, "def output = sample_json", nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)

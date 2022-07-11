@@ -257,7 +257,7 @@ type TransactionAsyncFile struct {
 
 type ArrowRelation struct {
 	RelationID string
-	Table      interface{}
+	Table      []interface{}
 }
 
 type TransactionAsyncSingleResponse struct {
@@ -280,6 +280,10 @@ type TransactionAsyncResponse struct {
 	UserAgent             string `json:"user_agent,omitempty"`
 	Query                 string `json:"query,omitempty"`
 	LastRequestedInterval int64  `json:"last_requested_interval,omitempty"`
+}
+
+type TransactionAsyncCancelResponse struct {
+	Message string `json:"message"`
 }
 
 type TransactionAsyncMetadataResponse struct {

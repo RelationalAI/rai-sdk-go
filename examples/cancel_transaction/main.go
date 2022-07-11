@@ -15,7 +15,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -24,23 +23,8 @@ import (
 )
 
 type Options struct {
-	Database string `short:"d" long:"database" required:"true" description:"database name"`
-	Engine   string `short:"e" long:"engine" required:"true" description:"engine name"`
-	Code     string `short:"c" long:"code" description:"rel source code"`
-	File     string `short:"f" long:"file" description:"rel source file"`
-	Readonly bool   `long:"readonly" description:"readonly query (default: false)"`
-	Profile  string `long:"profile" default:"default" description:"config profile"`
-}
-
-func getCode(opts *Options) (string, error) {
-	if opts.Code != "" {
-		return opts.Code, nil
-	}
-	bytes, err := ioutil.ReadFile(opts.File)
-	if err != nil {
-		return "", nil
-	}
-	return string(bytes), nil
+	ID      string `long:"id" required:"true" description:"transaction id"`
+	Profile string `long:"profile" default:"default" description:"config profile"`
 }
 
 func run(opts *Options) error {
@@ -48,15 +32,11 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	source, err := getCode(opts)
+	rsp, err := client.CancelTransaction(opts.ID)
 	if err != nil {
 		return err
 	}
-	rsp, err := client.Execute(opts.Database, opts.Engine, source, nil, opts.Readonly)
-	if err != nil {
-		return err
-	}
-	rsp.Show()
+	rai.Print(rsp, 4)
 	return nil
 }
 
