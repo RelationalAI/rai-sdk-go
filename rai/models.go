@@ -301,8 +301,10 @@ type Source struct {
 }
 
 type TransactionAsyncResult struct {
-	Transaction TransactionAsyncResponse
-	Results     []ArrowRelation
-	Metadata    []TransactionAsyncMetadataResponse
-	Problems    []interface{}
+	// If !GotCompleteResult, keep polling until Transaction reaches terminal State.
+	GotCompleteResult bool
+	Transaction       TransactionAsyncResponse
+	Results           []ArrowRelation
+	Metadata          []TransactionAsyncMetadataResponse
+	Problems          []interface{}
 }
