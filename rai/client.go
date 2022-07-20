@@ -305,7 +305,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
 			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
 			rsp.GotCompleteResult = true
-			srcValues := reflect.ValueOf(rsp)
+			srcValues := reflect.ValueOf(*rsp)
 			dstValues.Set(srcValues)
 			return err
 		}
