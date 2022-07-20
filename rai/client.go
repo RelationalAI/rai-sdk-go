@@ -286,6 +286,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 			if err != nil {
 				return err
 			}
+			txnResult.GotCompleteResult = false
 
 			// Set it into result
 			srcValues := reflect.ValueOf(txnResult)
@@ -303,6 +304,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 	case []TransactionAsyncFile: // Multipart response
 		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
 			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
+			rsp.GotCompleteResult = true
 			srcValues := reflect.ValueOf(rsp)
 			dstValues.Set(srcValues)
 			return err
@@ -502,7 +504,7 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, err
 	}
 
-	return &TransactionAsyncResult{txn, results, metadata, problems}, nil
+	return &TransactionAsyncResult{true, txn, results, metadata, problems}, nil
 }
 
 type HTTPError struct {
@@ -1223,6 +1225,13 @@ func (c *Client) Execute(
 		return nil, err
 	}
 
+	// Fast-path optimization
+	if rsp.GotCompleteResult {
+		return rsp, err
+	}
+
+	// Slow-path
+
 	id := rsp.Transaction.ID
 	count := 0
 	for {
@@ -1247,7 +1256,7 @@ func (c *Client) Execute(
 	metadata, _ := c.GetTransactionMetadata(id)
 	problems, _ := c.GetTransactionProblems(id)
 
-	return &TransactionAsyncResult{txn.Transaction, results, metadata, problems}, nil
+	return &TransactionAsyncResult{true, txn.Transaction, results, metadata, problems}, nil
 }
 
 func (c *Client) GetTransactions() (*TransactionAsyncMultipleResponses, error) {
