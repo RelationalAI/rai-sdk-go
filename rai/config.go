@@ -101,8 +101,8 @@ func parseConfigStanza(stanza *ini.Section, cfg *Config) error {
 			ClientID:             clientID,
 			ClientSecret:         clientSecret,
 			ClientCredentialsUrl: clientCredentialsUrl,
-			Audience:             audience
-}
+			Audience:             audience,
+		}
 	}
 	return nil
 }
