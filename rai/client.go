@@ -514,7 +514,7 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 	}
 
 	if len(metadata.Relations) == 0 {
-		return nil, errors.Errorf("metadata.proto is emty")
+		return nil, errors.Errorf("metadata.proto is empty")
 	}
 
 	if problems == nil {
