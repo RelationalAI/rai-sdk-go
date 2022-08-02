@@ -65,7 +65,6 @@ protoc --proto_path=/path/to/rai-sdk-go/protos/proto \
     --go_out=/path/to/rai-sdk-go/protos \
     --go_opt=Mschema.proto=./generated \
     --go_opt=Mmessage.proto=./generated \
-    --go_opt=Mmetadata.proto=./generated \
     /path/to/rai-sdk-go/protos/proto/*.proto
 ```
 
