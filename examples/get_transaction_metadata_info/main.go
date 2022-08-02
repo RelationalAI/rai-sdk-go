@@ -32,7 +32,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.GetTransactionMetadataInfo(opts.ID)
+	rsp, err := client.GetTransactionMetadata(opts.ID)
 	if err != nil {
 		return err
 	}

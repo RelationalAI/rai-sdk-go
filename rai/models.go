@@ -307,6 +307,6 @@ type TransactionAsyncResult struct {
 	GotCompleteResult bool
 	Transaction       TransactionAsyncResponse
 	Results           []ArrowRelation
-	Metdata           generated.MetadataInfo
+	Metadata          generated.MetadataInfo
 	Problems          []interface{}
 }

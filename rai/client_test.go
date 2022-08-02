@@ -23,7 +23,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/relationalai/rai-sdk-go/protos/generated"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 )
 
 var uid = uuid.New().String()
@@ -332,14 +334,11 @@ func TestExecuteAsync(t *testing.T) {
 
 	assert.Equal(t, rsp.Results[0].Table, expectedResults[0].Table)
 
-	// expectedMetadata := []TransactionAsyncMetadataResponse{
-	// 	TransactionAsyncMetadataResponse{
-	// 		"/:output/Int64/Int64/Int64/Int64",
-	// 		[]string{":output", "Int64", "Int64", "Int64", "Int64"},
-	// 	},
-	// }
+	var expectedMetadata generated.MetadataInfo
+	data, _ := os.ReadFile("./metadata.pb")
+	proto.Unmarshal(data, &expectedMetadata)
 
-	// assert.Equal(t, rsp.Metadata, expectedMetadata)
+	assert.Equal(t, rsp.Metadata.String(), expectedMetadata.String())
 
 	expectedProblems := []interface{}{}
 
