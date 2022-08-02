@@ -162,7 +162,7 @@ func (c *Client) AccessToken() (string, error) {
 
 // Fetch a new access token using the given client credentials.
 func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) {
-	audience := fmt.Sprintf("https://%s", c.Host)
+	audience := creds.Audience
 	body := fmt.Sprintf(getAccessTokenBody, creds.ClientID, creds.ClientSecret, audience)
 	req, err := http.NewRequest(http.MethodPost, creds.ClientCredentialsUrl, strings.NewReader(body))
 	if err != nil {
@@ -278,26 +278,41 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 		return nil
 	}
 
+	dstValues := reflect.ValueOf(result).Elem()
+
 	switch data.(type) {
 
-	case []byte:
+	case []byte: // Got back a JSON response
+
+		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
+			// But the user asked for the whole TransactionResult struct,
+			// so we need to parse the JSON TransactionResponse, and fill it in
+			// the TransactionResult.
+			var txnResult TransactionAsyncResult
+			err := json.Unmarshal(data.([]byte), &txnResult.Transaction)
+			if err != nil {
+				return err
+			}
+			txnResult.GotCompleteResult = false
+
+			// Set it into result
+			srcValues := reflect.ValueOf(txnResult)
+
+			dstValues.Set(srcValues)
+			return err
+		}
+
+		// If they asked for just a regular JSON object, unmarshal it.
 		err := json.Unmarshal(data.([]byte), &result)
 		if err != nil {
 			return err
 		}
 
-	case []TransactionAsyncFile:
-		dstValues := reflect.ValueOf(result).Elem()
-		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResponse{}) {
-			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
-			srcValues := reflect.ValueOf(rsp.Transaction)
-			dstValues.Set(srcValues)
-			return err
-		}
-
+	case []TransactionAsyncFile: // Multipart response
 		if dstValues.Type() == reflect.TypeOf(TransactionAsyncResult{}) {
 			rsp, err := readTransactionAsyncFiles(data.([]TransactionAsyncFile))
-			srcValues := reflect.ValueOf(rsp)
+			rsp.GotCompleteResult = true
+			srcValues := reflect.ValueOf(*rsp)
 			dstValues.Set(srcValues)
 			return err
 		}
@@ -339,7 +354,7 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 					data, _ := rec.Column(i).MarshalJSON()
 					var values []interface{}
 					json.Unmarshal(data, &values)
-					out = append(out, ArrowRelation{rec.ColumnName(i), values})
+					out = append(out, ArrowRelation{file.Name, values})
 				}
 
 				rec.Retain()
@@ -471,9 +486,9 @@ func (c *Client) request(
 // readTransactionAsyncFiles reads the transaction async results from TransactionAsyncFiles
 func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncResult, error) {
 	var txn TransactionAsyncResponse
-	var metadata []TransactionAsyncMetadataResponse
-	var metadataInfo generated.MetadataInfo
+	var metadata generated.MetadataInfo
 	var problems []interface{}
+
 	for _, file := range files {
 		if file.Name == "transaction" {
 			err := json.Unmarshal(file.Data, &txn)
@@ -482,15 +497,8 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 			}
 		}
 
-		if file.Name == "metadata" {
-			err := json.Unmarshal(file.Data, &metadata)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if file.Name == "metadata_info" {
-			err := proto.Unmarshal(file.Data, &metadataInfo)
+		if file.Name == "metadata.proto" {
+			err := proto.Unmarshal(file.Data, &metadata)
 			if err != nil {
 				return nil, err
 			}
@@ -505,8 +513,8 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, errors.Errorf("transaction part is missing")
 	}
 
-	if metadata == nil {
-		return nil, errors.Errorf("metadata part is missing")
+	if len(metadata.Relations) == 0 {
+		return nil, errors.Errorf("metadata.proto is emty")
 	}
 
 	if problems == nil {
@@ -518,7 +526,7 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, err
 	}
 
-	return &TransactionAsyncResult{txn, results, metadata, metadataInfo, problems}, nil
+	return &TransactionAsyncResult{true, txn, results, metadata, problems}, nil
 }
 
 type HTTPError struct {
@@ -1223,46 +1231,10 @@ func (c *Client) ExecuteAsync(
 		Source:   source,
 		Readonly: readonly,
 	}
-	var txn TransactionAsyncResponse
+	txnResult := &TransactionAsyncResult{}
 	data := tx.payload(inputs)
-	err := c.Post(PathTransactions, tx.QueryArgs(), data, &txn)
-	if txn.State == "CREATED" {
-		return &TransactionAsyncResult{
-			Transaction: txn,
-			Results:     make([]ArrowRelation, 0),
-			Metadata:    make([]TransactionAsyncMetadataResponse, 0),
-			Problems:    make([]interface{}, 0),
-		}, err
-	}
-
-	results, err := c.GetTransactionResults(txn.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	metadata, err := c.GetTransactionMetadata(txn.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	metadataInfo, err := c.GetTransactionMetadataInfo(txn.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	problems, err := c.GetTransactionProblems(txn.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &TransactionAsyncResult{
-		Transaction: txn,
-		Results:     results,
-		Metadata:    metadata,
-		MetdataInfo: metadataInfo,
-		Problems:    problems,
-	}, nil
-
+	err := c.Post(PathTransactions, tx.QueryArgs(), data, txnResult)
+	return txnResult, err
 }
 
 func (c *Client) Execute(
@@ -1274,6 +1246,13 @@ func (c *Client) Execute(
 	if err != nil {
 		return nil, err
 	}
+
+	// Fast-path optimization
+	if rsp.GotCompleteResult {
+		return rsp, err
+	}
+
+	// Slow-path
 
 	id := rsp.Transaction.ID
 	count := 0
@@ -1297,10 +1276,9 @@ func (c *Client) Execute(
 	txn, _ := c.GetTransaction(id)
 	results, _ := c.GetTransactionResults(id)
 	metadata, _ := c.GetTransactionMetadata(id)
-	metadatainfo, _ := c.GetTransactionMetadataInfo(id)
 	problems, _ := c.GetTransactionProblems(id)
 
-	return &TransactionAsyncResult{txn.Transaction, results, metadata, metadatainfo, problems}, nil
+	return &TransactionAsyncResult{true, txn.Transaction, results, metadata, problems}, nil
 }
 
 func (c *Client) GetTransactions() (*TransactionAsyncMultipleResponses, error) {
@@ -1324,14 +1302,7 @@ func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
 	return result, err
 }
 
-func (c *Client) GetTransactionMetadata(id string) ([]TransactionAsyncMetadataResponse, error) {
-	var result []TransactionAsyncMetadataResponse
-	err := c.Get(makePath(PathTransactions, id, "metadata"), nil, nil, &result)
-
-	return result, err
-}
-
-func (c *Client) GetTransactionMetadataInfo(id string) (generated.MetadataInfo, error) {
+func (c *Client) GetTransactionMetadata(id string) (generated.MetadataInfo, error) {
 	var result generated.MetadataInfo
 	headers := map[string]string{
 		"Accept": "application/x-protobuf",

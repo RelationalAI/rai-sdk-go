@@ -15,6 +15,7 @@
 package rai
 
 import (
+	"fmt"
 	"os/user"
 	"path"
 	"strings"
@@ -92,10 +93,16 @@ func parseConfigStanza(stanza *ini.Section, cfg *Config) error {
 		if v := stanza.Key("client_credentials_url").String(); v != "" {
 			clientCredentialsUrl = v
 		}
+		audience := fmt.Sprintf("https://%s", cfg.Host)
+		if v := stanza.Key("audience").String(); v != "" {
+			audience = v
+		}
 		cfg.Credentials = &ClientCredentials{
 			ClientID:             clientID,
 			ClientSecret:         clientSecret,
-			ClientCredentialsUrl: clientCredentialsUrl}
+			ClientCredentialsUrl: clientCredentialsUrl,
+			Audience:             audience,
+		}
 	}
 	return nil
 }
