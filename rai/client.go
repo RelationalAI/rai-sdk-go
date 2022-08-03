@@ -326,7 +326,6 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 
 		return errors.Errorf("unhandled unmarshal type %T", result)
 	case generated.MetadataInfo:
-		dstValues := reflect.ValueOf(result).Elem()
 		srcValues := reflect.ValueOf(data)
 		dstValues.Set(srcValues)
 		return err
