@@ -286,11 +286,6 @@ type TransactionAsyncCancelResponse struct {
 	Message string `json:"message"`
 }
 
-type TransactionAsyncMetadataResponse struct {
-	RelationId string   `json:"relationId"`
-	Types      []string `json:"types"`
-}
-
 type IntegrityConstraintViolation struct {
 	Type    string   `json:"type"`
 	Sources []Source `json:"sources"`

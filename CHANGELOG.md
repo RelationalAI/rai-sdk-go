@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.0-alpha
+* Deprecated metadata json format.
+* Removed `TransactionAsyncMetadataResponse` model.
+* Added support to metadata protobuf format.
+* `GetTransactionMetadata` returns protobuf metadata.
+
 ## v0.4.0-alpha
 * Renamed:
   - `Execute` to `ExecuteV1`.
