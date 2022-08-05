@@ -16,6 +16,8 @@ package rai
 
 import (
 	"time"
+
+	"github.com/relationalai/rai-sdk-go/protos/generated"
 )
 
 // REST API v1
@@ -284,11 +286,6 @@ type TransactionAsyncCancelResponse struct {
 	Message string `json:"message"`
 }
 
-type TransactionAsyncMetadataResponse struct {
-	RelationId string   `json:"relationId"`
-	Types      []string `json:"types"`
-}
-
 type IntegrityConstraintViolation struct {
 	Type    string   `json:"type"`
 	Sources []Source `json:"sources"`
@@ -305,6 +302,6 @@ type TransactionAsyncResult struct {
 	GotCompleteResult bool
 	Transaction       TransactionAsyncResponse
 	Results           []ArrowRelation
-	Metadata          []TransactionAsyncMetadataResponse
+	Metadata          generated.MetadataInfo
 	Problems          []interface{}
 }
