@@ -153,13 +153,13 @@ func (tx *TransactionAsyncResult) Show() {
 	for k, v := range res {
 		fmt.Println(k)
 		iter := zip(v...)
-		for tuples := iter(); tuples != nil; tuples = iter() {
-			for i, tuple := range tuples {
+		for tuple := iter(); tuple != nil; tuple = iter() {
+			for i, element := range tuple {
 				if i > 0 {
 					fmt.Print(", ")
 				}
 
-				fmt.Print(tuple)
+				fmt.Print(element)
 			}
 			fmt.Println()
 		}
