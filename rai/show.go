@@ -127,3 +127,14 @@ func (tx *TransactionResult) Show() {
 		}
 	}
 }
+
+func (tx *TransactionAsyncResult) Show() {
+	for i, r := range tx.Results {
+		if i > 0 {
+			fmt.Println()
+		}
+
+		fmt.Println(r.RelationID)
+		fmt.Println(r.Table...)
+	}
+}
