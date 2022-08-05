@@ -338,12 +338,12 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 
 // readArrowFiles read arrow files content and returns a list of ArrowRelations
 func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
-	var out []ArrowRelation
+	res := make(map[string][][]interface{})
 	for _, file := range files {
 		if file.ContentType == "application/vnd.apache.arrow.stream" {
 			reader, err := ipc.NewReader(bytes.NewReader(file.Data))
 			if err != nil {
-				return out, err
+				return nil, err
 			}
 
 			defer reader.Release()
@@ -353,12 +353,17 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 					data, _ := rec.Column(i).MarshalJSON()
 					var values []interface{}
 					json.Unmarshal(data, &values)
-					out = append(out, ArrowRelation{file.Name, values})
+					res[file.Name] = append(res[file.Name], values)
 				}
 
 				rec.Retain()
 			}
 		}
+	}
+
+	var out []ArrowRelation
+	for k, v := range res {
+		out = append(out, ArrowRelation{k, v})
 	}
 
 	return out, nil

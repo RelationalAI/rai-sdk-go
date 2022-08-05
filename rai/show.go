@@ -144,11 +144,12 @@ func zip(lists ...[]interface{}) func() []interface{} {
 }
 
 func (tx *TransactionAsyncResult) Show() {
+	fmt.Println(tx.Results)
 	for _, r := range tx.Results {
 		k := r.RelationID
 		v := r.Table
 		fmt.Println(k)
-		iter := zip(v)
+		iter := zip(v...)
 		for tuple := iter(); tuple != nil; tuple = iter() {
 			for i, element := range tuple {
 				if i > 0 {

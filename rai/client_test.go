@@ -326,10 +326,10 @@ func TestExecuteAsync(t *testing.T) {
 	assert.Nil(t, err)
 
 	expectedResults := []ArrowRelation{
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 2., 3., 4., 5.}},
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 4., 9., 16., 25.}},
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 8., 27., 64., 125.}},
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 16., 81., 256., 625.}},
+		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", [][]interface{}{{1., 2., 3., 4., 5.}}},
+		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", [][]interface{}{{1., 4., 9., 16., 25.}}},
+		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", [][]interface{}{{1., 8., 27., 64., 125.}}},
+		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", [][]interface{}{{1., 16., 81., 256., 625.}}},
 	}
 
 	assert.Equal(t, rsp.Results[0].Table, expectedResults[0].Table)

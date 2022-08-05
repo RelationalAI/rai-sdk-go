@@ -257,7 +257,7 @@ type TransactionAsyncFile struct {
 
 type ArrowRelation struct {
 	RelationID string
-	Table      []interface{}
+	Table      [][]interface{}
 }
 
 type TransactionAsyncSingleResponse struct {
