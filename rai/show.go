@@ -144,13 +144,9 @@ func zip(lists ...[]interface{}) func() []interface{} {
 }
 
 func (tx *TransactionAsyncResult) Show() {
-	res := make(map[string][][]interface{})
-
 	for _, r := range tx.Results {
-		res[r.RelationID] = append(res[r.RelationID], r.Table)
-	}
-
-	for k, v := range res {
+		k = r.RelationID
+		v = r.Table
 		fmt.Println(k)
 		iter := zip(v...)
 		for tuple := iter(); tuple != nil; tuple = iter() {
