@@ -128,18 +128,38 @@ func (tx *TransactionResult) Show() {
 	}
 }
 
+func zip(lists ...[]interface{}) func() []interface{} {
+	zip := make([]interface{}, len(lists))
+	i := 0
+	return func() []interface{} {
+		for j := range lists {
+			if i >= len(lists[j]) {
+				return nil
+			}
+			zip[j] = lists[j][i]
+		}
+		i++
+		return zip
+	}
+}
+
 func (tx *TransactionAsyncResult) Show() {
-	output := make(map[string][]interface{})
+	res := make(map[string][][]interface{})
 
 	for _, r := range tx.Results {
-		output[r.RelationID] = append(output[r.RelationID], r.Table)
+		res[r.RelationID] = append(res[r.RelationID], r.Table)
 	}
 
-	for k, v := range output {
+	for k, v := range res {
 		fmt.Println(k)
-		for _, r := range v {
-			for _, c := range r.([]interface{}) {
-				fmt.Print(c, " ")
+		iter := zip(v...)
+		for tuples := iter(); tuples != nil; tuples = iter() {
+			for i, tuple := range tuples {
+				if i > 0 {
+					fmt.Print(", ")
+				}
+
+				fmt.Print(tuple)
 			}
 			fmt.Println()
 		}
