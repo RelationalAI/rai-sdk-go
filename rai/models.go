@@ -32,8 +32,9 @@ type Database struct {
 	Region      string `json:"region"`
 	AccountName string `json:"account_name"`
 	CreatedBy   string `json:"created_by"`
-	DeletedOn   string `json:"deleted_on"`
+	CreatedOn   string `json:"created_on"`
 	DeletedBy   string `json:"deleted_by,omitempty"`
+	DeletedOn   string `json:"deleted_on,omitempty"`
 	State       string `json:"state"`
 }
 
