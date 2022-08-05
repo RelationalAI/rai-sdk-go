@@ -143,23 +143,26 @@ func zip(lists ...[]interface{}) func() []interface{} {
 	}
 }
 
-func (tx *TransactionAsyncResult) Show() {
-	fmt.Println(tx.Results)
+func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
 	for _, r := range tx.Results {
 		k := r.RelationID
 		v := r.Table
-		fmt.Println(k)
+		fmt.Fprintf(io, "%s\n", k)
 		iter := zip(v...)
 		for tuple := iter(); tuple != nil; tuple = iter() {
 			for i, element := range tuple {
 				if i > 0 {
-					fmt.Print(", ")
+					fmt.Fprint(io, ", ")
 				}
 
-				fmt.Print(element)
+				fmt.Fprintf(io, "%v", element)
 			}
-			fmt.Println()
+			fmt.Fprintln(io)
 		}
-		fmt.Println()
+		fmt.Fprintln(io)
 	}
+}
+
+func (tx *TransactionAsyncResult) Show() {
+	tx.ShowIO(os.Stdout)
 }

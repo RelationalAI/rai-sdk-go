@@ -15,6 +15,7 @@
 package rai
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -345,6 +346,13 @@ func TestExecuteAsync(t *testing.T) {
 	expectedProblems := []interface{}{}
 
 	assert.Equal(t, rsp.Problems, expectedProblems)
+
+	// also testing Show v2 result format
+	var io bytes.Buffer
+	rsp.ShowIO(&io)
+	expectedOutput := "/:output/Int64/Int64/Int64/Int64\n1, 1, 1, 1\n2, 4, 8, 16\n3, 9, 27, 81\n4, 16, 64, 256\n5, 25, 125, 625\n\n"
+
+	assert.Equal(t, io.String(), expectedOutput)
 }
 
 func findRelation(relations []Relation, colName string) *Relation {
