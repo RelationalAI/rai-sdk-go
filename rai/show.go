@@ -129,12 +129,20 @@ func (tx *TransactionResult) Show() {
 }
 
 func (tx *TransactionAsyncResult) Show() {
-	for i, r := range tx.Results {
-		if i > 0 {
+	output := make(map[string][]interface{})
+
+	for _, r := range tx.Results {
+		output[r.RelationID] = append(output[r.RelationID], r.Table)
+	}
+
+	for k, v := range output {
+		fmt.Println(k)
+		for _, r := range v {
+			for _, c := range r.([]interface{}) {
+				fmt.Print(c, " ")
+			}
 			fmt.Println()
 		}
-
-		fmt.Println(r.RelationID)
-		fmt.Println(r.Table...)
+		fmt.Println()
 	}
 }
