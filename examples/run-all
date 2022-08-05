@@ -6,7 +6,7 @@ DATABASE="sdk-test"
 DATABASECLONE="$DATABASE-clone"
 ENGINE="sdk-test3"
 
-set -ex
+set -x
 
 # reset state
 go run delete_database/main.go -d $DATABASECLONE
@@ -26,6 +26,7 @@ go run get_database/main.go -d $DATABASE
 go run list_databases/main.go
 go run list_databases/main.go --state CREATED
 go run list_databases/main.go --state NONSENSE
+go run list_edb_names/main.go -d $DATABASE -e $ENGINE
 go run list_edbs/main.go -d $DATABASE -e $ENGINE
 go run list_model_names/main.go -d $DATABASE -e $ENGINE
 go run list_models/main.go -d $DATABASE -e $ENGINE
@@ -33,8 +34,8 @@ go run get_model/main.go -d $DATABASE -e $ENGINE -m stdlib
 
 # exec
 QUERY='x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}'
-go run execute_v1/main.go -d $DATABASE -e $ENGINE -c "$QUERY"
-go run execute_v1/main.go  -d $DATABASE -e $ENGINE -c "$QUERY" --readonly
+go run execute/main.go -d $DATABASE -e $ENGINE -c "$QUERY"
+go run execute/main.go -d $DATABASE -e $ENGINE -c "$QUERY" --readonly
 
 # load model
 go run load_model/main.go -d $DATABASE -e $ENGINE -f hello.rel
@@ -50,7 +51,7 @@ go run load_csv/main.go -d $DATABASE -e $ENGINE -r sample_csv -f sample.csv
 go run execute/main.go -d $DATABASE -e $ENGINE -c sample_csv
 go run load_csv/main.go -d $DATABASE -e $ENGINE -r sample_no_header_csv -f sample_no_header.csv --headerrow=0
 go run execute/main.go -d $DATABASE -e $ENGINE -c sample_no_header_csv
-go run load_csv/main.go -d $DATABASE -e $ENGINE -r sample_alt_syntax_csv -f sample_alt_syntax.csv --delim='|' --quotechar="\"'\"" 
+go run load_csv/main.go -d $DATABASE -e $ENGINE -r sample_alt_syntax_csv -f sample_alt_syntax.csv --delim='|' --quotechar="\"'\""
 go run execute/main.go -d $DATABASE -e $ENGINE -c sample_alt_syntax_csv
 go run list_edbs/main.go -d $DATABASE -e $ENGINE
 
@@ -64,7 +65,7 @@ go run delete_database/main.go -d $DATABASE
 go run create_database/main.go -d $DATABASE
 go run load_json/main.go -d $DATABASE -e $ENGINE -r sample_json -f sample.json
 go run load_model/main.go -d $DATABASE -e $ENGINE -f hello.rel
-go run clone_database/main.go -d $DATABASECLONE
+go run clone_database/main.go -d $DATABASECLONE -s $DATABASE
 go run list_databases/main.go
 go run get_database/main.go -d $DATABASECLONE
 go run list_edbs/main.go -d $DATABASECLONE -e $ENGINE
