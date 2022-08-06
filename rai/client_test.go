@@ -15,6 +15,7 @@
 package rai
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -326,10 +327,12 @@ func TestExecuteAsync(t *testing.T) {
 	assert.Nil(t, err)
 
 	expectedResults := []ArrowRelation{
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 2., 3., 4., 5.}},
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 4., 9., 16., 25.}},
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 8., 27., 64., 125.}},
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", []interface{}{1., 16., 81., 256., 625.}},
+		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", [][]interface{}{
+			{1., 2., 3., 4., 5.},
+			{1., 4., 9., 16., 25.},
+			{1., 8., 27., 64., 125.},
+			{1., 16., 81., 256., 625.},
+		}},
 	}
 
 	assert.Equal(t, rsp.Results[0].Table, expectedResults[0].Table)
@@ -343,6 +346,13 @@ func TestExecuteAsync(t *testing.T) {
 	expectedProblems := []interface{}{}
 
 	assert.Equal(t, rsp.Problems, expectedProblems)
+
+	// also testing Show v2 result format
+	var io bytes.Buffer
+	rsp.ShowIO(&io)
+	expectedOutput := "/:output/Int64/Int64/Int64/Int64\n1, 1, 1, 1\n2, 4, 8, 16\n3, 9, 27, 81\n4, 16, 64, 256\n5, 25, 125, 625\n\n"
+
+	assert.Equal(t, io.String(), expectedOutput)
 }
 
 func findRelation(relations []Relation, colName string) *Relation {
