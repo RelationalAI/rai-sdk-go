@@ -1258,10 +1258,12 @@ func (c *Client) Execute(
 	id := rsp.Transaction.ID
 	for {
 		txn, err := c.GetTransaction(id)
-		if err != nil {
+		if err == nil {
 			if txn.Transaction.State == "COMPLETED" || txn.Transaction.State == "ABORTED" {
 				break
 			}
+		} else {
+			fmt.Println(err)
 		}
 
 		time.Sleep(1 * time.Second)
