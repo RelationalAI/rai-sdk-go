@@ -1256,22 +1256,15 @@ func (c *Client) Execute(
 	// Slow-path
 
 	id := rsp.Transaction.ID
-	count := 0
 	for {
 		txn, err := c.GetTransaction(id)
 		if err != nil {
-			count++
+			if txn.Transaction.State == "COMPLETED" || txn.Transaction.State == "ABORTED" {
+				break
+			}
 		}
 
-		if count > 5 {
-			return nil, err
-		}
-
-		if txn.Transaction.State == "COMPLETED" || txn.Transaction.State == "ABORTED" {
-			break
-		}
-
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	txn, _ := c.GetTransaction(id)
