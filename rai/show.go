@@ -165,9 +165,7 @@ func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
 			}
 			fmt.Fprintln(io)
 		}
-		if j <= len(tx.Results)-2 {
-			fmt.Fprintln(io)
-		}
+		fmt.Fprintln(io)
 	}
 }
 
