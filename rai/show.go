@@ -144,7 +144,7 @@ func zip(lists ...[]interface{}) func() []interface{} {
 }
 
 func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
-	for j, r := range tx.Results {
+	for _, r := range tx.Results {
 		k := r.RelationID
 		v := r.Table
 		fmt.Fprintf(io, "%s\n", k)
