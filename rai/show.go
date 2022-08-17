@@ -144,10 +144,16 @@ func zip(lists ...[]interface{}) func() []interface{} {
 }
 
 func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
-	for _, r := range tx.Results {
+	for j, r := range tx.Results {
 		k := r.RelationID
 		v := r.Table
 		fmt.Fprintf(io, "%s\n", k)
+
+		if len(v) == 0 {
+			fmt.Fprintln(io, "()")
+			return
+		}
+
 		iter := zip(v...)
 		for tuple := iter(); tuple != nil; tuple = iter() {
 			for i, element := range tuple {
@@ -159,7 +165,9 @@ func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
 			}
 			fmt.Fprintln(io)
 		}
-		fmt.Fprintln(io)
+		if j <= len(tx.Results)-2 {
+			fmt.Fprintln(io)
+		}
 	}
 }
 
