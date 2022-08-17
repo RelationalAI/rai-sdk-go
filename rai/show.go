@@ -150,8 +150,8 @@ func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
 		fmt.Fprintf(io, "%s\n", k)
 
 		if len(v) == 0 {
-			fmt.Fprintln(io, "()")
-			return
+			fmt.Fprintln(io, "()\n")
+			continue
 		}
 
 		iter := zip(v...)
