@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.3.1-alpha
+* Fix v2 show result if empty result.
+
 ## v0.3.0-alpha
 * Deprecated metadata json format.
 * Removed `TransactionAsyncMetadataResponse` model.
