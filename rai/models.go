@@ -257,9 +257,16 @@ type TransactionAsyncFile struct {
 	Data        []byte
 }
 
+type ArrowResult struct {
+	RelationID string
+	Filename   string
+	Table      arrow.Record
+}
+
 type ArrowRelation struct {
 	RelationID string
 	Table      arrow.Record
+	Metadata   pb.RelationId
 }
 
 type TransactionAsyncSingleResponse struct {

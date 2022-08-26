@@ -320,7 +320,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 			return nil
 		}
 
-		if dstValues.Type() == reflect.TypeOf([]ArrowRelation{}) {
+		if dstValues.Type() == reflect.TypeOf([]ArrowResult{}) {
 			rsp, err := readArrowFiles(data.([]TransactionAsyncFile))
 			if err != nil {
 				return err
@@ -343,8 +343,8 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 }
 
 // readArrowFiles read arrow files content and returns a list of ArrowRelations
-func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
-	var arrowRelations []ArrowRelation
+func readArrowFiles(files []TransactionAsyncFile) ([]ArrowResult, error) {
+	var arrowRelations []ArrowResult
 
 	// filter arrow files
 	for _, file := range files {
@@ -362,7 +362,7 @@ func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
 				record.Retain()
 			}
 
-			arrowRelations = append(arrowRelations, ArrowRelation{file.Name, record})
+			arrowRelations = append(arrowRelations, ArrowResult{file.Name, file.Filename, record})
 		}
 	}
 
@@ -461,30 +461,27 @@ func parseHttpResponse(rsp *http.Response) (interface{}, error) {
 	}
 }
 
-// Construct request, execute and unmarshal response.
-func (c *Client) request(
-	method, path string, headers map[string]string, args url.Values, data, result interface{},
-) error {
-	body, err := marshal(data)
-	if err != nil {
-		return err
-	}
-	req, err := c.newRequest(method, path, args, body)
-	if err != nil {
-		return err
-	}
-	c.ensureHeaders(req, headers)
-	if err := c.authenticate(req); err != nil {
-		return err
-	}
-	//showRequest(req, data)
-	rsp, err := c.Do(req)
-	if err != nil {
-		return err
-	}
-	defer rsp.Body.Close()
+// makeArrowRelations merge ArrowResults and Metadata protobuf
+func makeArrowRelations(results []ArrowResult, metadata pb.MetadataInfo) []ArrowRelation {
+	var out []ArrowRelation
 
-	return unmarshal(rsp, result)
+	metadataMap := make(map[string]*pb.RelationId)
+	for _, relation := range metadata.Relations {
+		metadataMap[relation.FileName] = relation.RelationId
+	}
+
+	for _, res := range results {
+		out = append(
+			out,
+			ArrowRelation{
+				res.RelationID,
+				res.Table,
+				*metadataMap[res.Filename], // check if empty
+			},
+		)
+	}
+
+	return out
 }
 
 // readTransactionAsyncFiles reads the transaction async results from TransactionAsyncFiles
@@ -521,12 +518,40 @@ func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncR
 		return nil, errors.Errorf("problems part is missing")
 	}
 
-	results, err := readArrowFiles(files)
+	arrowRelations, err := readArrowFiles(files)
 	if err != nil {
 		return nil, err
 	}
 
+	results := makeArrowRelations(arrowRelations, metadata)
+
 	return &TransactionAsyncResult{true, txn, results, metadata, problems}, nil
+}
+
+// Construct request, execute and unmarshal response.
+func (c *Client) request(
+	method, path string, headers map[string]string, args url.Values, data, result interface{},
+) error {
+	body, err := marshal(data)
+	if err != nil {
+		return err
+	}
+	req, err := c.newRequest(method, path, args, body)
+	if err != nil {
+		return err
+	}
+	c.ensureHeaders(req, headers)
+	if err := c.authenticate(req); err != nil {
+		return err
+	}
+	//showRequest(req, data)
+	rsp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer rsp.Body.Close()
+
+	return unmarshal(rsp, result)
 }
 
 type HTTPError struct {

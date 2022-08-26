@@ -21,6 +21,7 @@ import (
 	"math/big"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -106,21 +107,21 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		return float64(value.(float64)), nil
 	case "Decimal16":
 		v := int64(value.(int16))
-		exp := int32(typeDef["places"].(float64))
-		return decimal.New(v, -exp), nil
+		exp, err := strconv.Atoi(typeDef["places"].(string))
+		return decimal.New(v, -int32(exp)), err
 	case "Decimal32":
 		v := int64(value.(int32))
-		exp := int32(typeDef["places"].(float64))
-		return decimal.New(v, -exp), nil
+		exp, err := strconv.Atoi(typeDef["places"].(string))
+		return decimal.New(v, -int32(exp)), err
 	case "Decimal64":
 		v := int64(value.(int64))
-		exp := int32(typeDef["places"].(float64))
-		return decimal.New(v, -exp), nil
+		exp, err := strconv.Atoi(typeDef["places"].(string))
+		return decimal.New(v, -int32(exp)), err
 	case "Decimal128":
 		v := int128ToMathInt128(value.([]interface{}))
-		exp := int32(typeDef["places"].(float64))
+		exp, err := strconv.Atoi(typeDef["places"].(string))
 		// FixMe: decimals doesn't support big.Int
-		return decimal.New(v.Int64(), -exp), nil
+		return decimal.New(v.Int64(), -int32(exp)), err
 	case "Rational8":
 		v1 := int64(value.([]interface{})[0].(int8))
 		v2 := int64(value.([]interface{})[1].(int8))
@@ -145,7 +146,7 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		return big.NewRat(v1.Int64(), v2.Int64()), nil
 
 	default:
-		panic(fmt.Errorf("unhandled value type %s", typeDef["type"]))
+		panic(fmt.Errorf("unhandled value type %v", typeDef["type"]))
 	}
 	return nil, nil
 }
@@ -172,17 +173,16 @@ func uint128ToMathInt128(tuple []interface{}) *big.Int {
 	return big
 }
 
-func getTypeDef(tp string) (map[string]interface{}, error) {
-
-	_unmarshall := func(data string) (map[string]interface{}, error) {
-		var typeDef map[string]interface{}
-		if err := json.Unmarshal([]byte(data), &typeDef); err != nil {
-			return make(map[string]interface{}), nil
-		}
-
-		return typeDef, nil
+func _unmarshall(data string) (map[string]interface{}, error) {
+	var typeDef map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &typeDef); err != nil {
+		return make(map[string]interface{}), nil
 	}
 
+	return typeDef, nil
+}
+
+func getTypeDef(tp string) (map[string]interface{}, error) {
 	if strings.HasPrefix(tp, ":") {
 		return _unmarshall(fmt.Sprintf(`{"type":"Constant","value":{"type":"String","value":"%s"}}`, tp))
 	}

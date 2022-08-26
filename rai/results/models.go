@@ -14,11 +14,20 @@
 
 package results
 
-import "github.com/apache/arrow/go/v9/arrow"
+import (
+	"github.com/apache/arrow/go/v9/arrow"
+	"github.com/relationalai/rai-sdk-go/rai/pb"
+)
+
+type ColumnDefOld struct {
+	TypeDef    map[string]interface{}
+	Metadata   string
+	ArrowIndex int
+}
 
 type ColumnDef struct {
 	TypeDef    map[string]interface{}
-	Metadata   string //pb.RelType
+	Metadata   pb.RelType
 	ArrowIndex int
 }
 
