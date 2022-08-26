@@ -143,32 +143,32 @@ func zip(lists ...[]interface{}) func() []interface{} {
 	}
 }
 
-func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
-	for _, r := range tx.Results {
-		k := r.RelationID
-		v := r.Table
-		fmt.Fprintf(io, "%s\n", k)
+// func (tx *TransactionAsyncResult) ShowIO(io io.Writer) {
+// 	for _, r := range tx.Results {
+// 		k := r.RelationID
+// 		v := r.Table
+// 		fmt.Fprintf(io, "%s\n", k)
 
-		if len(v) == 0 {
-			fmt.Fprintln(io, "()")
-			continue
-		}
+// 		if len(v) == 0 {
+// 			fmt.Fprintln(io, "()")
+// 			continue
+// 		}
 
-		iter := zip(v...)
-		for tuple := iter(); tuple != nil; tuple = iter() {
-			for i, element := range tuple {
-				if i > 0 {
-					fmt.Fprint(io, ", ")
-				}
+// 		iter := zip(v...)
+// 		for tuple := iter(); tuple != nil; tuple = iter() {
+// 			for i, element := range tuple {
+// 				if i > 0 {
+// 					fmt.Fprint(io, ", ")
+// 				}
 
-				fmt.Fprintf(io, "%v", element)
-			}
-			fmt.Fprintln(io)
-		}
-		fmt.Fprintln(io)
-	}
-}
+// 				fmt.Fprintf(io, "%v", element)
+// 			}
+// 			fmt.Fprintln(io)
+// 		}
+// 		fmt.Fprintln(io)
+// 	}
+// }
 
-func (tx *TransactionAsyncResult) Show() {
-	tx.ShowIO(os.Stdout)
-}
+// func (tx *TransactionAsyncResult) Show() {
+// 	tx.ShowIO(os.Stdout)
+// }

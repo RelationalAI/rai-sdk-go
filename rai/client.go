@@ -31,9 +31,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apache/arrow/go/v7/arrow/ipc"
+	"github.com/apache/arrow/go/v9/arrow"
+	"github.com/apache/arrow/go/v9/arrow/ipc"
 	"github.com/pkg/errors"
-	"github.com/relationalai/rai-sdk-go/protos/generated"
+	"github.com/relationalai/rai-sdk-go/rai/pb"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -330,7 +331,7 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 		}
 
 		return errors.Errorf("unhandled unmarshal type %T", result)
-	case generated.MetadataInfo:
+	case pb.MetadataInfo:
 		srcValues := reflect.ValueOf(data)
 		dstValues.Set(srcValues)
 		return nil
@@ -343,32 +344,29 @@ func unmarshal(rsp *http.Response, result interface{}) error {
 
 // readArrowFiles read arrow files content and returns a list of ArrowRelations
 func readArrowFiles(files []TransactionAsyncFile) ([]ArrowRelation, error) {
-	var out []ArrowRelation
+	var arrowRelations []ArrowRelation
+
+	// filter arrow files
 	for _, file := range files {
 		if file.ContentType == "application/vnd.apache.arrow.stream" {
 			reader, err := ipc.NewReader(bytes.NewReader(file.Data))
+
 			if err != nil {
-				return out, err
+				return nil, err
 			}
 
 			defer reader.Release()
-			for reader.Next() {
-				rec := reader.Record()
-				var columns [][]interface{}
-				for i := 0; i < int(rec.NumCols()); i++ {
-					data, _ := rec.Column(i).MarshalJSON()
-					var column []interface{}
-					json.Unmarshal(data, &column)
-					columns = append(columns, column)
-				}
-				out = append(out, ArrowRelation{file.Name, columns})
-
-				rec.Retain()
+			var record arrow.Record
+			if reader.Next() {
+				record = reader.Record()
+				record.Retain()
 			}
+
+			arrowRelations = append(arrowRelations, ArrowRelation{file.Name, record})
 		}
 	}
 
-	return out, nil
+	return arrowRelations, nil
 }
 
 // readProblemResults unmarshall the given string into list of ClientProblem and IntegrityConstraintViolation
@@ -451,7 +449,7 @@ func parseHttpResponse(rsp *http.Response) (interface{}, error) {
 		boundary := params["boundary"]
 		return parseMultipartResponse(data, boundary)
 	} else if mediaType == "application/x-protobuf" {
-		var metadataInfo generated.MetadataInfo
+		var metadataInfo pb.MetadataInfo
 		err := proto.Unmarshal(data, &metadataInfo)
 		if err != nil {
 			return nil, err
@@ -492,7 +490,7 @@ func (c *Client) request(
 // readTransactionAsyncFiles reads the transaction async results from TransactionAsyncFiles
 func readTransactionAsyncFiles(files []TransactionAsyncFile) (*TransactionAsyncResult, error) {
 	var txn TransactionAsyncResponse
-	var metadata generated.MetadataInfo
+	var metadata pb.MetadataInfo
 	var problems []interface{}
 
 	for _, file := range files {
@@ -1304,8 +1302,8 @@ func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
 	return result, err
 }
 
-func (c *Client) GetTransactionMetadata(id string) (generated.MetadataInfo, error) {
-	var result generated.MetadataInfo
+func (c *Client) GetTransactionMetadata(id string) (pb.MetadataInfo, error) {
+	var result pb.MetadataInfo
 	headers := map[string]string{
 		"Accept": "application/x-protobuf",
 	}

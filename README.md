@@ -57,7 +57,7 @@ https://console.relationalai.com/login
 You can copy `config.spec` from the root of this repo and modify as needed.
 
 ## Generate golang sources from protobuf specification
-
+We need to install `protoc` then
 ```shell
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 export PATH=$PATH:$HOME/go/bin

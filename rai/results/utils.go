@@ -1,0 +1,576 @@
+// Copyright 2022 RelationalAI, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package results
+
+import (
+	"encoding/json"
+	"fmt"
+	"math"
+	"math/big"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/apache/arrow/go/v9/arrow"
+	"github.com/apache/arrow/go/v9/arrow/array"
+	"github.com/apache/arrow/go/v9/arrow/float16"
+	"github.com/shopspring/decimal"
+)
+
+const UNIXEPOCH = 62135683200000
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+const decimalsRegex = "^FixedPointDecimals.FixedDecimal{Int([0-9]+), ([0-9]+)}$"
+const rationalRegEx = "^Rational{Int([0-9]+)}$"
+
+func convertValue(typeDef map[string]interface{}, value interface{}) (interface{}, error) {
+	switch typeDef["type"] {
+	case "Constant":
+		return typeDef["value"].(map[string]interface{})["value"], nil
+	case "String":
+		return value, nil
+	case "Char":
+		return string(value.(uint32)), nil
+	case "Bool":
+		return value, nil
+	case "DateTime":
+		sec, dec := math.Modf(float64(value.(int64)-UNIXEPOCH) / 1000.0)
+		return time.Unix(int64(sec), int64(dec*(1e9))).Format(time.RFC3339), nil
+	case "Date":
+		ms := int64(value.(int64)*MILLISECONDS_PER_DAY - UNIXEPOCH)
+		return time.UnixMilli(ms).Format("2006-02-01"), nil
+	case "Month":
+		return time.Month(value.(int64)), nil
+	case "Year":
+		return value.(int64), nil
+	case "Day":
+		return value.(int64), nil
+	case "Week":
+		return value.(int64), nil
+	case "Hour":
+		return value.(int64), nil
+	case "Minute":
+		return value.(int64), nil
+	case "Second":
+		return value.(int64), nil
+	case "Millisecond":
+		return value.(int64), nil
+	case "Microsecond":
+		return value.(int64), nil
+	case "Nanosecond":
+		return value.(int64), nil
+	case "Missing":
+		return nil, nil
+	case "FilePos":
+		return value.(int64), nil
+	case "Hash":
+		return uint128ToMathInt128(value.([]interface{})), nil
+	case "UInt8":
+		return value.(uint8), nil
+	case "UInt16":
+		return value.(uint16), nil
+	case "UInt32":
+		return value.(uint32), nil
+	case "UInt64":
+		return value.(uint64), nil
+	case "UInt128":
+		return uint128ToMathInt128(value.([]interface{})), nil
+	case "Int8":
+		return value.(int8), nil
+	case "Int16":
+		return value.(int16), nil
+	case "Int32":
+		return value.(int32), nil
+	case "Int64":
+		return value.(int64), nil
+	case "Int128":
+		return int128ToMathInt128(value.([]interface{})), nil
+	case "Float16":
+		v := value.(float16.Num)
+		return v.Float32(), nil
+	case "Float32":
+		return float32(value.(float32)), nil
+	case "Float64":
+		return float64(value.(float64)), nil
+	case "Decimal16":
+		v := int64(value.(int16))
+		exp := int32(typeDef["places"].(float64))
+		return decimal.New(v, -exp), nil
+	case "Decimal32":
+		v := int64(value.(int32))
+		exp := int32(typeDef["places"].(float64))
+		return decimal.New(v, -exp), nil
+	case "Decimal64":
+		v := int64(value.(int64))
+		exp := int32(typeDef["places"].(float64))
+		return decimal.New(v, -exp), nil
+	case "Decimal128":
+		v := int128ToMathInt128(value.([]interface{}))
+		exp := int32(typeDef["places"].(float64))
+		// FixMe: decimals doesn't support big.Int
+		return decimal.New(v.Int64(), -exp), nil
+	case "Rational8":
+		v1 := int64(value.([]interface{})[0].(int8))
+		v2 := int64(value.([]interface{})[1].(int8))
+		return big.NewRat(v1, v2), nil
+	case "Rational16":
+		v1 := int64(value.([]interface{})[0].(int16))
+		v2 := int64(value.([]interface{})[1].(int16))
+		return big.NewRat(v1, v2), nil
+	case "Rational32":
+		v1 := int64(value.([]interface{})[0].(int32))
+		v2 := int64(value.([]interface{})[1].(int32))
+		return big.NewRat(v1, v2), nil
+	case "Rational64":
+		v1 := int64(value.([]interface{})[0].(int64))
+		v2 := int64(value.([]interface{})[1].(int64))
+		return big.NewRat(v1, v2), nil
+	case "Rational128":
+		v := value.([]interface{})[0].([]interface{})
+		v1 := int128ToMathInt128(v[0:2])
+		v2 := int128ToMathInt128(v[2:4])
+		// FIXME: big.Rat doesn't support big.Int
+		return big.NewRat(v1.Int64(), v2.Int64()), nil
+
+	default:
+		panic(fmt.Errorf("unhandled value type %s", typeDef["type"]))
+	}
+	return nil, nil
+}
+
+// FIXME: can't handle negative values
+func int128ToMathInt128(tuple []interface{}) *big.Int {
+	big := new(big.Int).SetBits(
+		[]big.Word{
+			big.Word(tuple[0].(uint64)),
+			big.Word(tuple[1].(uint64)),
+		},
+	)
+
+	return big
+}
+
+func uint128ToMathInt128(tuple []interface{}) *big.Int {
+	big := new(big.Int).SetBits(
+		[]big.Word{
+			big.Word(tuple[0].(uint64)),
+			big.Word(tuple[1].(uint64)),
+		},
+	)
+	return big
+}
+
+func getTypeDef(tp string) (map[string]interface{}, error) {
+
+	_unmarshall := func(data string) (map[string]interface{}, error) {
+		var typeDef map[string]interface{}
+		if err := json.Unmarshal([]byte(data), &typeDef); err != nil {
+			return make(map[string]interface{}), nil
+		}
+
+		return typeDef, nil
+	}
+
+	if strings.HasPrefix(tp, ":") {
+		return _unmarshall(fmt.Sprintf(`{"type":"Constant","value":{"type":"String","value":"%s"}}`, tp))
+	}
+
+	if strings.ContainsAny(tp, "(") && !strings.HasPrefix(tp, "(") {
+		return _unmarshall(fmt.Sprintf(`{"type":"Constant","value":{"type":"String","value":"%s"}}`, tp))
+	}
+
+	if tp == "String" {
+		return _unmarshall(`{"type": "String"}`)
+	}
+
+	if tp == "Bool" {
+		return _unmarshall(`{"type":"Bool"}`)
+	}
+
+	if tp == "Char" {
+		return _unmarshall(`{"type":"Char"}`)
+	}
+
+	if tp == "Dates.DateTime" {
+		return _unmarshall(`{"type":"DateTime"}`)
+	}
+
+	if tp == "Dates.Date" {
+		return _unmarshall(`{"type":"Date"}`)
+	}
+
+	if tp == "Dates.Year" {
+		return _unmarshall(`{"type":"Year"}`)
+	}
+
+	if tp == "Dates.Month" {
+		return _unmarshall(`{"type":"Month"}`)
+	}
+
+	if tp == "Dates.Week" {
+		return _unmarshall(`{"type":"Week"}`)
+	}
+
+	if tp == "Dates.Day" {
+		return _unmarshall(`{"type":"Day"}`)
+	}
+
+	if tp == "Dates.Hour" {
+		return _unmarshall(`{"type":"Hour"}`)
+	}
+
+	if tp == "Dates.Minute" {
+		return _unmarshall(`{"type":"Minute"}`)
+	}
+
+	if tp == "Dates.Second" {
+		return _unmarshall(`{"type":"Second"}`)
+	}
+
+	if tp == "Dates.Millisecond" {
+		return _unmarshall(`{"type":"Millisecond"}`)
+	}
+
+	if tp == "Dates.Microsecond" {
+		return _unmarshall(`{"type":"Microsecond"}`)
+	}
+
+	if tp == "Dates.Nanosecond" {
+		return _unmarshall(`{"type":"Nanosecond"}`)
+	}
+
+	if tp == "HashValue" {
+		return _unmarshall(`{"type":"Hash"}`)
+	}
+
+	if tp == "Missing" {
+		return _unmarshall(`{"type":"Missing"}`)
+	}
+
+	if tp == "FilePos" {
+		return _unmarshall(`{"type":"FilePos"}`)
+	}
+
+	if tp == "Float16" {
+		return _unmarshall(`{"type": "Float16"}`)
+	}
+
+	if tp == "Float32" {
+		return _unmarshall(`{"type": "Float32"}`)
+	}
+
+	if tp == "Float64" {
+		return _unmarshall(`{"type": "Float64"}`)
+	}
+
+	if tp == "Int8" {
+		return _unmarshall(`{"type": "Int8"}`)
+	}
+
+	if tp == "Int16" {
+		return _unmarshall(`{"type": "Int16"}`)
+	}
+
+	if tp == "Int32" {
+		return _unmarshall(`{"type": "Int32"}`)
+	}
+
+	if tp == "Int64" {
+		return _unmarshall(`{"type": "Int64"}`)
+	}
+
+	if tp == "Int128" {
+		return _unmarshall(`{"type": "Int128"}`)
+	}
+
+	if tp == "UInt8" {
+		return _unmarshall(`{"type": "UInt8"}`)
+	}
+
+	if tp == "UInt16" {
+		return _unmarshall(`{"type": "UInt16"}`)
+	}
+
+	if tp == "UInt32" {
+		return _unmarshall(`{"type": "UInt32"}`)
+	}
+
+	if tp == "UInt64" {
+		return _unmarshall(`{"type": "UInt64"}`)
+	}
+
+	if tp == "UInt128" {
+		return _unmarshall(`{"type": "UInt128"}`)
+	}
+
+	re := regexp.MustCompile(decimalsRegex)
+	matches := re.FindStringSubmatch(tp)
+	if len(matches) == 3 {
+		return _unmarshall(fmt.Sprintf(`{"type":"Decimal%v","places":%v}`, matches[1], matches[2]))
+	}
+
+	re = regexp.MustCompile(rationalRegEx)
+	matches = re.FindStringSubmatch(tp)
+	if len(matches) == 2 {
+		return _unmarshall(fmt.Sprintf(`{"type":"Rational%v"}`, matches[1]))
+	}
+	// TODO: add the other types
+	return nil, fmt.Errorf("unhandled data type %s", tp)
+}
+
+func getColDefs(relationID string) []ColumnDef {
+	var types []string
+	// filter empty strings
+	for _, t := range strings.Split(relationID, "/") {
+		if t != "" {
+			types = append(types, t)
+		}
+	}
+
+	colDefs := make([]ColumnDef, 0)
+	arrowIndex := 0
+	for _, tp := range types {
+		typeDef, err := getTypeDef(tp)
+		if err != nil {
+			panic(err)
+		}
+
+		colDef := new(ColumnDef)
+		colDef.TypeDef = typeDef
+
+		if typeDef["type"] != "Constant" {
+			colDef.ArrowIndex = arrowIndex
+			arrowIndex++
+		}
+
+		colDefs = append(colDefs, *colDef)
+	}
+
+	return colDefs
+}
+
+func isFullySpecialized(colDefs []ColumnDef) bool {
+	if len(colDefs) == 0 {
+		return false
+	}
+
+	for _, colDef := range colDefs {
+		if colDef.TypeDef["type"] != "Constant" {
+			return false
+		}
+	}
+
+	return true
+}
+
+func sortedMapKeys(m map[string][]interface{}) []string {
+	var keys []string
+	for k, _ := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func Zip(lists ...[]interface{}) func() []interface{} {
+	zip := make([]interface{}, len(lists))
+	i := 0
+	return func() []interface{} {
+		for j := range lists {
+			if i >= len(lists[j]) {
+				return nil
+			}
+			zip[j] = lists[j][i]
+		}
+		i++
+		return zip
+	}
+}
+
+func arrowRowToValues(arrowRow []interface{}, colDefs []ColumnDef) ([]interface{}, error) {
+	var row []interface{}
+
+	for _, colDef := range colDefs {
+		if colDef.TypeDef["type"] == "Constant" {
+			v, err := convertValue(colDef.TypeDef, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			row = append(row, v)
+		} else {
+			v, err := convertValue(colDef.TypeDef, arrowRow[colDef.ArrowIndex])
+			if err != nil {
+				return nil, err
+			}
+
+			row = append(row, v)
+		}
+	}
+
+	return row, nil
+}
+
+func join(slice []interface{}, sep string) string {
+	var out []string
+	for _, v := range slice {
+		out = append(out, fmt.Sprintf("%v", v))
+	}
+
+	return strings.Join(out, sep)
+}
+
+func arrowArrayToArray(arr arrow.Array) []interface{} {
+	var out []interface{}
+	switch arr.(type) {
+	case *array.Uint8:
+		listValues := arr.(*array.Uint8)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Uint16:
+		listValues := arr.(*array.Uint16)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Uint32:
+		listValues := arr.(*array.Uint32)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Uint64:
+		listValues := arr.(*array.Uint64)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Int8:
+		listValues := arr.(*array.Int8)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Int16:
+		listValues := arr.(*array.Int16)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Int32:
+		listValues := arr.(*array.Int32)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Int64:
+		listValues := arr.(*array.Int64)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Float16:
+		listValues := arr.(*array.Float16)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Float32:
+		listValues := arr.(*array.Float32)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Float64:
+		listValues := arr.(*array.Float64)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.String:
+		listValues := arr.(*array.String)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.Boolean:
+		listValues := arr.(*array.Boolean)
+		for i := 0; i < listValues.Len(); i++ {
+			out = append(out, listValues.Value(i))
+		}
+	case *array.FixedSizeList:
+		listValues := arr.(*array.FixedSizeList).ListValues()
+		switch listValues.(type) {
+		case *array.FixedSizeList:
+			listValues := arr.(*array.FixedSizeList).ListValues()
+			out = append(out, arrowArrayToArray(listValues))
+		case *array.Uint8:
+			intValues := listValues.(*array.Uint8).Uint8Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Uint16:
+			intValues := listValues.(*array.Uint16).Uint16Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Uint32:
+			intValues := listValues.(*array.Uint32).Uint32Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Uint64:
+			intValues := listValues.(*array.Uint64).Uint64Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Int8:
+			intValues := listValues.(*array.Int8).Int8Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Int16:
+			intValues := listValues.(*array.Int16).Int16Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Int32:
+			intValues := listValues.(*array.Int32).Int32Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		case *array.Int64:
+			intValues := listValues.(*array.Int64).Int64Values()
+			var innerValues []interface{}
+			for _, v := range intValues {
+				innerValues = append(innerValues, v)
+			}
+			out = append(out, innerValues)
+		default:
+			panic(fmt.Sprintf("unhandled fixedSizeList value type: %T", listValues))
+		}
+	case *array.Struct:
+		values := arr.(*array.Struct)
+		out = append(out, values)
+	default:
+		panic(fmt.Sprintf("unhandled array value type: %T", arr))
+	}
+
+	return out
+}
