@@ -17,7 +17,7 @@ package rai
 import (
 	"time"
 
-	"github.com/relationalai/rai-sdk-go/protos/generated"
+	"github.com/relationalai/rai-sdk-go/rai/pb"
 )
 
 // REST API v1
@@ -303,6 +303,6 @@ type TransactionAsyncResult struct {
 	GotCompleteResult bool
 	Transaction       TransactionAsyncResponse
 	Results           []ArrowRelation
-	Metadata          generated.MetadataInfo
+	Metadata          pb.MetadataInfo
 	Problems          []interface{}
 }
