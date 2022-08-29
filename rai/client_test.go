@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/relationalai/rai-sdk-go/protos/generated"
+	"github.com/relationalai/rai-sdk-go/rai/pb"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -337,7 +337,7 @@ func TestExecuteAsync(t *testing.T) {
 
 	assert.Equal(t, rsp.Results[0].Table, expectedResults[0].Table)
 
-	var expectedMetadata generated.MetadataInfo
+	var expectedMetadata pb.MetadataInfo
 	data, _ := os.ReadFile("./metadata.pb")
 	proto.Unmarshal(data, &expectedMetadata)
 
