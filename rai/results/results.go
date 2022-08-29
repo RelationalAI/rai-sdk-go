@@ -129,6 +129,8 @@ func mapPrimitiveValue(val *pb.PrimitiveValue) interface{} {
 		return string(val.Value.(*pb.PrimitiveValue_StringVal).StringVal)
 	case *pb.PrimitiveValue_CharVal:
 		return val.Value.(*pb.PrimitiveValue_CharVal).CharVal
+	case *pb.PrimitiveValue_BoolVal:
+		return val.Value.(*pb.PrimitiveValue_BoolVal).BoolVal
 	case *pb.PrimitiveValue_Int8Val:
 		return val.Value.(*pb.PrimitiveValue_Int8Val).Int8Val
 	case *pb.PrimitiveValue_Int16Val:
@@ -149,6 +151,13 @@ func mapPrimitiveValue(val *pb.PrimitiveValue) interface{} {
 		return val.Value.(*pb.PrimitiveValue_Uint64Val).Uint64Val
 	case *pb.PrimitiveValue_Uint128Val:
 		return []uint64{val.Value.(*pb.PrimitiveValue_Uint128Val).Uint128Val.Lowbits, val.Value.(*pb.PrimitiveValue_Uint128Val).Uint128Val.Highbits}
+	case *pb.PrimitiveValue_Float16Val:
+		return val.Value.(*pb.PrimitiveValue_Float16Val).Float16Val
+	case *pb.PrimitiveValue_Float32Val:
+		return val.Value.(*pb.PrimitiveValue_Float32Val).Float32Val
+	case *pb.PrimitiveValue_Float64Val:
+		return val.Value.(*pb.PrimitiveValue_Float64Val).Float64Val
+
 	default:
 		panic(fmt.Sprintf("unhandled metadata primitive value %T", val.Value))
 	}
@@ -160,9 +169,11 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 		reltype.ConstantType.RelType != nil {
 
 		typeDef, err := getColDefFromProtobuf(reltype.ConstantType.RelType)
+
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
+		fmt.Println(typeDef["type"])
 		if typeDef["type"] != "ValueType" {
 			var values []interface{}
 			for _, arg := range reltype.ConstantType.Value.Arguments {
@@ -178,7 +189,7 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 			}
 
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 
 			// add value to typeDef
@@ -229,6 +240,8 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 			return _unmarshall(`{"type":"Float32"}`)
 		case pb.PrimitiveType_FLOAT_64:
 			return _unmarshall(`{"type":"Float64"}`)
+		default:
+			panic(fmt.Sprintln("unhandled rel primitive type %v", reltype.PrimitiveType))
 		}
 	}
 
@@ -249,8 +262,7 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 			"typeDefs": typeDefs,
 		}
 
-		x, _ := mapValueType(typeDef)
-		return x, nil
+		return mapValueType(typeDef)
 	}
 
 	return _unmarshall(`{"type":"Unknown"}`)
@@ -284,16 +296,10 @@ func NewResultTable(relation rai.ArrowRelation) *ResultTable {
 	rs := new(ResultTable)
 	rs.RelationID = relation.RelationID
 	rs.Record = relation.Table
-
-	// case json metadata
-	//rs.ColDefs = getColDefs(rs.RelationID)
-	//fmt.Println("==> colDefs from metadata.json: ", rs.ColDefs)
-	//fmt.Println(getColDefsFromProtobuf(relation.Metadata))
 	rs.ColDefs = getColDefsFromProtobuf(relation.Metadata)
-	//for _, colDef := range rs.ColDefs {
-	//	fmt.Println(colDef.Metadata)
-	//	fmt.Println(colDef.TypeDef)
-	//}
+	// for _, colDef := range rs.ColDefs {
+	// 	fmt.Println(colDef.TypeDef)
+	// }
 	return rs
 }
 
@@ -354,12 +360,25 @@ func (r *ResultTable) ToArrayRow() ([][]interface{}, error) {
 	}
 
 	keys := sortedMapKeys(m)
-	for i := 0; i < int(r.RowsCount()); i++ {
-		var row []interface{}
-		for _, k := range keys {
-			row = append(row, m[k][i])
+
+	// for i := 0; i < int(r.RowsCount()); i++ {
+	// 	var row []interface{}
+	// 	for _, k := range keys {
+	// 		row = append(row, m[k][i])
+	// 	}
+
+	// 	out = append(out, row)
+	// }
+
+	if len(keys) > 0 {
+		for i := 0; i < len(m[keys[0]]); i++ {
+			var row []interface{}
+			for _, k := range keys {
+				row = append(row, m[k][i])
+			}
+
+			out = append(out, row)
 		}
-		out = append(out, row)
 	}
 
 	return out, nil
@@ -432,13 +451,42 @@ func (r *ResultTable) Get(index int) ([]interface{}, error) {
 func (r *ResultTable) Values() ([][]interface{}, error) {
 	var out [][]interface{}
 
-	for i := 0; i < int(r.RowsCount()); i++ {
-		v, err := r.Get(i)
+	if isFullySpecialized(r.ColDefs) {
+		var rows []interface{}
+		for _, colDef := range r.ColDefs {
+			v, err := convertValue(colDef.TypeDef, nil)
+			if err != nil {
+				return out, nil
+			}
+
+			rows = append(rows, v)
+		}
+
+		out = append(out, rows)
+	}
+
+	arr, err := r.ToArrayRow()
+	if err != nil {
+		return nil, nil
+	}
+
+	for _, value := range arr {
+		v, err := arrowRowToValues(value, r.ColDefs)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, v)
 	}
+
+	// for i := 0; i < int(r.RowsCount()); i++ {
+	// 	v, err := r.Get(i)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	out = append(out, v)
+	// }
+
 	return out, nil
 }
 

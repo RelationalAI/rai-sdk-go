@@ -31,8 +31,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const UNIXEPOCH = 62135683200000
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
+const unixEPOCH = 62135683200000
+const millisPerDay = 24 * 60 * 60 * 1000
 const decimalsRegex = "^FixedPointDecimals.FixedDecimal{Int([0-9]+), ([0-9]+)}$"
 const rationalRegEx = "^Rational{Int([0-9]+)}$"
 
@@ -47,10 +47,10 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 	case "Bool":
 		return value, nil
 	case "DateTime":
-		sec, dec := math.Modf(float64(value.(int64)-UNIXEPOCH) / 1000.0)
+		sec, dec := math.Modf(float64(value.(int64)-unixEPOCH) / 1000.0)
 		return time.Unix(int64(sec), int64(dec*(1e9))).Format(time.RFC3339), nil
 	case "Date":
-		ms := int64(value.(int64)*MILLISECONDS_PER_DAY - UNIXEPOCH)
+		ms := int64(value.(int64)*millisPerDay - unixEPOCH)
 		return time.UnixMilli(ms).Format("2006-02-01"), nil
 	case "Month":
 		return time.Month(value.(int64)), nil
@@ -77,48 +77,73 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 	case "FilePos":
 		return value.(int64), nil
 	case "Hash":
-		return uint128ToMathInt128(value.([]interface{})), nil
+		return uint128ToMathInt128(value), nil
 	case "UInt8":
-		return value.(uint8), nil
+		return value, nil
 	case "UInt16":
-		return value.(uint16), nil
+		return value, nil
 	case "UInt32":
-		return value.(uint32), nil
+		return value, nil
 	case "UInt64":
-		return value.(uint64), nil
+		return value, nil
 	case "UInt128":
-		return uint128ToMathInt128(value.([]interface{})), nil
+		return uint128ToMathInt128(value), nil
 	case "Int8":
-		return value.(int8), nil
+		return value, nil
 	case "Int16":
-		return value.(int16), nil
+		return value, nil
 	case "Int32":
-		return value.(int32), nil
+		return value, nil
 	case "Int64":
-		return value.(int64), nil
+		return value, nil
 	case "Int128":
-		return int128ToMathInt128(value.([]interface{})), nil
+		return int128ToMathInt128(value), nil
 	case "Float16":
-		v := value.(float16.Num)
-		return v.Float32(), nil
+		switch value.(type) {
+		case float16.Num:
+			v := value.(float16.Num)
+			return v.Float32(), nil
+		case float32:
+			return value, nil
+		default:
+			panic(fmt.Sprintf("unhandled Float16 type conversion %T", value))
+		}
 	case "Float32":
 		return float32(value.(float32)), nil
 	case "Float64":
 		return float64(value.(float64)), nil
 	case "Decimal16":
-		v := int64(value.(int16))
-		exp, err := strconv.Atoi(typeDef["places"].(string))
-		return decimal.New(v, -int32(exp)), err
+		switch value.(type) {
+		case int16:
+			v := int64(value.(int16))
+			exp, err := strconv.Atoi(typeDef["places"].(string))
+			return decimal.New(v, -int32(exp)), err
+		case int32:
+			v := int64(value.(int32))
+			exp, err := strconv.Atoi(typeDef["places"].(string))
+			return decimal.New(v, -int32(exp)), err
+		default:
+			panic(fmt.Sprintf("unhandled Decimal16 type conversion %T", value))
+		}
 	case "Decimal32":
-		v := int64(value.(int32))
-		exp, err := strconv.Atoi(typeDef["places"].(string))
-		return decimal.New(v, -int32(exp)), err
+		switch value.(type) {
+		case int:
+			v := int64(value.(int))
+			exp, err := strconv.Atoi(typeDef["places"].(string))
+			return decimal.New(v, -int32(exp)), err
+		case int32:
+			v := int64(value.(int32))
+			exp, err := strconv.Atoi(typeDef["places"].(string))
+			return decimal.New(v, -int32(exp)), err
+		default:
+			panic(fmt.Sprintf("unhandled Decimal32 type conversion %T", value))
+		}
 	case "Decimal64":
 		v := int64(value.(int64))
 		exp, err := strconv.Atoi(typeDef["places"].(string))
 		return decimal.New(v, -int32(exp)), err
 	case "Decimal128":
-		v := int128ToMathInt128(value.([]interface{}))
+		v := int128ToMathInt128(value)
 		exp, err := strconv.Atoi(typeDef["places"].(string))
 		// FixMe: decimals doesn't support big.Int
 		return decimal.New(v.Int64(), -int32(exp)), err
@@ -144,6 +169,45 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		v2 := int128ToMathInt128(v[2:4])
 		// FIXME: big.Rat doesn't support big.Int
 		return big.NewRat(v1.Int64(), v2.Int64()), nil
+	case "ValueType":
+		var physicalTypeDefs []map[string]interface{}
+		for _, tp := range typeDef["typeDefs"].([]interface{}) {
+			if tp.(map[string]interface{})["type"] != "Constant" {
+				physicalTypeDefs = append(physicalTypeDefs, tp.(map[string]interface{}))
+			}
+		}
+
+		physicalIndex := -1
+
+		var values []interface{}
+		for _, tp := range typeDef["typeDefs"].([]interface{}) {
+			if tp.(map[string]interface{})["type"] == "Constant" {
+				v, err := convertValue(tp.(map[string]interface{}), nil)
+				if err != nil {
+					return nil, err
+				}
+				values = append(values, v)
+			} else {
+				physicalIndex++
+				vx, ok := value.([]interface{})
+				if ok {
+					v, err := convertValue(tp.(map[string]interface{}), vx[physicalIndex])
+					if err != nil {
+						return values, err
+					}
+					values = append(values, v)
+				} else {
+					vx := []interface{}{value}
+					v, err := convertValue(tp.(map[string]interface{}), vx[physicalIndex])
+					if err != nil {
+						return values, err
+					}
+					values = append(values, v)
+				}
+
+			}
+		}
+		return values, nil
 
 	default:
 		panic(fmt.Errorf("unhandled value type %v", typeDef["type"]))
@@ -152,25 +216,54 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 }
 
 // FIXME: can't handle negative values
-func int128ToMathInt128(tuple []interface{}) *big.Int {
-	big := new(big.Int).SetBits(
-		[]big.Word{
-			big.Word(tuple[0].(uint64)),
-			big.Word(tuple[1].(uint64)),
-		},
-	)
-
-	return big
+func int128ToMathInt128(tuple interface{}) *big.Int {
+	switch tuple.(type) {
+	case []interface{}:
+		t1 := tuple.([]interface{})[0]
+		t2 := tuple.([]interface{})[1]
+		return new(big.Int).SetBits(
+			[]big.Word{
+				big.Word(t1.(uint64)),
+				big.Word(t2.(uint64)),
+			},
+		)
+	case []uint64:
+		t1 := tuple.([]uint64)[0]
+		t2 := tuple.([]uint64)[1]
+		return new(big.Int).SetBits(
+			[]big.Word{
+				big.Word(t1),
+				big.Word(t2),
+			},
+		)
+	default:
+		panic(fmt.Sprintf("unhandled tuple type %T", tuple))
+	}
 }
 
-func uint128ToMathInt128(tuple []interface{}) *big.Int {
-	big := new(big.Int).SetBits(
-		[]big.Word{
-			big.Word(tuple[0].(uint64)),
-			big.Word(tuple[1].(uint64)),
-		},
-	)
-	return big
+func uint128ToMathInt128(tuple interface{}) *big.Int {
+	switch tuple.(type) {
+	case []interface{}:
+		t1 := tuple.([]interface{})[0]
+		t2 := tuple.([]interface{})[1]
+		return new(big.Int).SetBits(
+			[]big.Word{
+				big.Word(t1.(uint64)),
+				big.Word(t2.(uint64)),
+			},
+		)
+	case []uint64:
+		t1 := tuple.([]uint64)[0]
+		t2 := tuple.([]uint64)[1]
+		return new(big.Int).SetBits(
+			[]big.Word{
+				big.Word(t1),
+				big.Word(t2),
+			},
+		)
+	default:
+		panic(fmt.Sprintf("unhandled tuple type %T", tuple))
+	}
 }
 
 func _unmarshall(data string) (map[string]interface{}, error) {
@@ -567,7 +660,12 @@ func arrowArrayToArray(arr arrow.Array) []interface{} {
 		}
 	case *array.Struct:
 		values := arr.(*array.Struct)
-		out = append(out, values)
+		var inner []interface{}
+		for i := 0; i < values.NumField(); i++ {
+			inner = append(inner, arrowArrayToArray(values.Field(i))...)
+		}
+		out = append(out, inner)
+
 	default:
 		panic(fmt.Sprintf("unhandled array value type: %T", arr))
 	}
