@@ -28,7 +28,6 @@ import (
 )
 
 func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error) {
-	fmt.Println(typeDef)
 	var relNames []map[string]interface{}
 	for _, typeDef := range typeDef["typeDefs"].([]interface{})[0:3] {
 		if typeDef.(map[string]interface{})["type"] == "Constant" &&
@@ -117,11 +116,39 @@ func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error
 	return typeDef, nil
 }
 
-func unflattenConstantValue(typeDef map[string]interface{}, value []*pb.PrimitiveValue) {
+func walkTypeDefs(typeDef map[string]interface{}, values []interface{}) (interface{}, []interface{}) {
+	switch typeDef["type"] {
+	case "ValueType":
+		v := values
+		var r interface{}
+		var res []interface{}
+		for _, tp := range typeDef["typeDefs"].([]interface{}) {
+			r, v = walkTypeDefs(tp.(map[string]interface{}), v)
+			res = append(res, r)
+		}
+		return res, nil
+	case "Rational8", "Rational16", "Rational32", "Rational64", "Rational128":
+		return values[0:2], values[2:]
+	default:
+		if typeDef["type"] != "Constant" {
+			return values[0:1][0], values[1:]
+		}
+	}
+	return nil, nil
+}
+
+func unflattenConstantValue(typeDef map[string]interface{}, value []*pb.PrimitiveValue) []interface{} {
 	var values []interface{}
 	for _, arg := range value {
 		values = append(values, mapPrimitiveValue(arg))
 	}
+
+	res, v := walkTypeDefs(typeDef, values)
+	if v != nil {
+		panic("Left values from walkTypeDefs: something went wrong !")
+	}
+
+	return res.([]interface{})
 }
 
 func mapPrimitiveValue(val *pb.PrimitiveValue) interface{} {
@@ -200,8 +227,14 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 				"value": typeDef,
 			}, nil
 		} else {
-			panic("==> not handled")
-			//unflattenConstantValue(typeDef, reltype.ConstantType.Value.Arguments)
+			value := unflattenConstantValue(typeDef, reltype.ConstantType.Value.Arguments)
+			cv, err := convertValue(typeDef, value)
+
+			typeDef["value"] = cv
+			return map[string]interface{}{
+				"type":  "Constant",
+				"value": typeDef,
+			}, err
 		}
 	}
 
