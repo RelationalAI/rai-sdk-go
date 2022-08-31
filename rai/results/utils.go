@@ -43,7 +43,7 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 	case "String":
 		return value, nil
 	case "Char":
-		return string(value.(uint32)), nil
+		return fmt.Sprintf("%c", int(value.(uint32))), nil
 	case "Bool":
 		return value, nil
 	case "DateTime":
@@ -51,7 +51,7 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		return time.Unix(int64(sec), int64(dec*(1e9))).Format(time.RFC3339), nil
 	case "Date":
 		ms := int64(value.(int64)*millisPerDay - unixEPOCH)
-		return time.UnixMilli(ms).Format("2006-02-01"), nil
+		return time.UnixMilli(ms).Format("2006-01-02"), nil
 	case "Month":
 		return time.Month(value.(int64)), nil
 	case "Year":
@@ -671,4 +671,13 @@ func arrowArrayToArray(arr arrow.Array) []interface{} {
 	}
 
 	return out
+}
+
+func strToBig(s string) *big.Int {
+	b := new(big.Int)
+	if v, ok := b.SetString(s, 10); ok {
+		return v
+	} else {
+		return nil
+	}
 }

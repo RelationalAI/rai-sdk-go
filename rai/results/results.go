@@ -28,6 +28,7 @@ import (
 )
 
 func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error) {
+	fmt.Println(typeDef)
 	var relNames []map[string]interface{}
 	for _, typeDef := range typeDef["typeDefs"].([]interface{})[0:3] {
 		if typeDef.(map[string]interface{})["type"] == "Constant" &&
@@ -173,7 +174,7 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(typeDef["type"])
+
 		if typeDef["type"] != "ValueType" {
 			var values []interface{}
 			for _, arg := range reltype.ConstantType.Value.Arguments {
@@ -199,8 +200,8 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 				"value": typeDef,
 			}, nil
 		} else {
-			fmt.Println("====> impelement else, look for me :D")
-			unflattenConstantValue(typeDef, reltype.ConstantType.Value.Arguments)
+			panic("==> not handled")
+			//unflattenConstantValue(typeDef, reltype.ConstantType.Value.Arguments)
 		}
 	}
 
@@ -241,7 +242,7 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 		case pb.PrimitiveType_FLOAT_64:
 			return _unmarshall(`{"type":"Float64"}`)
 		default:
-			panic(fmt.Sprintln("unhandled rel primitive type %v", reltype.PrimitiveType))
+			panic(fmt.Sprintf("unhandled rel primitive type %v", reltype.PrimitiveType))
 		}
 	}
 
@@ -370,15 +371,13 @@ func (r *ResultTable) ToArrayRow() ([][]interface{}, error) {
 	// 	out = append(out, row)
 	// }
 
-	if len(keys) > 0 {
-		for i := 0; i < len(m[keys[0]]); i++ {
-			var row []interface{}
-			for _, k := range keys {
-				row = append(row, m[k][i])
-			}
-
-			out = append(out, row)
+	for i := 0; i < int(r.RowsCount()); i++ {
+		var row []interface{}
+		for _, k := range keys {
+			row = append(row, m[k][i])
 		}
+
+		out = append(out, row)
 	}
 
 	return out, nil
