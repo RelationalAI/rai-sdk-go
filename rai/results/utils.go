@@ -595,69 +595,7 @@ func arrowArrayToArray(arr arrow.Array) []interface{} {
 		}
 	case *array.FixedSizeList:
 		listValues := arr.(*array.FixedSizeList).ListValues()
-		switch listValues.(type) {
-		case *array.FixedSizeList:
-			listValues := arr.(*array.FixedSizeList).ListValues()
-			out = append(out, arrowArrayToArray(listValues))
-		case *array.Uint8:
-			intValues := listValues.(*array.Uint8).Uint8Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Uint16:
-			intValues := listValues.(*array.Uint16).Uint16Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Uint32:
-			intValues := listValues.(*array.Uint32).Uint32Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Uint64:
-			intValues := listValues.(*array.Uint64).Uint64Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Int8:
-			intValues := listValues.(*array.Int8).Int8Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Int16:
-			intValues := listValues.(*array.Int16).Int16Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Int32:
-			intValues := listValues.(*array.Int32).Int32Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		case *array.Int64:
-			intValues := listValues.(*array.Int64).Int64Values()
-			var innerValues []interface{}
-			for _, v := range intValues {
-				innerValues = append(innerValues, v)
-			}
-			out = append(out, innerValues)
-		default:
-			panic(fmt.Sprintf("unhandled fixedSizeList value type: %T", listValues))
-		}
+		out = append(out, arrowArrayToArray(listValues))
 	case *array.Struct:
 		values := arr.(*array.Struct)
 		var inner []interface{}
