@@ -148,13 +148,35 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		// FixMe: decimals doesn't support big.Int
 		return decimal.New(v.Int64(), -int32(exp)), err
 	case "Rational8":
-		v1 := int64(value.([]interface{})[0].(int8))
-		v2 := int64(value.([]interface{})[1].(int8))
-		return big.NewRat(v1, v2), nil
+		v1 := value.([]interface{})[0]
+		v2 := value.([]interface{})[1]
+		switch v1.(type) {
+		case int8:
+			v1 = int64(v1.(int8))
+			v2 = int64(v2.(int8))
+			return big.NewRat(v1.(int64), v2.(int64)), nil
+		case int32:
+			v1 = int64(v1.(int32))
+			v2 = int64(v2.(int32))
+			return big.NewRat(v1.(int64), v2.(int64)), nil
+		default:
+			panic(fmt.Sprintf("unhandled Rational8 type conversion %T", v1))
+		}
 	case "Rational16":
-		v1 := int64(value.([]interface{})[0].(int16))
-		v2 := int64(value.([]interface{})[1].(int16))
-		return big.NewRat(v1, v2), nil
+		v1 := value.([]interface{})[0]
+		v2 := value.([]interface{})[1]
+		switch v1.(type) {
+		case int16:
+			v1 = int64(v1.(int16))
+			v2 = int64(v2.(int16))
+			return big.NewRat(v1.(int64), v2.(int64)), nil
+		case int32:
+			v1 = int64(v1.(int32))
+			v2 = int64(v2.(int32))
+			return big.NewRat(v1.(int64), v2.(int64)), nil
+		default:
+			panic(fmt.Sprintf("unhandled Rational8 type conversion %T", v1))
+		}
 	case "Rational32":
 		v1 := int64(value.([]interface{})[0].(int32))
 		v2 := int64(value.([]interface{})[1].(int32))
@@ -170,12 +192,12 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		// FIXME: big.Rat doesn't support big.Int
 		return big.NewRat(v1.Int64(), v2.Int64()), nil
 	case "ValueType":
-		var physicalTypeDefs []map[string]interface{}
-		for _, tp := range typeDef["typeDefs"].([]interface{}) {
-			if tp.(map[string]interface{})["type"] != "Constant" {
-				physicalTypeDefs = append(physicalTypeDefs, tp.(map[string]interface{}))
-			}
-		}
+		// var physicalTypeDefs []map[string]interface{}
+		// for _, tp := range typeDef["typeDefs"].([]interface{}) {
+		// 	if tp.(map[string]interface{})["type"] != "Constant" {
+		// 		physicalTypeDefs = append(physicalTypeDefs, tp.(map[string]interface{}))
+		// 	}
+		// }
 
 		physicalIndex := -1
 
