@@ -32,7 +32,7 @@ type ColumnDef struct {
 }
 
 type ResultColumn struct {
-	Array   arrow.Array
+	Array   []interface{}
 	TypeDef map[string]interface{}
 	Length  int
 }

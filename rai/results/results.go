@@ -15,7 +15,6 @@
 package results
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -25,11 +24,16 @@ import (
 	"github.com/apache/arrow/go/v9/arrow/array"
 	"github.com/relationalai/rai-sdk-go/rai"
 	"github.com/relationalai/rai-sdk-go/rai/pb"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error) {
+	slice := 3
+	if len(typeDef["typeDefs"].([]interface{})) < 3 {
+		slice = len(typeDef["typeDefs"].([]interface{}))
+	}
 	var relNames []map[string]interface{}
-	for _, typeDef := range typeDef["typeDefs"].([]interface{})[0:3] {
+	for _, typeDef := range typeDef["typeDefs"].([]interface{})[0:slice] {
 		if typeDef.(map[string]interface{})["type"] == "Constant" &&
 			typeDef.(map[string]interface{})["value"].(map[string]interface{})["type"] == "String" {
 			relNames = append(relNames, typeDef.(map[string]interface{}))
@@ -331,6 +335,9 @@ func NewResultTable(relation rai.ArrowRelation) *ResultTable {
 	rs.RelationID = relation.RelationID
 	rs.Record = relation.Table
 	rs.ColDefs = getColDefsFromProtobuf(relation.Metadata)
+	fmt.Println(rs.Record)
+	jsonbytes, _ := protojson.Marshal(&relation.Metadata)
+	fmt.Println(string(jsonbytes))
 	// for _, colDef := range rs.ColDefs {
 	// 	fmt.Println(colDef.TypeDef)
 	// }
@@ -425,31 +432,55 @@ func (r *ResultTable) TypeDefs() []map[string]interface{} {
 	return out
 }
 
-func (r *ResultTable) RowsCount() int64 {
-	return r.Record.NumRows()
+func (r *ResultTable) RowsCount() int {
+	return int(r.Record.NumRows())
 }
 
 func (r *ResultTable) ColumnsCount() int {
 	return len(r.ColDefs)
 }
 
-func (r *ResultTable) ColmunAt(index int) ResultColumn {
-	resCol := new(ResultColumn)
-	colDef := r.ColDefs[index]
-	arr := r.Record.Column(colDef.ArrowIndex)
-
-	var length int
-	if isFullySpecialized(r.ColDefs) {
-		length = 1
-	} else {
-		length = arr.Len()
+func (r *ResultTable) Columns() ([]ResultColumn, error) {
+	var out []ResultColumn
+	values, err := r.Values()
+	if err != nil {
+		return out, err
 	}
 
-	resCol.Array = arr
-	resCol.Length = length
-	resCol.TypeDef = colDef.TypeDef
+	i := 0
+	iter := Zip(values...)
+	for tuple := iter(); tuple != nil; tuple = iter() {
+		resultColumn := new(ResultColumn)
+		var arr []interface{}
+		for _, v := range tuple {
+			arr = append(arr, v)
+		}
+		resultColumn.Array = arr
+		if isFullySpecialized(r.ColDefs) {
+			resultColumn.Length = 1
+		} else {
+			resultColumn.Length = len(arr)
+		}
 
-	return *resCol
+		resultColumn.TypeDef = r.ColDefs[i].TypeDef
+		out = append(out, *resultColumn)
+		i++
+	}
+
+	return out, nil
+}
+
+func (r *ResultTable) ColmunAt(index int) ResultColumn {
+	if index >= r.ColumnsCount() {
+		panic(fmt.Sprintf("index out of range [%d] with length %d", index, r.ColumnsCount()))
+	}
+
+	column, err := r.Columns()
+	if err != nil {
+		panic(err)
+	}
+
+	return column[index]
 }
 
 func (r *ResultTable) Get(index int) ([]interface{}, error) {
@@ -557,7 +588,12 @@ func (r *ResultTable) Print() {
 
 func (r *ResultTable) Physical() *ResultTable {
 	out := new(ResultTable)
-	out.ColDefs = r.ColDefs[1 : len(r.ColDefs)-1]
+	//out.ColDefs = r.ColDefs[1 : len(r.ColDefs)-1]
+	for _, colDef := range r.ColDefs {
+		if colDef.TypeDef["type"] != "Constant" {
+			out.ColDefs = append(out.ColDefs, colDef)
+		}
+	}
 	out.Record = r.Record
 	return out
 }
@@ -574,25 +610,7 @@ func (r *ResultColumn) Values() ([]interface{}, error) {
 		return out, nil
 	}
 
-	b, err := r.Array.MarshalJSON()
-	if err != nil {
-		return out, err
-	}
-
-	var arr []interface{}
-	err = json.Unmarshal(b, &arr)
-	if err != nil {
-		return out, nil
-	}
-
-	for _, elem := range arr {
-		v, err := convertValue(r.TypeDef, elem)
-		if err != nil {
-			return out, err
-		}
-
-		out = append(out, v)
-	}
+	out = append(out, r.Array...)
 	return out, nil
 }
 
