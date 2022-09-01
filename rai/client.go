@@ -1299,9 +1299,11 @@ func (c *Client) Execute(
 	}
 
 	txn, _ := c.GetTransaction(id)
-	results, _ := c.GetTransactionResults(id)
+	result, _ := c.GetTransactionResults(id)
 	metadata, _ := c.GetTransactionMetadata(id)
 	problems, _ := c.GetTransactionProblems(id)
+
+	results := makeArrowRelations(result, metadata)
 
 	return &TransactionAsyncResult{true, txn.Transaction, results, metadata, problems}, nil
 }
@@ -1320,8 +1322,8 @@ func (c *Client) GetTransaction(id string) (*TransactionAsyncSingleResponse, err
 	return &result, err
 }
 
-func (c *Client) GetTransactionResults(id string) ([]ArrowRelation, error) {
-	var result []ArrowRelation
+func (c *Client) GetTransactionResults(id string) ([]ArrowResult, error) {
+	var result []ArrowResult
 	err := c.Get(makePath(PathTransactions, id, "results"), nil, nil, &result)
 
 	return result, err

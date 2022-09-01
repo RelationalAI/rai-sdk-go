@@ -479,32 +479,32 @@ func (r *ResultTable) ColmunAt(index int) ResultColumn {
 	return column[index]
 }
 
-func (r *ResultTable) Get(index int) ([]interface{}, error) {
+func (r *ResultTable) Get(index int) []interface{} {
 	if isFullySpecialized(r.ColDefs) && index == 0 {
 		var row []interface{}
 		for _, colDef := range r.ColDefs {
 			v, err := convertValue(colDef.TypeDef, nil)
 			if err != nil {
-				return row, err
+				panic(err)
 			}
 
 			row = append(row, v)
 		}
-		return row, nil
+		return row
 	}
 
 	arr, err := r.ToArrayRow()
 
 	if err != nil {
-		return make([]interface{}, 0), nil
+		panic(err)
 	}
 
 	arrowRow, err := arrowRowToValues(arr[index], r.ColDefs)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return arrowRow, nil
+	return arrowRow
 }
 
 func (r *ResultTable) Values() ([][]interface{}, error) {

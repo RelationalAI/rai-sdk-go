@@ -293,8 +293,7 @@ func TestValues(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, values, expectedValues)
 
-	v, err := table.Get(2)
-	assert.Nil(t, err)
+	v := table.Get(2)
 	assert.Equal(t, v, expectedValues[2])
 
 	table.Record.Release()

@@ -32,6 +32,24 @@ type testInput struct {
 	Values      []interface{}
 }
 
+func TestConvertValue(t *testing.T) {
+	for _, testInput := range testInputs {
+		typeDef := make(map[string]interface{})
+
+		typeDef["type"] = testInput.Type
+		if testInput.Places != nil {
+			typeDef["places"] = testInput.Places
+		}
+
+		for i, val := range testInput.ArrowValues {
+			v, err := convertValue(typeDef, val)
+			assert.Nil(t, err)
+			assert.Equal(t, v, testInput.Values[i])
+			t.Logf("test: %s, OK", testInput.Type)
+		}
+	}
+}
+
 var testInputs = []testInput{
 	{
 		"String",
@@ -368,22 +386,4 @@ var testInputs = []testInput{
 	// 	[]interface{}{[]interface{}{[]interface{}{uint64(123456789101112313), uint64(0), uint64(9123456789101112313), uint64(0)}}},
 	// 	[]interface{}{big.NewRat(strToBig("9123456789101112313").Int64(), strToBig("123456789101112313").Int64())},
 	// },
-}
-
-func TestConvertValue(t *testing.T) {
-	for _, testInput := range testInputs {
-		typeDef := make(map[string]interface{})
-
-		typeDef["type"] = testInput.Type
-		if testInput.Places != nil {
-			typeDef["places"] = testInput.Places
-		}
-
-		for i, val := range testInput.ArrowValues {
-			v, err := convertValue(typeDef, val)
-			assert.Nil(t, err)
-			assert.Equal(t, v, testInput.Values[i])
-			t.Logf("test: %s, OK", testInput.Type)
-		}
-	}
 }
