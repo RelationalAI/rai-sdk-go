@@ -24,7 +24,6 @@ import (
 	"github.com/apache/arrow/go/v9/arrow/array"
 	"github.com/relationalai/rai-sdk-go/rai"
 	"github.com/relationalai/rai-sdk-go/rai/pb"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error) {
@@ -335,9 +334,6 @@ func NewResultTable(relation rai.ArrowRelation) *ResultTable {
 	rs.RelationID = relation.RelationID
 	rs.Record = relation.Table
 	rs.ColDefs = getColDefsFromProtobuf(relation.Metadata)
-	fmt.Println(rs.Record)
-	jsonbytes, _ := protojson.Marshal(&relation.Metadata)
-	fmt.Println(string(jsonbytes))
 	// for _, colDef := range rs.ColDefs {
 	// 	fmt.Println(colDef.TypeDef)
 	// }
