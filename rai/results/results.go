@@ -106,8 +106,8 @@ func (r *ResultTable) ToArrayRow() ([][]interface{}, error) {
 	return out, nil
 }
 
-func (r *ResultTable) TypeDefs() []map[string]interface{} {
-	var out []map[string]interface{}
+func (r *ResultTable) TypeDefs() []TypeDef {
+	var out []TypeDef
 	for _, colDef := range r.ColDefs {
 		out = append(out, colDef.TypeDef)
 	}
@@ -244,11 +244,11 @@ func (r *ResultTable) Print() {
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', tabwriter.Debug|tabwriter.AlignRight)
 
 	for _, m := range r.ColDefs {
-		if m.TypeDef["type"] == "Constant" {
-			value := m.TypeDef["value"].(map[string]interface{})
-			headers = append(headers, value["type"].(string))
+		if m.TypeDef.Type == "Constant" {
+			value := m.TypeDef.Value.(TypeDef)
+			headers = append(headers, value.Type)
 		} else {
-			headers = append(headers, m.TypeDef["type"].(string))
+			headers = append(headers, m.TypeDef.Type)
 		}
 	}
 
@@ -266,7 +266,7 @@ func (r *ResultTable) Physical() *ResultTable {
 	out := new(ResultTable)
 	//out.ColDefs = r.ColDefs[1 : len(r.ColDefs)-1]
 	for _, colDef := range r.ColDefs {
-		if colDef.TypeDef["type"] != "Constant" {
+		if colDef.TypeDef.Type != "Constant" {
 			out.ColDefs = append(out.ColDefs, colDef)
 		}
 	}
@@ -276,7 +276,7 @@ func (r *ResultTable) Physical() *ResultTable {
 
 func (r *ResultColumn) Values() ([]interface{}, error) {
 	var out []interface{}
-	if r.TypeDef["type"] == "Constant" {
+	if r.TypeDef.Type == "Constant" {
 		v, err := convertValue(r.TypeDef, nil)
 		if err != nil {
 			return out, nil

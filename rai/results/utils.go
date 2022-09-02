@@ -19,9 +19,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -34,94 +32,58 @@ import (
 
 const unixEPOCH = 62135683200000
 const millisPerDay = 24 * 60 * 60 * 1000
-const decimalsRegex = "^FixedPointDecimals.FixedDecimal{Int([0-9]+), ([0-9]+)}$"
-const rationalRegEx = "^Rational{Int([0-9]+)}$"
 
-func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error) {
+func mapValueType(typeDef TypeDef) (TypeDef, error) {
 	slice := 3
-	if len(typeDef["typeDefs"].([]interface{})) < 3 {
-		slice = len(typeDef["typeDefs"].([]interface{}))
+	if len(typeDef.TypeDefs) < 3 {
+		slice = len(typeDef.TypeDefs)
 	}
-	var relNames []map[string]interface{}
-	for _, typeDef := range typeDef["typeDefs"].([]interface{})[0:slice] {
-		if typeDef.(map[string]interface{})["type"] == "Constant" &&
-			typeDef.(map[string]interface{})["value"].(map[string]interface{})["type"] == "String" {
-			relNames = append(relNames, typeDef.(map[string]interface{}))
+	var relNames []TypeDef
+	for _, typeDef := range typeDef.TypeDefs[0:slice] {
+		if typeDef.Type == "Constant" &&
+			typeDef.Value.(TypeDef).Type == "String" {
+			relNames = append(relNames, *typeDef)
 		}
 	}
 
 	if len(relNames) != 3 ||
-		!(relNames[0]["value"].(map[string]interface{})["value"] == "rel" &&
-			relNames[1]["value"].(map[string]interface{})["value"] == "base") {
+		!(relNames[0].Value.(TypeDef).Value == "rel" &&
+			relNames[1].Value.(TypeDef).Value == "base") {
 		return typeDef, nil
 	}
 
-	standardValueType := relNames[2]["value"].(map[string]interface{})["value"].(string)
+	standardValueType := relNames[2].Value.(TypeDef).Value.(string)
 	switch standardValueType {
-	case "DateTime":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Date":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Year":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Month":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Week":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Day":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Hour":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Minute":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Second":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Millisecond":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Microsecond":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Nanosecond":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "FilePos":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Missing":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
-	case "Hash":
-		return _unmarshall(fmt.Sprintf(`{"type":"%v"}`, standardValueType))
+	case "DateTime", "Date", "Year", "Month", "Week", "Day", "Hour", "Minute", "Second", "Millisecond", "Microsecond", "Nanosecond", "FilePos", "Missing", "Hash":
+		return TypeDef{standardValueType, nil, nil, nil}, nil
 	case "FixedDecimal":
-		typeDefs := typeDef["typeDefs"].([]interface{})
-		td3 := typeDefs[3].(map[string]interface{})
-		td4 := typeDefs[4].(map[string]interface{})
-
-		if len(typeDefs) == 6 &&
-			td3["type"].(string) == "Constant" &&
-			td4["type"].(string) == "Constant" {
-			bits := td3["value"].(map[string]interface{})["value"].(int64)
-			places := td4["value"].(map[string]interface{})["value"].(int64)
+		if len(typeDef.TypeDefs) == 6 &&
+			typeDef.TypeDefs[3].Type == "Constant" &&
+			typeDef.TypeDefs[4].Type == "Constant" {
+			bits := typeDef.TypeDefs[3].Value.(TypeDef).Value.(int64)
+			places := int32(typeDef.TypeDefs[4].Value.(TypeDef).Value.(int64))
 
 			if bits == 16 || bits == 32 || bits == 64 || bits == 128 {
-				return _unmarshall(fmt.Sprintf(`{"type":"Decimal%v", "places":"%v"}`, bits, places))
+				return TypeDef{fmt.Sprintf("Decimal%v", bits), nil, places, nil}, nil
 			}
 
 			break
 		}
 	case "Rational":
 		{
-			typeDefs := typeDef["typeDefs"].([]interface{})
+			typeDefs := typeDef.TypeDefs
 			if len(typeDefs) == 5 {
-				tp := typeDefs[3].(map[string]interface{})
-
-				switch tp["type"] {
+				switch typeDefs[3].Type {
 				case "Int8":
-					return _unmarshall(`{"type":"Rational8"}`)
+					return TypeDef{"Rational8", nil, nil, nil}, nil
 				case "Int16":
-					return _unmarshall(`{"type":"Rational16"}`)
+					return TypeDef{"Rational16", nil, nil, nil}, nil
 				case "Int32":
-					return _unmarshall(`{"type":"Rational32"}`)
+					return TypeDef{"Rational32", nil, nil, nil}, nil
 				case "Int64":
-					return _unmarshall(`{"type":"Rational64"}`)
+					return TypeDef{"Rational64", nil, nil, nil}, nil
 				case "Int128":
-					return _unmarshall(`{"type":"Rational128"}`)
+					return TypeDef{"Rational128", nil, nil, nil}, nil
 				}
 			}
 		}
@@ -130,28 +92,28 @@ func mapValueType(typeDef map[string]interface{}) (map[string]interface{}, error
 	return typeDef, nil
 }
 
-func walkTypeDefs(typeDef map[string]interface{}, values []interface{}) (interface{}, []interface{}) {
-	switch typeDef["type"] {
+func walkTypeDefs(typeDef TypeDef, values []interface{}) (interface{}, []interface{}) {
+	switch typeDef.Type {
 	case "ValueType":
 		v := values
 		var r interface{}
 		var res []interface{}
-		for _, tp := range typeDef["typeDefs"].([]interface{}) {
-			r, v = walkTypeDefs(tp.(map[string]interface{}), v)
+		for _, tp := range typeDef.TypeDefs {
+			r, v = walkTypeDefs(*tp, v)
 			res = append(res, r)
 		}
 		return res, nil
 	case "Rational8", "Rational16", "Rational32", "Rational64", "Rational128":
 		return values[0:2], values[2:]
 	default:
-		if typeDef["type"] != "Constant" {
+		if typeDef.Type != "Constant" {
 			return values[0:1][0], values[1:]
 		}
 	}
 	return nil, nil
 }
 
-func unflattenConstantValue(typeDef map[string]interface{}, value []*pb.PrimitiveValue) []interface{} {
+func unflattenConstantValue(typeDef TypeDef, value []*pb.PrimitiveValue) []interface{} {
 	var values []interface{}
 	for _, arg := range value {
 		values = append(values, mapPrimitiveValue(arg))
@@ -205,18 +167,15 @@ func mapPrimitiveValue(val *pb.PrimitiveValue) interface{} {
 	}
 }
 
-func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) {
-	if reltype.Tag == pb.Kind_CONSTANT_TYPE &&
-		reltype.ConstantType.Value != nil &&
-		reltype.ConstantType.RelType != nil {
-
+func getColDefFromProtobuf(reltype *pb.RelType) (TypeDef, error) {
+	if reltype.Tag == pb.Kind_CONSTANT_TYPE {
 		typeDef, err := getColDefFromProtobuf(reltype.ConstantType.RelType)
 
 		if err != nil {
-			return nil, err
+			return TypeDef{}, err
 		}
 
-		if typeDef["type"] != "ValueType" {
+		if typeDef.Type != "ValueType" {
 			var values []interface{}
 			for _, arg := range reltype.ConstantType.Value.Arguments {
 				values = append(values, mapPrimitiveValue(arg))
@@ -231,89 +190,80 @@ func getColDefFromProtobuf(reltype *pb.RelType) (map[string]interface{}, error) 
 			}
 
 			if err != nil {
-				return nil, err
+				return TypeDef{}, err
 			}
 
 			// add value to typeDef
-			typeDef["value"] = value
-			return map[string]interface{}{
-				"type":  "Constant",
-				"value": typeDef,
-			}, nil
+			typeDef.Value = value
+
+			return TypeDef{"Constant", typeDef, nil, nil}, nil
 		} else {
 			value := unflattenConstantValue(typeDef, reltype.ConstantType.Value.Arguments)
 			cv, err := convertValue(typeDef, value)
 
-			typeDef["value"] = cv
-			return map[string]interface{}{
-				"type":  "Constant",
-				"value": typeDef,
-			}, err
+			typeDef.Value = cv
+			return TypeDef{"Constant", typeDef, nil, nil}, err
 		}
 	}
 
 	if reltype.Tag == pb.Kind_PRIMITIVE_TYPE {
 		switch reltype.PrimitiveType {
 		case pb.PrimitiveType_STRING:
-			return _unmarshall(`{"type": "String"}`)
+			return TypeDef{"String", nil, nil, nil}, nil
 		case pb.PrimitiveType_SYMBOL:
-			return _unmarshall(`{"type": "String"}`)
+			return TypeDef{"String", nil, nil, nil}, nil
 		case pb.PrimitiveType_CHAR:
-			return _unmarshall(`{"type":"Char"}`)
+			return TypeDef{"Char", nil, nil, nil}, nil
 		case pb.PrimitiveType_BOOL:
-			return _unmarshall(`{"type":"Bool"}`)
+			return TypeDef{"Bool", nil, nil, nil}, nil
 		case pb.PrimitiveType_INT_8:
-			return _unmarshall(`{"type":"Int8"}`)
+			return TypeDef{"Int8", nil, nil, nil}, nil
 		case pb.PrimitiveType_INT_16:
-			return _unmarshall(`{"type":"Int16"}`)
+			return TypeDef{"Int16", nil, nil, nil}, nil
 		case pb.PrimitiveType_INT_32:
-			return _unmarshall(`{"type":"Int32"}`)
+			return TypeDef{"Int32", nil, nil, nil}, nil
 		case pb.PrimitiveType_INT_64:
-			return _unmarshall(`{"type":"Int64"}`)
+			return TypeDef{"Int64", nil, nil, nil}, nil
 		case pb.PrimitiveType_INT_128:
-			return _unmarshall(`{"type":"Int128"}`)
+			return TypeDef{"Int128", nil, nil, nil}, nil
 		case pb.PrimitiveType_UINT_8:
-			return _unmarshall(`{"type":"UInt8"}`)
+			return TypeDef{"UInt8", nil, nil, nil}, nil
 		case pb.PrimitiveType_UINT_16:
-			return _unmarshall(`{"type":"UInt16"}`)
+			return TypeDef{"UInt16", nil, nil, nil}, nil
 		case pb.PrimitiveType_UINT_32:
-			return _unmarshall(`{"type":"UInt32"}`)
+			return TypeDef{"UInt32", nil, nil, nil}, nil
 		case pb.PrimitiveType_UINT_64:
-			return _unmarshall(`{"type":"UInt64"}`)
+			return TypeDef{"UInt64", nil, nil, nil}, nil
 		case pb.PrimitiveType_UINT_128:
-			return _unmarshall(`{"type":"UInt128"}`)
+			return TypeDef{"UInt128", nil, nil, nil}, nil
 		case pb.PrimitiveType_FLOAT_16:
-			return _unmarshall(`{"type":"Float16"}`)
+			return TypeDef{"Float16", nil, nil, nil}, nil
 		case pb.PrimitiveType_FLOAT_32:
-			return _unmarshall(`{"type":"Float32"}`)
+			return TypeDef{"Float32", nil, nil, nil}, nil
 		case pb.PrimitiveType_FLOAT_64:
-			return _unmarshall(`{"type":"Float64"}`)
+			return TypeDef{"Float64", nil, nil, nil}, nil
 		default:
 			panic(fmt.Sprintf("unhandled rel primitive type %v", reltype.PrimitiveType))
 		}
 	}
 
-	// check if reltype.ValueType is not empty
 	if reltype.Tag == pb.Kind_VALUE_TYPE {
-		var typeDefs []interface{}
+		var typeDefs []*TypeDef
 		for _, t := range reltype.ValueType.ArgumentTypes {
-			m, err := getColDefFromProtobuf(t)
+			tp, err := getColDefFromProtobuf(t)
 			if err != nil {
 				panic(err)
 			}
 
-			typeDefs = append(typeDefs, m)
+			typeDefs = append(typeDefs, &tp)
 		}
 
-		typeDef := map[string]interface{}{
-			"type":     "ValueType",
-			"typeDefs": typeDefs,
-		}
+		typeDef := TypeDef{"ValueType", nil, nil, typeDefs}
 
 		return mapValueType(typeDef)
 	}
 
-	return _unmarshall(`{"type":"Unknown"}`)
+	return TypeDef{"unknow", nil, nil, nil}, nil
 }
 
 func getColDefsFromProtobuf(relation pb.RelationId) []ColumnDef {
@@ -329,7 +279,7 @@ func getColDefsFromProtobuf(relation pb.RelationId) []ColumnDef {
 		colDef := new(ColumnDef)
 		colDef.TypeDef = typeDef
 		colDef.Metadata = *relType
-		if typeDef["type"] != "Constant" {
+		if typeDef.Type != "Constant" {
 			colDef.ArrowIndex = arrowIndex
 			arrowIndex++
 		}
@@ -340,10 +290,10 @@ func getColDefsFromProtobuf(relation pb.RelationId) []ColumnDef {
 	return colDefs
 }
 
-func convertValue(typeDef map[string]interface{}, value interface{}) (interface{}, error) {
-	switch typeDef["type"] {
+func convertValue(typeDef TypeDef, value interface{}) (interface{}, error) {
+	switch typeDef.Type {
 	case "Constant":
-		return typeDef["value"].(map[string]interface{})["value"], nil
+		return typeDef.Value.(TypeDef).Value, nil
 	case "String":
 		return value, nil
 	case "Char":
@@ -420,12 +370,12 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		switch value.(type) {
 		case int16:
 			v := int64(value.(int16))
-			exp, err := strconv.Atoi(typeDef["places"].(string))
-			return decimal.New(v, -int32(exp)), err
+			exp := typeDef.Places.(int32)
+			return decimal.New(v, -exp), nil
 		case int32:
 			v := int64(value.(int32))
-			exp, err := strconv.Atoi(typeDef["places"].(string))
-			return decimal.New(v, -int32(exp)), err
+			exp := typeDef.Places.(int32)
+			return decimal.New(v, -exp), nil
 		default:
 			panic(fmt.Sprintf("unhandled Decimal16 type conversion %T", value))
 		}
@@ -433,24 +383,24 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		switch value.(type) {
 		case int:
 			v := int64(value.(int))
-			exp, err := strconv.Atoi(typeDef["places"].(string))
-			return decimal.New(v, -int32(exp)), err
+			exp := typeDef.Places.(int32)
+			return decimal.New(v, -exp), nil
 		case int32:
 			v := int64(value.(int32))
-			exp, err := strconv.Atoi(typeDef["places"].(string))
-			return decimal.New(v, -int32(exp)), err
+			exp := typeDef.Places.(int32)
+			return decimal.New(v, -exp), nil
 		default:
 			panic(fmt.Sprintf("unhandled Decimal32 type conversion %T", value))
 		}
 	case "Decimal64":
 		v := int64(value.(int64))
-		exp, err := strconv.Atoi(typeDef["places"].(string))
-		return decimal.New(v, -int32(exp)), err
+		exp := typeDef.Places.(int32)
+		return decimal.New(v, -exp), nil
 	case "Decimal128":
 		v := int128ToMathInt128(value)
-		exp, err := strconv.Atoi(typeDef["places"].(string))
+		exp := typeDef.Places.(int32)
 		// FixMe: decimals doesn't support big.Int
-		return decimal.New(v.Int64(), -int32(exp)), err
+		return decimal.New(v.Int64(), -exp), nil
 	case "Rational8":
 		v1 := value.([]interface{})[0]
 		v2 := value.([]interface{})[1]
@@ -499,9 +449,9 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		physicalIndex := -1
 
 		var values []interface{}
-		for _, tp := range typeDef["typeDefs"].([]interface{}) {
-			if tp.(map[string]interface{})["type"] == "Constant" {
-				v, err := convertValue(tp.(map[string]interface{}), nil)
+		for _, tp := range typeDef.TypeDefs {
+			if tp.Type == "Constant" {
+				v, err := convertValue(*tp, nil)
 				if err != nil {
 					return nil, err
 				}
@@ -510,13 +460,13 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 				physicalIndex++
 				vx, ok := value.([]interface{})
 				if ok {
-					v, err := convertValue(tp.(map[string]interface{}), vx[physicalIndex])
+					v, err := convertValue(*tp, vx[physicalIndex])
 					if err != nil {
 						return values, err
 					}
 					values = append(values, v)
 				} else {
-					v, err := convertValue(tp.(map[string]interface{}), value)
+					v, err := convertValue(*tp, value)
 					if err != nil {
 						return values, err
 					}
@@ -527,7 +477,7 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		return values, nil
 
 	default:
-		panic(fmt.Errorf("unhandled value type %v", typeDef["type"]))
+		panic(fmt.Errorf("unhandled value type %v", typeDef.Type))
 	}
 	return nil, nil
 }
@@ -600,161 +550,13 @@ func _unmarshall(data string) (map[string]interface{}, error) {
 	return typeDef, nil
 }
 
-func getTypeDef(tp string) (map[string]interface{}, error) {
-	if strings.HasPrefix(tp, ":") {
-		return _unmarshall(fmt.Sprintf(`{"type":"Constant","value":{"type":"String","value":"%s"}}`, tp))
-	}
-
-	if strings.ContainsAny(tp, "(") && !strings.HasPrefix(tp, "(") {
-		return _unmarshall(fmt.Sprintf(`{"type":"Constant","value":{"type":"String","value":"%s"}}`, tp))
-	}
-
-	if tp == "String" {
-		return _unmarshall(`{"type": "String"}`)
-	}
-
-	if tp == "Bool" {
-		return _unmarshall(`{"type":"Bool"}`)
-	}
-
-	if tp == "Char" {
-		return _unmarshall(`{"type":"Char"}`)
-	}
-
-	if tp == "Dates.DateTime" {
-		return _unmarshall(`{"type":"DateTime"}`)
-	}
-
-	if tp == "Dates.Date" {
-		return _unmarshall(`{"type":"Date"}`)
-	}
-
-	if tp == "Dates.Year" {
-		return _unmarshall(`{"type":"Year"}`)
-	}
-
-	if tp == "Dates.Month" {
-		return _unmarshall(`{"type":"Month"}`)
-	}
-
-	if tp == "Dates.Week" {
-		return _unmarshall(`{"type":"Week"}`)
-	}
-
-	if tp == "Dates.Day" {
-		return _unmarshall(`{"type":"Day"}`)
-	}
-
-	if tp == "Dates.Hour" {
-		return _unmarshall(`{"type":"Hour"}`)
-	}
-
-	if tp == "Dates.Minute" {
-		return _unmarshall(`{"type":"Minute"}`)
-	}
-
-	if tp == "Dates.Second" {
-		return _unmarshall(`{"type":"Second"}`)
-	}
-
-	if tp == "Dates.Millisecond" {
-		return _unmarshall(`{"type":"Millisecond"}`)
-	}
-
-	if tp == "Dates.Microsecond" {
-		return _unmarshall(`{"type":"Microsecond"}`)
-	}
-
-	if tp == "Dates.Nanosecond" {
-		return _unmarshall(`{"type":"Nanosecond"}`)
-	}
-
-	if tp == "HashValue" {
-		return _unmarshall(`{"type":"Hash"}`)
-	}
-
-	if tp == "Missing" {
-		return _unmarshall(`{"type":"Missing"}`)
-	}
-
-	if tp == "FilePos" {
-		return _unmarshall(`{"type":"FilePos"}`)
-	}
-
-	if tp == "Float16" {
-		return _unmarshall(`{"type": "Float16"}`)
-	}
-
-	if tp == "Float32" {
-		return _unmarshall(`{"type": "Float32"}`)
-	}
-
-	if tp == "Float64" {
-		return _unmarshall(`{"type": "Float64"}`)
-	}
-
-	if tp == "Int8" {
-		return _unmarshall(`{"type": "Int8"}`)
-	}
-
-	if tp == "Int16" {
-		return _unmarshall(`{"type": "Int16"}`)
-	}
-
-	if tp == "Int32" {
-		return _unmarshall(`{"type": "Int32"}`)
-	}
-
-	if tp == "Int64" {
-		return _unmarshall(`{"type": "Int64"}`)
-	}
-
-	if tp == "Int128" {
-		return _unmarshall(`{"type": "Int128"}`)
-	}
-
-	if tp == "UInt8" {
-		return _unmarshall(`{"type": "UInt8"}`)
-	}
-
-	if tp == "UInt16" {
-		return _unmarshall(`{"type": "UInt16"}`)
-	}
-
-	if tp == "UInt32" {
-		return _unmarshall(`{"type": "UInt32"}`)
-	}
-
-	if tp == "UInt64" {
-		return _unmarshall(`{"type": "UInt64"}`)
-	}
-
-	if tp == "UInt128" {
-		return _unmarshall(`{"type": "UInt128"}`)
-	}
-
-	re := regexp.MustCompile(decimalsRegex)
-	matches := re.FindStringSubmatch(tp)
-	if len(matches) == 3 {
-		return _unmarshall(fmt.Sprintf(`{"type":"Decimal%v","places":%v}`, matches[1], matches[2]))
-	}
-
-	re = regexp.MustCompile(rationalRegEx)
-	matches = re.FindStringSubmatch(tp)
-	if len(matches) == 2 {
-		return _unmarshall(fmt.Sprintf(`{"type":"Rational%v"}`, matches[1]))
-	}
-	// TODO: add the other types
-	return nil, fmt.Errorf("unhandled data type %s", tp)
-}
-
 func isFullySpecialized(colDefs []ColumnDef) bool {
 	if len(colDefs) == 0 {
 		return false
 	}
 
 	for _, colDef := range colDefs {
-		if colDef.TypeDef["type"] != "Constant" {
+		if colDef.TypeDef.Type != "Constant" {
 			return false
 		}
 	}
@@ -790,7 +592,7 @@ func arrowRowToValues(arrowRow []interface{}, colDefs []ColumnDef) ([]interface{
 	var row []interface{}
 
 	for _, colDef := range colDefs {
-		if colDef.TypeDef["type"] == "Constant" {
+		if colDef.TypeDef.Type == "Constant" {
 			v, err := convertValue(colDef.TypeDef, nil)
 			if err != nil {
 				return nil, err

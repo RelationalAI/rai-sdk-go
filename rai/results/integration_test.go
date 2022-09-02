@@ -34,7 +34,7 @@ var engine = fmt.Sprintf("go-sdk-%s", uid)
 type test struct {
 	Name     string
 	Query    string
-	TypeDefs []map[string]interface{}
+	TypeDefs []TypeDef
 	Values   []interface{}
 	Skip     bool
 }
@@ -155,15 +155,9 @@ var standardTypeTests = []test{
 	{
 		"String",
 		`def output = "test"`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "String"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"String", nil, nil, nil},
 		},
 		[]interface{}{"output", "test"},
 		false,
@@ -171,16 +165,10 @@ var standardTypeTests = []test{
 	{
 		"Bool",
 		`def output = boolean_true, boolean_false`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Bool"},
-			{"type": "Bool"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Bool", nil, nil, nil},
+			{"Bool", nil, nil, nil},
 		},
 		[]interface{}{"output", true, false},
 		false,
@@ -188,16 +176,10 @@ var standardTypeTests = []test{
 	{
 		"Char",
 		`def output = 'a', '👍'`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Char"},
-			{"type": "Char"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Char", nil, nil, nil},
+			{"Char", nil, nil, nil},
 		},
 		[]interface{}{"output", "a", "👍"},
 		false,
@@ -205,15 +187,9 @@ var standardTypeTests = []test{
 	{
 		"DateTime",
 		`def output = 2021-10-12T01:22:31+10:00`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "DateTime"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"DateTime", nil, nil, nil},
 		},
 		[]interface{}{"output", "2021-10-11T15:22:31Z"},
 		false,
@@ -221,15 +197,9 @@ var standardTypeTests = []test{
 	{
 		"Date",
 		`def output = 2021-10-12`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Date"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Date", nil, nil, nil},
 		},
 		[]interface{}{"output", "2021-10-12"},
 		false,
@@ -237,15 +207,9 @@ var standardTypeTests = []test{
 	{
 		"Year",
 		`def output = Year[2022]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Year"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Year", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(2022)},
 		false,
@@ -253,15 +217,9 @@ var standardTypeTests = []test{
 	{
 		"Month",
 		`def output = Month[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Month"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Month", nil, nil, nil},
 		},
 		[]interface{}{"output", time.Month(1)},
 		false,
@@ -269,15 +227,9 @@ var standardTypeTests = []test{
 	{
 		"Week",
 		`def output = Week[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Week"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Week", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -285,15 +237,9 @@ var standardTypeTests = []test{
 	{
 		"Day",
 		`def output = Day[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Day"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Day", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -301,15 +247,9 @@ var standardTypeTests = []test{
 	{
 		"Hour",
 		`def output = Hour[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Hour"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Hour", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -317,15 +257,9 @@ var standardTypeTests = []test{
 	{
 		"Minute",
 		`def output = Minute[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Minute"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Minute", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -333,15 +267,9 @@ var standardTypeTests = []test{
 	{
 		"Second",
 		`def output = Second[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Second"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Second", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -349,15 +277,9 @@ var standardTypeTests = []test{
 	{
 		"Millisecond",
 		`def output = Millisecond[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Millisecond"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Millisecond", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -365,15 +287,9 @@ var standardTypeTests = []test{
 	{
 		"Microsecond",
 		`def output = Microsecond[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Microsecond"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Microsecond", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -381,15 +297,9 @@ var standardTypeTests = []test{
 	{
 		"Nanosecond",
 		`def output = Nanosecond[1]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Nanosecond"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Nanosecond", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -400,15 +310,9 @@ var standardTypeTests = []test{
 		entity type Foo = Int
 		def output = ^Foo[12]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Hash"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Hash", nil, nil, nil},
 		},
 		[]interface{}{"output", strToBig("290925887971139297379988470542779955742")},
 		false,
@@ -416,15 +320,9 @@ var standardTypeTests = []test{
 	{
 		"Missing",
 		`def output = missing`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Missing"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Missing", nil, nil, nil},
 		},
 		[]interface{}{"output", nil},
 		false,
@@ -442,15 +340,9 @@ var standardTypeTests = []test{
 
 		def output(p) = csv(_, p, _)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "FilePos"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"FilePos", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(2)},
 		false,
@@ -458,15 +350,9 @@ var standardTypeTests = []test{
 	{
 		"Int8",
 		`def output = int[8, 12], int[8, -12]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Int8"}, {"type": "Int8"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Int8", nil, nil, nil}, {"Int8", nil, nil, nil},
 		},
 		[]interface{}{"output", int8(12), int8(-12)},
 		false,
@@ -474,15 +360,9 @@ var standardTypeTests = []test{
 	{
 		"Int16",
 		`def output = int[16, 123], int[16, -123]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Int16"}, {"type": "Int16"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Int16", nil, nil, nil}, {"Int16", nil, nil, nil},
 		},
 		[]interface{}{"output", int16(123), int16(-123)},
 		false,
@@ -490,15 +370,9 @@ var standardTypeTests = []test{
 	{
 		"Int32",
 		`def output = int[32, 1234], int[32, -1234]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Int32"}, {"type": "Int32"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Int32", nil, nil, nil}, {"Int32", nil, nil, nil},
 		},
 		[]interface{}{"output", int32(1234), int32(-1234)},
 		false,
@@ -506,15 +380,9 @@ var standardTypeTests = []test{
 	{
 		"Int64",
 		`def output = int[64, 12345], int[64, -12345]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Int64"}, {"type": "Int64"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Int64", nil, nil, nil}, {"Int64", nil, nil, nil},
 		},
 		[]interface{}{"output", int64(12345), int64(-12345)},
 		false,
@@ -522,15 +390,9 @@ var standardTypeTests = []test{
 	{ // FIXME: negative int128 are not correctly parsed
 		"Int128",
 		`def output = 123456789101112131415, int[128, 0], int[128, -10^10]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Int128"}, {"type": "Int128"}, {"type": "Int128"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Int128", nil, nil, nil}, {"Int128", nil, nil, nil}, {"Int128", nil, nil, nil},
 		},
 		[]interface{}{"output", strToBig("123456789101112131415"), new(big.Int).SetBits([]big.Word{0, 0}), strToBig("-10000000000")},
 		true,
@@ -538,15 +400,9 @@ var standardTypeTests = []test{
 	{
 		"UInt8",
 		`def output = uint[8, 12]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "UInt8"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"UInt8", nil, nil, nil},
 		},
 		[]interface{}{"output", uint8(12)},
 		false,
@@ -554,15 +410,9 @@ var standardTypeTests = []test{
 	{
 		"UInt16",
 		`def output = uint[16, 123]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "UInt16"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"UInt16", nil, nil, nil},
 		},
 		[]interface{}{"output", uint16(123)},
 		false,
@@ -570,15 +420,9 @@ var standardTypeTests = []test{
 	{
 		"UInt32",
 		`def output = uint[32, 1234]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "UInt32"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"UInt32", nil, nil, nil},
 		},
 		[]interface{}{"output", uint32(1234)},
 		false,
@@ -586,15 +430,9 @@ var standardTypeTests = []test{
 	{
 		"UInt64",
 		`def output = uint[64, 12345]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "UInt64"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"UInt64", nil, nil, nil},
 		},
 		[]interface{}{"output", uint64(12345)},
 		false,
@@ -602,15 +440,9 @@ var standardTypeTests = []test{
 	{
 		"UInt128",
 		`def output = uint[128, 123456789101112131415], uint[128, 0], 0xdade49b564ec827d92f4fd30f1023a1e`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "UInt128"}, {"type": "UInt128"}, {"type": "UInt128"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"UInt128", nil, nil, nil}, {"UInt128", nil, nil, nil}, {"UInt128", nil, nil, nil},
 		},
 		[]interface{}{"output", strToBig("123456789101112131415"), new(big.Int).SetBits([]big.Word{0, 0}), strToBig("290925887971139297379988470542779955742")},
 		false,
@@ -618,15 +450,9 @@ var standardTypeTests = []test{
 	{
 		"Float16",
 		`def output = float[16, 12], float[16, 42.5]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Float16"}, {"type": "Float16"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Float16", nil, nil, nil}, {"Float16", nil, nil, nil},
 		},
 		[]interface{}{"output", float32(12.0), float32(42.5)},
 		false,
@@ -634,15 +460,9 @@ var standardTypeTests = []test{
 	{
 		"Float32",
 		`def output = float[32, 12], float[32, 42.5]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Float32"}, {"type": "Float32"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Float32", nil, nil, nil}, {"Float32", nil, nil, nil},
 		},
 		[]interface{}{"output", float32(12.0), float32(42.5)},
 		false,
@@ -650,15 +470,9 @@ var standardTypeTests = []test{
 	{
 		"Float64",
 		`def output = float[64, 12], float[64, 42.5]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Float64"}, {"type": "Float64"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Float64", nil, nil, nil}, {"Float64", nil, nil, nil},
 		},
 		[]interface{}{"output", float64(12.0), float64(42.5)},
 		false,
@@ -666,15 +480,9 @@ var standardTypeTests = []test{
 	{
 		"Decimal16",
 		`def output = parse_decimal[16, 2, "12.34"]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"places": "2", "type": "Decimal16"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Decimal16", nil, int32(2), nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		false,
@@ -682,15 +490,9 @@ var standardTypeTests = []test{
 	{
 		"Decimal32",
 		`def output = parse_decimal[32, 2, "12.34"]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"places": "2", "type": "Decimal32"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Decimal32", nil, int32(2), nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		false,
@@ -698,15 +500,9 @@ var standardTypeTests = []test{
 	{
 		"Decimal64",
 		`def output = parse_decimal[64, 2, "12.34"]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"places": "2", "type": "Decimal64"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Decimal64", nil, int32(2), nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		false,
@@ -714,15 +510,9 @@ var standardTypeTests = []test{
 	{ //FIXME: decimal package doesn't support big.Int
 		"Decimal64",
 		`def output = parse_decimal[128, 2, "12345678901011121314.34"]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"places": "2", "type": "Decimal128"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Decimal128", nil, int32(2), nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		true,
@@ -730,15 +520,9 @@ var standardTypeTests = []test{
 	{
 		"Rational8",
 		`def output = rational[8, 1, 2]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Rational8"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Rational8", nil, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -746,15 +530,9 @@ var standardTypeTests = []test{
 	{
 		"Rational16",
 		`def output = rational[16, 1, 2]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Rational16"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Rational16", nil, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -762,15 +540,9 @@ var standardTypeTests = []test{
 	{
 		"Rational32",
 		`def output = rational[32, 1, 2]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Rational32"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Rational32", nil, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -778,15 +550,9 @@ var standardTypeTests = []test{
 	{
 		"Rational64",
 		`def output = rational[64, 1, 2]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Rational64"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Rational64", nil, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -794,15 +560,9 @@ var standardTypeTests = []test{
 	{ // FIXME: big.NewRat don't support big.Int as value
 		"Rational128",
 		`def output = rational[128, 123456789101112313, 9123456789101112313]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Rational128"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Rational128", nil, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(strToBig("9123456789101112313").Int64(), strToBig("123456789101112313").Int64())},
 		true,
@@ -813,21 +573,9 @@ var specializationTests = []test{
 	{
 		"String(symbol)",
 		`def output= :foo`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "foo",
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", "foo"},
 		false,
@@ -838,21 +586,9 @@ var specializationTests = []test{
 		def v = "foo"
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "foo",
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", "foo"},
 		false,
@@ -863,21 +599,9 @@ var specializationTests = []test{
 		def v = "foo / bar"
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "foo / bar",
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"String", "foo / bar", nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", "foo / bar"},
 		false,
@@ -888,21 +612,9 @@ var specializationTests = []test{
 		def v = '👍'
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Char",
-					"value": "👍",
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Char", "👍", nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", "👍"},
 		false,
@@ -913,21 +625,9 @@ var specializationTests = []test{
 		def v = 2021-10-12T01:22:31+10:00
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "DateTime",
-					"value": "2021-10-11T15:22:31Z",
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"DateTime", "2021-10-11T15:22:31Z", nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", "2021-10-11T15:22:31Z"},
 		true, // enable back when DateTime serialization is fixed
@@ -938,21 +638,9 @@ var specializationTests = []test{
 		def v = 2021-10-12
       	def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Date",
-					"value": "2021-10-12",
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Date", "2021-10-12", nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", "2021-10-12"},
 		false,
@@ -963,21 +651,9 @@ var specializationTests = []test{
 		def v = Year[2022]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Year",
-					"value": int64(2022),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Year", int64(2022), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(2022)},
 		false,
@@ -988,21 +664,9 @@ var specializationTests = []test{
 		def v = Month[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Month",
-					"value": time.Month(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Month", time.Month(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", time.Month(1)},
 		false,
@@ -1013,21 +677,9 @@ var specializationTests = []test{
 		def v = Week[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Week",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Week", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1038,21 +690,9 @@ var specializationTests = []test{
 		def v = Day[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Day",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Day", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1063,21 +703,9 @@ var specializationTests = []test{
 		def v = Hour[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Hour",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Hour", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1088,21 +716,9 @@ var specializationTests = []test{
 		def v = Minute[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Minute",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Minute", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1113,21 +729,9 @@ var specializationTests = []test{
 		def v = Second[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Second",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Second", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1138,21 +742,9 @@ var specializationTests = []test{
 		def v = Millisecond[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Millisecond",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Millisecond", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1163,21 +755,9 @@ var specializationTests = []test{
 		def v = Microsecond[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Microsecond",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Microsecond", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1188,21 +768,9 @@ var specializationTests = []test{
 		def v = Nanosecond[1]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Nanosecond",
-					"value": int64(1),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Nanosecond", int64(1), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(1)},
 		false,
@@ -1214,21 +782,9 @@ var specializationTests = []test{
 		def v = ^Foo[12]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Hash",
-					"value": strToBig("290925887971139297379988470542779955742"),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Hash", strToBig("290925887971139297379988470542779955742"), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", strToBig("290925887971139297379988470542779955742")},
 		false,
@@ -1239,21 +795,9 @@ var specializationTests = []test{
 		def v = missing
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Missing",
-					"value": nil,
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Missing", nil, nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", nil},
 		false,
@@ -1272,21 +816,9 @@ var specializationTests = []test{
 		def v(p) = csv(_, p, _)
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "FilePos",
-					"value": int64(2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"FilePos", int64(2), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(2)},
 		false,
@@ -1297,21 +829,9 @@ var specializationTests = []test{
 		def v = int[8, -12]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int8",
-					"value": int32(-12),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Int8", int32(-12), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int32(-12)},
 		false,
@@ -1322,21 +842,9 @@ var specializationTests = []test{
 		def v = int[16, -123]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int16",
-					"value": int32(-123),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Int16", int32(-123), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int32(-123)},
 		false,
@@ -1347,21 +855,9 @@ var specializationTests = []test{
 		def v = int[32, -1234]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int32",
-					"value": int32(-1234),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Int32", int32(-1234), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int32(-1234)},
 		false,
@@ -1372,21 +868,9 @@ var specializationTests = []test{
 		def v = int[64, -12345]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int64",
-					"value": int64(-12345),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Int64", int64(-12345), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(-12345)},
 		false,
@@ -1397,21 +881,9 @@ var specializationTests = []test{
 		def v = int[128, 123456789101112131415]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int128",
-					"value": strToBig("123456789101112131415"),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Int128", strToBig("123456789101112131415"), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", strToBig("123456789101112131415")},
 		false,
@@ -1422,21 +894,9 @@ var specializationTests = []test{
 		def v = uint[8, 12]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "UInt8",
-					"value": uint32(12),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"UInt8", uint32(12), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", uint32(12)},
 		false,
@@ -1447,21 +907,9 @@ var specializationTests = []test{
 		def v = uint[16, 123]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "UInt16",
-					"value": uint32(123),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"UInt16", uint32(123), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", uint32(123)},
 		false,
@@ -1472,21 +920,9 @@ var specializationTests = []test{
 		def v = uint[32, 1234]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "UInt32",
-					"value": uint32(1234),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"UInt32", uint32(1234), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", uint32(1234)},
 		false,
@@ -1497,21 +933,9 @@ var specializationTests = []test{
 		def v = uint[64, 12345]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "UInt64",
-					"value": uint64(12345),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"UInt64", uint64(12345), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", uint64(12345)},
 		false,
@@ -1522,21 +946,9 @@ var specializationTests = []test{
 		def v = uint[128, 123456789101112131415]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "UInt128",
-					"value": strToBig("123456789101112131415"),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"UInt128", strToBig("123456789101112131415"), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", strToBig("123456789101112131415")},
 		false,
@@ -1547,21 +959,9 @@ var specializationTests = []test{
 		def v = float[16, 42.5]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Float16",
-					"value": float32(42.5),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Float16", float32(42.5), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", float32(42.5)},
 		false,
@@ -1572,21 +972,9 @@ var specializationTests = []test{
 		def v = float[32, 42.5]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Float32",
-					"value": float32(42.5),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Float32", float32(42.5), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", float32(42.5)},
 		false,
@@ -1597,21 +985,9 @@ var specializationTests = []test{
 		def v = float[64, 42.5]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Float64",
-					"value": float64(42.5),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Float64", float64(42.5), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", float64(42.5)},
 		false,
@@ -1622,22 +998,9 @@ var specializationTests = []test{
 		def v = parse_decimal[16, 2, "12.34"]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"places": "2",
-					"type":   "Decimal16",
-					"value":  decimal.New(1234, -2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Decimal16", decimal.New(1234, -2), int32(2), nil}, nil, nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		false,
@@ -1648,22 +1011,9 @@ var specializationTests = []test{
 		def v = parse_decimal[32, 2, "12.34"]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"places": "2",
-					"type":   "Decimal32",
-					"value":  decimal.New(1234, -2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Decimal32", decimal.New(1234, -2), int32(2), nil}, nil, nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		false,
@@ -1674,22 +1024,9 @@ var specializationTests = []test{
 		def v = parse_decimal[64, 2, "12.34"]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"places": "2",
-					"type":   "Decimal64",
-					"value":  decimal.New(1234, -2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Decimal64", decimal.New(1234, -2), int32(2), nil}, nil, nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		false,
@@ -1697,22 +1034,9 @@ var specializationTests = []test{
 	{ //FIXME: decimal package doesn't support big.Int
 		"Decimal128",
 		`def output = parse_decimal[128, 2, "12345678901011121314.34"]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"places": "2",
-					"type":   "Decimal128",
-					"value":  decimal.New(1234, -2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Decimal128", decimal.New(1234, -2), int32(2), nil}, nil, nil},
 		},
 		[]interface{}{"output", decimal.New(1234, -2)},
 		true,
@@ -1723,21 +1047,9 @@ var specializationTests = []test{
 		def v = rational[8, 1, 2]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Rational8",
-					"value": big.NewRat(1, 2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Rational8", big.NewRat(1, 2), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -1748,21 +1060,9 @@ var specializationTests = []test{
 		def v = rational[16, 1, 2]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Rational16",
-					"value": big.NewRat(1, 2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Rational16", big.NewRat(1, 2), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -1773,21 +1073,9 @@ var specializationTests = []test{
 		def v = rational[32, 1, 2]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Rational32",
-					"value": big.NewRat(1, 2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Rational32", big.NewRat(1, 2), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -1798,21 +1086,9 @@ var specializationTests = []test{
 		def v = rational[64, 1, 2]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Rational64",
-					"value": big.NewRat(1, 2),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Rational64", big.NewRat(1, 2), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(1, 2)},
 		false,
@@ -1820,15 +1096,9 @@ var specializationTests = []test{
 	{ // FIXME: big.NewRat don't support big.Int as value
 		"Rational128",
 		`def output = rational[128, 123456789101112313, 9123456789101112313]`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{"type": "Rational128"},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Rational128", nil, nil, nil},
 		},
 		[]interface{}{"output", big.NewRat(strToBig("9123456789101112313").Int64(), strToBig("123456789101112313").Int64())},
 		true,
@@ -1842,32 +1112,12 @@ var valueTypeTests = []test{
 		value type MyType = :foo; :bar; :baz
 		def output = ^MyType[:foo]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "foo",
-						},
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", "foo"}},
@@ -1879,31 +1129,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, String
 		def output = ^MyType[1, "abc"]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"String", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "String",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "abc"}},
@@ -1915,31 +1147,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Boolean
 		def output = ^MyType[1, boolean_false]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Bool", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Bool",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), false}},
@@ -1951,31 +1165,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Char
 		def output = ^MyType[1, '👍']
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Char", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Char",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "👍"}},
@@ -1987,31 +1183,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, DateTime
 		def output = ^MyType[1, 2021-10-12T01:22:31+10:00]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"DateTime", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "DateTime",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "2021-10-11T15:22:31Z"}},
@@ -2023,31 +1201,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Date
 		def output = ^MyType[1, 2021-10-12]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Date", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Date",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "2021-10-12"}},
@@ -2059,31 +1219,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Year
 		def output = ^MyType[1, Year[2022]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Year", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Year",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2022)}},
@@ -2095,31 +1237,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Month
 		def output = ^MyType[1, Month[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Month", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Month",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), time.Month(2)}},
@@ -2131,31 +1255,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Week
 		def output = ^MyType[1, Week[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Week", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Week",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2167,31 +1273,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Day
 		def output = ^MyType[1, Day[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Day", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Day",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2203,31 +1291,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Hour
 		def output = ^MyType[1, Hour[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Hour", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Hour",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2239,31 +1309,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Minute
 		def output = ^MyType[1, Minute[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Minute", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Minute",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2275,31 +1327,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Second
 		def output = ^MyType[1, Second[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Second", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Second",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2311,31 +1345,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Millisecond
 		def output = ^MyType[1, Millisecond[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Millisecond", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Millisecond",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2347,31 +1363,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Microsecond
 		def output = ^MyType[1, Microsecond[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Microsecond", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Microsecond",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2383,31 +1381,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, is_Nanosecond
 		def output = ^MyType[1, Nanosecond[2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Nanosecond", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Nanosecond",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2420,31 +1400,13 @@ var valueTypeTests = []test{
 		def h(x) = hash128["abc", _, x]
 		def output = ^MyType[1, h]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Hash", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Hash",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), strToBig("59005302613613978016770438099762432572")}},
@@ -2456,31 +1418,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Missing
 		def output = ^MyType[1, missing]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Missing", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Missing",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), nil}},
@@ -2499,31 +1443,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, FilePos
 		def output = ^MyType[1, v]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"FilePos", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "FilePos",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -2535,31 +1461,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, SignedInt[8]
       	def output = ^MyType[1, int[8, -12]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Int8", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Int8",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int8(-12)}},
@@ -2571,31 +1479,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, SignedInt[16]
       	def output = ^MyType[1, int[16, -123]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Int16", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Int16",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int16(-123)}},
@@ -2607,31 +1497,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, SignedInt[32]
       	def output = ^MyType[1, int[32, -1234]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Int32", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Int32",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int32(-1234)}},
@@ -2643,31 +1515,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, SignedInt[64]
       	def output = ^MyType[1, int[64, -12345]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Int64", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(-12345)}},
@@ -2679,31 +1533,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, SignedInt[128]
 		def output = ^MyType[1, int[128, 123456789101112131415]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Int128", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Int128",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), strToBig("123456789101112131415")}},
@@ -2715,31 +1551,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, UnsignedInt[8]
 		def output = ^MyType[1, uint[8, 12]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"UInt8", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "UInt8",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint8(12)}},
@@ -2751,31 +1569,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, UnsignedInt[16]
 		def output = ^MyType[1, uint[16, 123]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"UInt16", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "UInt16",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint16(123)}},
@@ -2787,31 +1587,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, UnsignedInt[32]
 		def output = ^MyType[1, uint[32, 1234]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"UInt32", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "UInt32",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint32(1234)}},
@@ -2823,31 +1605,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, UnsignedInt[64]
 		def output = ^MyType[1, uint[64, 12345]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"UInt64", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "UInt64",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint64(12345)}},
@@ -2859,31 +1623,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, UnsignedInt[128]
 		def output = ^MyType[1, uint[128, 123456789101112131415]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"UInt128", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "UInt128",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), strToBig("123456789101112131415")}},
@@ -2895,31 +1641,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Floating[16]
 		def output = ^MyType[1, float[16, 42.5]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Float16", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Float16",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), float32(42.5)}},
@@ -2931,31 +1659,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Floating[32]
 		def output = ^MyType[1, float[32, 42.5]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Float32", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Float32",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), float32(42.5)}},
@@ -2967,31 +1677,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Floating[64]
 		def output = ^MyType[1, float[64, 42.5]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Float64", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Float64",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), float64(42.5)}},
@@ -3003,32 +1695,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, FixedDecimal[16, 2]
 		def output = ^MyType[1, parse_decimal[16, 2, "12.34"]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Decimal16", nil, int32(2), nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"places": "2",
-						"type":   "Decimal16",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(1234, -2)}},
@@ -3040,32 +1713,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, FixedDecimal[32, 2]
 		def output = ^MyType[1, parse_decimal[32, 2, "12.34"]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Decimal32", nil, int32(2), nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"places": "2",
-						"type":   "Decimal32",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(1234, -2)}},
@@ -3077,32 +1731,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, FixedDecimal[64, 2]
 		def output = ^MyType[1, parse_decimal[64, 2, "12.34"]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Decimal64", nil, int32(2), nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"places": "2",
-						"type":   "Decimal64",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(1234, -2)}},
@@ -3114,32 +1749,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, FixedDecimal[128, 2]
 		def output = ^MyType[1, parse_decimal[128, 2, "12345678901011121314.34"]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Decimal64", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"places": "2",
-						"type":   "Decimal64",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(123456789010111213, -2)}},
@@ -3151,31 +1767,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Rational[8]
 		def output = ^MyType[1, rational[8, 1, 2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Rational8", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Rational8",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -3187,31 +1785,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Rational[16]
 		def output = ^MyType[1, rational[16, 1, 2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Rational16", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Rational16",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -3223,31 +1803,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Rational[32]
 		def output = ^MyType[1, rational[32, 1, 2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Rational32", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Rational32",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -3259,31 +1821,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Rational[64]
 		def output = ^MyType[1, rational[64, 1, 2]]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Rational64", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Rational64",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -3295,31 +1839,13 @@ var valueTypeTests = []test{
 		value type MyType = Int, Rational[128]
 		def output = ^MyType[1, rational[128, 123456789101112313, 9123456789101112313]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil},
+				{"Rational128", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Rational128",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -3334,28 +1860,11 @@ var miscValueTypeTests = []test{
 		value type MyType = Int
 		def output = ^MyType[123]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int64", nil, nil, nil}},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(123)}},
@@ -3367,28 +1876,12 @@ var miscValueTypeTests = []test{
 		value type MyType = SignedInt[128]
 		def output = ^MyType[123445677777999999999]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Int128", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int128",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", strToBig("123445677777999999999")}},
@@ -3400,28 +1893,12 @@ var miscValueTypeTests = []test{
 		value type MyType = Date
 		def output = ^MyType[2021-10-12]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil, []*TypeDef{
+				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+				{"Date", nil, nil, nil},
 			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Date",
-					},
-				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", "2021-10-12"}},
@@ -3434,42 +1911,18 @@ var miscValueTypeTests = []test{
 		value type OuterType = InnerType, String
 		def output = ^OuterType[^InnerType[123, "inner"], "outer"]
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "OuterType",
-						},
-					}, map[string]interface{}{
-						"type": "ValueType",
-						"typeDefs": []interface{}{
-							map[string]interface{}{
-								"type": "Constant",
-								"value": map[string]interface{}{
-									"type":  "String",
-									"value": "InnerType",
-								},
-							},
-							map[string]interface{}{
-								"type": "Int64",
-							},
-							map[string]interface{}{
-								"type": "String",
-							},
-						},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "OuterType", nil, nil}, nil, nil},
+					{"ValueType", nil, nil, []*TypeDef{
+						{"Constant", TypeDef{"String", "InnerType", nil, nil}, nil, nil},
+						{"Int64", nil, nil, nil},
+						{"String", nil, nil, nil},
 					},
-					map[string]interface{}{"type": "String"},
+					},
+					{"String", nil, nil, nil},
 				},
 			},
 		},
@@ -3486,44 +1939,15 @@ var miscValueTypeTests = []test{
       	end
       	def output = Foo:Bar:^MyType[12, 34]
 		`,
-		[]map[string]interface{}{
-			map[string]interface{}{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			map[string]interface{}{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "Foo",
-						},
-					},
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "Bar",
-						},
-					},
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
-					map[string]interface{}{
-						"type": "Int64",
-					},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "Foo", nil, nil}, nil, nil},
+					{"Constant", TypeDef{"String", "Bar", nil, nil}, nil, nil},
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Int64", nil, nil, nil},
 				},
 			},
 		},
@@ -3537,31 +1961,12 @@ var miscValueTypeTests = []test{
 		def v = ^MyType[:foo]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "ValueType",
-				"typeDefs": []interface{}{
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "MyType",
-						},
-					},
-					map[string]interface{}{
-						"type": "Constant",
-						"value": map[string]interface{}{
-							"type":  "String",
-							"value": "foo",
-						},
-					},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
 				},
 			},
 		},
@@ -3575,21 +1980,9 @@ var miscValueTypeTests = []test{
 		def v = ^MyType[123]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int64",
-					"value": int64(123),
-				},
-			},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{"Int64", int64(123), nil, nil}, nil, nil},
 		},
 		[]interface{}{"output", int64(123)},
 		false,
@@ -3601,30 +1994,16 @@ var miscValueTypeTests = []test{
 		def v = ^MyType[123, 456]
 		def output = #(v)
 		`,
-		[]map[string]interface{}{
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
+		[]TypeDef{
+			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
+			{"Constant", TypeDef{
+				"ValueType",
+				[]interface{}{int64(123), int64(456)},
+				nil,
+				[]*TypeDef{{"Int64", nil, nil, nil}, {"Int64", nil, nil, nil}},
 			},
-			{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type": "ValueType",
-					"typeDefs": []interface{}{
-						map[string]interface{}{
-							"type": "Int64",
-						},
-						map[string]interface{}{
-							"type": "Int64",
-						},
-					},
-					"value": []interface{}{
-						int64(123), int64(456),
-					},
-				},
+				nil,
+				nil,
 			},
 		},
 		[]interface{}{"output", []interface{}{int64(123), int64(456)}},

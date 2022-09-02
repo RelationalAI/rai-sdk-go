@@ -168,52 +168,28 @@ func mockResultTable() *ResultTable {
 func TestTypesDefinition(t *testing.T) {
 	var expectedTypeDefs = []ColumnDef{
 		{
-			map[string]interface{}{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "output",
-				},
-			},
+			TypeDef{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
 			pb.RelType{},
 			0,
 		},
 		{
-			map[string]interface{}{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "Int64",
-					"value": int64(1),
-				},
-			},
+			TypeDef{"Constant", TypeDef{"Int64", int64(1), nil, nil}, nil, nil},
 			pb.RelType{},
 			0,
 		},
 		{
-			map[string]interface{}{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "foo",
-				},
-			},
+			TypeDef{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
 			pb.RelType{},
 			0,
 		},
-		{map[string]interface{}{"type": "String"}, pb.RelType{}, 0},
+		{TypeDef{"String", nil, nil, nil}, pb.RelType{}, 0},
 		{
-			map[string]interface{}{
-				"type": "Constant",
-				"value": map[string]interface{}{
-					"type":  "String",
-					"value": "bar",
-				},
-			},
+			TypeDef{"Constant", TypeDef{"String", "bar", nil, nil}, nil, nil},
 			pb.RelType{},
 			0,
 		},
-		{map[string]interface{}{"type": "Char"}, pb.RelType{}, 1},
-		{map[string]interface{}{"type": "Int64"}, pb.RelType{}, 2},
+		{TypeDef{"Char", nil, nil, nil}, pb.RelType{}, 1},
+		{TypeDef{"Int64", nil, nil, nil}, pb.RelType{}, 2},
 	}
 
 	table := mockResultTable()
@@ -239,37 +215,37 @@ func TestColumnAt(t *testing.T) {
 	var expectedColumns = []ResultColumn{
 		{
 			[]interface{}{"output", "output", "output", "output"},
-			map[string]interface{}{"type": "Constant", "value": map[string]interface{}{"type": "String", "value": "output"}},
+			TypeDef{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
 			4,
 		},
 		{
 			[]interface{}{int64(1), int64(1), int64(1), int64(1)},
-			map[string]interface{}{"type": "Constant", "value": map[string]interface{}{"type": "Int64", "value": int64(1)}},
+			TypeDef{"Constant", TypeDef{"Int64", int64(1), nil, nil}, nil, nil},
 			4,
 		},
 		{
 			[]interface{}{"foo", "foo", "foo", "foo"},
-			map[string]interface{}{"type": "Constant", "value": map[string]interface{}{"type": "String", "value": "foo"}},
+			TypeDef{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
 			4,
 		},
 		{
 			[]interface{}{"w", "x", "y", "z"},
-			map[string]interface{}{"type": "String"},
+			TypeDef{"String", nil, nil, nil},
 			4,
 		},
 		{
 			[]interface{}{"bar", "bar", "bar", "bar"},
-			map[string]interface{}{"type": "Constant", "value": map[string]interface{}{"type": "String", "value": "bar"}},
+			TypeDef{"Constant", TypeDef{"String", "bar", nil, nil}, nil, nil},
 			4,
 		},
 		{
 			[]interface{}{"a", "b", "c", "d"},
-			map[string]interface{}{"type": "Char"},
+			TypeDef{"Char", nil, nil, nil},
 			4,
 		},
 		{
 			[]interface{}{int64(1), int64(2), int64(3), int64(4)},
-			map[string]interface{}{"type": "Int64"},
+			TypeDef{"Int64", nil, nil, nil},
 			4,
 		},
 	}

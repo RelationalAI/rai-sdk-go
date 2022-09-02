@@ -36,16 +36,16 @@ type testInput struct {
 func TestConvertValue(t *testing.T) {
 	for _, testInput := range testInputs {
 		if !testInput.Skip {
-			typeDef := make(map[string]interface{})
+			t.Logf("test: %s", testInput.Type)
+			typeDef := TypeDef{}
 
-			typeDef["type"] = testInput.Type
+			typeDef.Type = testInput.Type
 			if testInput.Places != nil {
-				typeDef["places"] = testInput.Places
+				typeDef.Places = testInput.Places
 			}
 
 			for i, val := range testInput.ArrowValues {
 				v, err := convertValue(typeDef, val)
-				t.Logf("test: %s", testInput.Type)
 				assert.Nil(t, err)
 				assert.Equal(t, v, testInput.Values[i])
 			}
@@ -348,7 +348,7 @@ var testInputs = []testInput{
 	{
 		"FixedPointDecimals.FixedDecimal{Int16, 2}",
 		"Decimal16",
-		"2",
+		int32(2),
 		`def output = parse_decimal[16, 2, "12.34"]`,
 		[]interface{}{int16(1234)},
 		[]interface{}{decimal.New(1234, -2)},
@@ -357,7 +357,7 @@ var testInputs = []testInput{
 	{
 		"FixedPointDecimals.FixedDecimal{Int32, 2}",
 		"Decimal32",
-		"2",
+		int32(2),
 		`def output = parse_decimal[32, 2, "12.34"]`,
 		[]interface{}{int32(1234)},
 		[]interface{}{decimal.New(1234, -2)},
@@ -366,7 +366,7 @@ var testInputs = []testInput{
 	{
 		"FixedPointDecimals.FixedDecimal{Int64, 2}",
 		"Decimal64",
-		"2",
+		int32(2),
 		`def output = parse_decimal[64, 2, "12.34"]`,
 		[]interface{}{int64(1234)},
 		[]interface{}{decimal.New(1234, -2)},
@@ -376,7 +376,7 @@ var testInputs = []testInput{
 	{
 		"FixedPointDecimals.FixedDecimal{Int128, 2}",
 		"Decimal128",
-		"2",
+		int32(2),
 		`def output = parse_decimal[128, 2, "12345678901011121314.34"]`,
 		[]interface{}{[]interface{}{uint64(17082781236281724778), uint64(66)}},
 		[]interface{}{decimal.New(123, -2)},

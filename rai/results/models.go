@@ -19,15 +19,22 @@ import (
 	"github.com/relationalai/rai-sdk-go/rai/pb"
 )
 
+type TypeDef struct {
+	Type     string
+	Value    interface{}
+	Places   interface{}
+	TypeDefs []*TypeDef
+}
+
 type ColumnDef struct {
-	TypeDef    map[string]interface{}
+	TypeDef    TypeDef
 	Metadata   pb.RelType
 	ArrowIndex int
 }
 
 type ResultColumn struct {
 	Array   []interface{}
-	TypeDef map[string]interface{}
+	TypeDef TypeDef
 	Length  int
 }
 
