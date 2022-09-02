@@ -16,6 +16,7 @@ package results
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -334,9 +335,7 @@ func NewResultTable(relation rai.ArrowRelation) *ResultTable {
 	rs.RelationID = relation.RelationID
 	rs.Record = relation.Table
 	rs.ColDefs = getColDefsFromProtobuf(relation.Metadata)
-	// for _, colDef := range rs.ColDefs {
-	// 	fmt.Println(colDef.TypeDef)
-	// }
+
 	return rs
 }
 
@@ -623,4 +622,29 @@ func (r *ResultColumn) Get(index int) (interface{}, error) {
 	}
 
 	return values[index], nil
+}
+
+func ShowIO(io io.Writer, tx *rai.TransactionAsyncResult) {
+	for _, r := range tx.Results {
+		table := NewResultTable(r)
+		values, err := table.Values()
+		if err != nil {
+			panic(err)
+		}
+
+		for _, arr := range values {
+			for j, v := range arr {
+				if j > 0 {
+					fmt.Fprint(io, ", ")
+				}
+
+				fmt.Fprint(io, v)
+			}
+			fmt.Fprintln(io)
+		}
+	}
+}
+
+func Show(tx *rai.TransactionAsyncResult) {
+	ShowIO(os.Stdout, tx)
 }
