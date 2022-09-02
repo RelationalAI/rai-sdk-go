@@ -15,13 +15,8 @@
 package results
 
 import (
-	"context"
 	"fmt"
 	"math/big"
-	"os"
-	"os/user"
-	"path"
-	"strings"
 	"testing"
 	"time"
 
@@ -33,70 +28,8 @@ import (
 
 var uid = uuid.New().String()
 
-var databaseName = fmt.Sprintf("go-sdk-%s", uid)
-var engineName = fmt.Sprintf("go-sdk-%s", uid)
-
-func expandUser(fname string) (string, error) {
-	if strings.HasPrefix(fname, "~/") {
-		usr, err := user.Current()
-		if err != nil {
-			return "", err
-		}
-		return path.Join(usr.HomeDir, fname[2:]), nil
-	}
-	return fname, nil
-}
-
-func newTestClient() (*rai.Client, error) {
-	configPath, _ := expandUser("~/.rai/config")
-	if _, err := os.Stat(configPath); err == nil {
-		return rai.NewDefaultClient()
-	}
-
-	var cfg rai.Config
-
-	clientId := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
-
-	placeHolderConfig := `
-		[default]
-		host=azure.relationalai.com
-		region=us-east
-		port=443
-		scheme=https
-		client_id=%s
-		client_secret=%s
-		client_credentials_url=%s
-	`
-	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
-	rai.LoadConfigString(configSrc, "default", &cfg)
-	opts := rai.ClientOptions{Config: cfg}
-	return rai.NewClient(context.Background(), &opts), nil
-}
-
-func ensureDatabase(t *testing.T, client *rai.Client) {
-	ensureEngine(t, client)
-	if _, err := client.GetDatabase(databaseName); err != nil {
-		assert.Nil(t, err)
-		_, err := client.CreateDatabase(databaseName)
-		assert.Nil(t, err)
-	}
-}
-
-func tearDown(client *rai.Client) {
-	client.DeleteDatabase(databaseName)
-	client.DeleteEngine(engineName)
-}
-
-// Ensure that the test engine exists.
-func ensureEngine(t *testing.T, client *rai.Client) {
-	if _, err := client.GetEngine(engineName); err != nil {
-		assert.Nil(t, err)
-		_, err = client.CreateEngine(engineName, "XS")
-		assert.Nil(t, err)
-	}
-}
+var dbname = fmt.Sprintf("go-sdk-%s", uid)
+var engine = fmt.Sprintf("go-sdk-%s", uid)
 
 type test struct {
 	Name     string
@@ -107,15 +40,17 @@ type test struct {
 }
 
 func TestStandardTypesIntegration(t *testing.T) {
-	client, err := newTestClient()
+	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer rai.TearDownDatabase(client, dbname)
+	defer rai.TearDownEngine(client, engine)
 
-	ensureDatabase(t, client)
+	rai.EnsureDatabase(t, client, dbname)
+	rai.EnsureEngine(t, client, engine)
 
 	for _, test := range standardTypeTests {
 		if !test.Skip {
-			rsp, err := client.Execute(databaseName, engineName, test.Query, nil, true)
+			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
 			if err != nil {
 				panic(err)
 			}
@@ -124,6 +59,7 @@ func TestStandardTypesIntegration(t *testing.T) {
 			typeDefs := table.TypeDefs()
 			values := table.Get(0)
 
+			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 			t.Logf("test: %s, OK", test.Name)
@@ -133,15 +69,17 @@ func TestStandardTypesIntegration(t *testing.T) {
 }
 
 func TestSpecializationIntegration(t *testing.T) {
-	client, err := newTestClient()
+	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer rai.TearDownDatabase(client, dbname)
+	defer rai.TearDownEngine(client, engine)
 
-	ensureDatabase(t, client)
+	rai.EnsureDatabase(t, client, dbname)
+	rai.EnsureEngine(t, client, engine)
 
 	for _, test := range specializationTests {
 		if !test.Skip {
-			rsp, err := client.Execute(databaseName, engineName, test.Query, nil, true)
+			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
 			if err != nil {
 				panic(err)
 			}
@@ -150,6 +88,7 @@ func TestSpecializationIntegration(t *testing.T) {
 			typeDefs := table.TypeDefs()
 			values := table.Get(0)
 
+			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 			t.Logf("test: %s, OK", test.Name)
@@ -159,15 +98,17 @@ func TestSpecializationIntegration(t *testing.T) {
 }
 
 func TestValueTypesIntegration(t *testing.T) {
-	client, err := newTestClient()
+	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer rai.TearDownDatabase(client, dbname)
+	defer rai.TearDownEngine(client, engine)
 
-	ensureDatabase(t, client)
+	rai.EnsureDatabase(t, client, dbname)
+	rai.EnsureEngine(t, client, engine)
 
 	for _, test := range valueTypeTests {
 		if !test.Skip {
-			rsp, err := client.Execute(databaseName, engineName, test.Query, nil, true)
+			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
 			if err != nil {
 				panic(err)
 			}
@@ -176,6 +117,7 @@ func TestValueTypesIntegration(t *testing.T) {
 			typeDefs := table.TypeDefs()
 			values := table.Get(0)
 
+			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 			t.Logf("test: %s, OK", test.Name)
@@ -185,15 +127,17 @@ func TestValueTypesIntegration(t *testing.T) {
 }
 
 func TestMiscValueTypeIntegration(t *testing.T) {
-	client, err := newTestClient()
+	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer rai.TearDownDatabase(client, dbname)
+	defer rai.TearDownEngine(client, engine)
 
-	ensureDatabase(t, client)
+	rai.EnsureDatabase(t, client, dbname)
+	rai.EnsureEngine(t, client, engine)
 
 	for _, test := range miscValueTypeTests {
 		if !test.Skip {
-			rsp, err := client.Execute(databaseName, engineName, test.Query, nil, true)
+			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
 			if err != nil {
 				panic(err)
 			}
@@ -202,6 +146,7 @@ func TestMiscValueTypeIntegration(t *testing.T) {
 			typeDefs := table.TypeDefs()
 			values := table.Get(0)
 
+			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 			t.Logf("test: %s, OK", test.Name)

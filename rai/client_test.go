@@ -15,9 +15,7 @@
 package rai
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -37,86 +35,6 @@ var databaseName = fmt.Sprintf("go-sdk-%s", uid)
 var engineName = fmt.Sprintf("go-sdk-%s", uid)
 var userEmail = fmt.Sprintf("go-sdk-%s@example.com", uid)
 var clientName = fmt.Sprintf("go-sdk-%s", uid)
-
-func newTestClient() (*Client, error) {
-	configPath, _ := expandUser(DefaultConfigFile)
-	if _, err := os.Stat(configPath); err == nil {
-		return NewDefaultClient()
-	}
-
-	var cfg Config
-
-	clientId := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
-
-	placeHolderConfig := `
-		[default]
-		host=azure.relationalai.com
-		region=us-east
-		port=443
-		scheme=https
-		client_id=%s
-		client_secret=%s
-		client_credentials_url=%s
-	`
-	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
-	LoadConfigString(configSrc, "default", &cfg)
-	opts := ClientOptions{Config: cfg}
-	return NewClient(context.Background(), &opts), nil
-}
-
-// Answers if the given list contains the given value
-func contains(items []string, value string) bool {
-	for _, v := range items {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
-func isErrNotFound(err error) bool {
-	e, ok := err.(HTTPError)
-	if !ok {
-		return false
-	}
-	return e.StatusCode == http.StatusNotFound
-}
-
-// Ensure that the test database exists.
-func ensureDatabase(t *testing.T, client *Client) {
-	ensureEngine(t, client)
-	if _, err := client.GetDatabase(databaseName); err != nil {
-		assert.True(t, isErrNotFound(err))
-		_, err := client.CreateDatabase(databaseName)
-		assert.Nil(t, err)
-	}
-}
-
-func tearDown(client *Client) {
-	client.DeleteDatabase(databaseName)
-	client.DeleteEngine(engineName)
-
-	user, _ := client.FindUser(userEmail)
-	if user != nil {
-		client.DeleteUser(user.ID)
-	}
-
-	c, _ := client.FindOAuthClient(clientName)
-	if c != nil {
-		client.DeleteOAuthClient(c.ID)
-	}
-}
-
-// Ensure that the test engine exists.
-func ensureEngine(t *testing.T, client *Client) {
-	if _, err := client.GetEngine(engineName); err != nil {
-		assert.True(t, isErrNotFound(err))
-		_, err = client.CreateEngine(engineName, "XS")
-		assert.Nil(t, err)
-	}
-}
 
 func findDatabase(databases []Database, name string) *Database {
 	for _, database := range databases {
@@ -147,11 +65,13 @@ func findModel(models []Model, name string) *Model {
 
 // Test database management APIs.
 func TestDatabase(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureEngine(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	if err := client.DeleteDatabase(databaseName); err != nil {
 		assert.True(t, isErrNotFound(err))
@@ -235,9 +155,10 @@ func findEngine(engines []Engine, name string) *Engine {
 
 // Test engine management APIs.
 func TestEngine(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
 	if err := client.DeleteEngine(engineName); err != nil {
 		assert.True(t, isErrNotFound(err))
@@ -289,11 +210,13 @@ func TestEngine(t *testing.T) {
 
 // Test transaction execution.
 func TestExecuteV1(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
@@ -318,11 +241,13 @@ func TestExecuteV1(t *testing.T) {
 
 // Test transaction asynchronous execution
 func TestExecuteAsync(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
@@ -397,11 +322,13 @@ const sampleCSV = "" +
 
 // Test loading CSV data using default options.
 func TestLoadCSV(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	r := strings.NewReader(sampleCSV)
 	rsp, err := client.LoadCSV(databaseName, engineName, "sample_csv", r, nil)
@@ -450,11 +377,13 @@ func TestLoadCSV(t *testing.T) {
 
 // Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	const sampleNoHeader = "" +
 		"\"martini\",2,12.50,\"2020-01-01\"\n" +
@@ -510,11 +439,13 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 // Test loading CSV data with alternate syntax options.
 func TestLoadCSVAltSyntax(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	const sampleAltSyntax = "" +
 		"cocktail|quantity|price|date\n" +
@@ -572,11 +503,13 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 // Test loading CSV data with a schema definition.
 func TestLoadCSVWithSchema(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	schema := map[string]string{
 		"cocktail": "string",
@@ -631,11 +564,13 @@ func TestLoadCSVWithSchema(t *testing.T) {
 
 // Test loading JSON data.
 func TestLoadJSON(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	const sampleJSON = "{" +
 		"\"name\":\"Amira\",\n" +
@@ -680,11 +615,13 @@ func TestLoadJSON(t *testing.T) {
 
 // Test model APIs.
 func TestModels(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
-	ensureDatabase(t, client)
+	EnsureEngine(t, client, engineName)
+	EnsureDatabase(t, client, databaseName)
 
 	const testModel = "def R = \"hello\", \"world\""
 
@@ -737,9 +674,10 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 
 // Test OAuth Client APIs.
 func TestOAuthClient(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
 	rsp, err := client.FindOAuthClient(clientName)
 	assert.Nil(t, err)
@@ -799,9 +737,10 @@ func findUser(users []User, id string) *User {
 }
 
 func TestUser(t *testing.T) {
-	client, err := newTestClient()
+	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	defer TearDownEngine(client, engineName)
+	defer TearDownDatabase(client, databaseName)
 
 	rsp, err := client.FindUser(userEmail)
 	assert.Nil(t, err)

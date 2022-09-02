@@ -30,22 +30,26 @@ type testInput struct {
 	Query       string
 	ArrowValues []interface{}
 	Values      []interface{}
+	Skip        bool
 }
 
 func TestConvertValue(t *testing.T) {
 	for _, testInput := range testInputs {
-		typeDef := make(map[string]interface{})
+		if !testInput.Skip {
+			typeDef := make(map[string]interface{})
 
-		typeDef["type"] = testInput.Type
-		if testInput.Places != nil {
-			typeDef["places"] = testInput.Places
-		}
+			typeDef["type"] = testInput.Type
+			if testInput.Places != nil {
+				typeDef["places"] = testInput.Places
+			}
 
-		for i, val := range testInput.ArrowValues {
-			v, err := convertValue(typeDef, val)
-			assert.Nil(t, err)
-			assert.Equal(t, v, testInput.Values[i])
-			t.Logf("test: %s, OK", testInput.Type)
+			for i, val := range testInput.ArrowValues {
+				v, err := convertValue(typeDef, val)
+				t.Logf("test: %s", testInput.Type)
+				assert.Nil(t, err)
+				assert.Equal(t, v, testInput.Values[i])
+				t.Logf("test: %s, OK", testInput.Type)
+			}
 		}
 	}
 }
@@ -58,6 +62,7 @@ var testInputs = []testInput{
 		"def output = \"test\"",
 		[]interface{}{"test"},
 		[]interface{}{"test"},
+		false,
 	},
 	{
 		"Bool",
@@ -66,6 +71,7 @@ var testInputs = []testInput{
 		"def output = boolean_true, boolean_false",
 		[]interface{}{true, false},
 		[]interface{}{true, false},
+		false,
 	},
 	{
 		"Char",
@@ -74,6 +80,7 @@ var testInputs = []testInput{
 		"def output = 'a', '👍'",
 		[]interface{}{uint32(97), uint32(128077)},
 		[]interface{}{"a", "👍"},
+		false,
 	},
 	{
 		"Dates.DateTime",
@@ -82,6 +89,7 @@ var testInputs = []testInput{
 		"def output = 2021-10-12T01:22:31+10:00",
 		[]interface{}{int64(63769648951000)},
 		[]interface{}{"2021-10-11T16:22:31+01:00"},
+		false,
 	},
 	{
 		"Dates.Date",
@@ -90,6 +98,7 @@ var testInputs = []testInput{
 		"def output = 2021-10-12",
 		[]interface{}{int64(738075)},
 		[]interface{}{"2021-10-12"},
+		false,
 	},
 	{
 		"Dates.Year",
@@ -98,6 +107,7 @@ var testInputs = []testInput{
 		"def output = Year[2022]",
 		[]interface{}{int64(2022)},
 		[]interface{}{int64(2022)},
+		false,
 	},
 	{
 		"Dates.Month",
@@ -106,6 +116,7 @@ var testInputs = []testInput{
 		"def output = Month[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{time.Month(1)},
+		false,
 	},
 	{
 		"Dates.Week",
@@ -114,6 +125,7 @@ var testInputs = []testInput{
 		"def output = Week[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Day",
@@ -122,6 +134,7 @@ var testInputs = []testInput{
 		"def output = Day[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Hour",
@@ -130,6 +143,7 @@ var testInputs = []testInput{
 		"def output = Hour[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Minute",
@@ -138,6 +152,7 @@ var testInputs = []testInput{
 		"def output = Minute[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Second",
@@ -146,6 +161,7 @@ var testInputs = []testInput{
 		"def output = Second[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Millisecond",
@@ -154,6 +170,7 @@ var testInputs = []testInput{
 		"def output = Millisecond[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Microsecond",
@@ -162,6 +179,7 @@ var testInputs = []testInput{
 		"def output = Microsecond[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"Dates.Nanosecond",
@@ -170,6 +188,7 @@ var testInputs = []testInput{
 		"def output = Nanosecond[1]",
 		[]interface{}{int64(1)},
 		[]interface{}{int64(1)},
+		false,
 	},
 	{
 		"HashValue",
@@ -179,6 +198,7 @@ var testInputs = []testInput{
 		def output = ^Foo[12]`,
 		[]interface{}{[]interface{}{uint64(10589367010498591262), uint64(15771123988529185405)}},
 		[]interface{}{strToBig("290925887971139297379988470542779955742")},
+		false,
 	},
 	{
 		"Missing",
@@ -187,6 +207,7 @@ var testInputs = []testInput{
 		"def output = missing",
 		[]interface{}{"{}"},
 		[]interface{}{nil},
+		false,
 	},
 	{
 		"FilePos",
@@ -205,6 +226,7 @@ var testInputs = []testInput{
 		`,
 		[]interface{}{int64(2)},
 		[]interface{}{int64(2)},
+		false,
 	},
 	{
 		"Int8",
@@ -213,6 +235,7 @@ var testInputs = []testInput{
 		"def output = int[8, 12], int[8, -12]",
 		[]interface{}{int8(12), int8(-12)},
 		[]interface{}{int8(12), int8(-12)},
+		false,
 	},
 	{
 		"Int16",
@@ -221,6 +244,7 @@ var testInputs = []testInput{
 		"def output = int[16, 12], int[16, -12]",
 		[]interface{}{int16(12), int16(-12)},
 		[]interface{}{int16(12), int16(-12)},
+		false,
 	},
 	{
 		"Int32",
@@ -229,6 +253,7 @@ var testInputs = []testInput{
 		"def output = int[32, 12], int[32, -12]",
 		[]interface{}{int32(12), int32(-12)},
 		[]interface{}{int32(12), int32(-12)},
+		false,
 	},
 	{
 		"Int64",
@@ -237,15 +262,17 @@ var testInputs = []testInput{
 		"def output = int[64, 12], int[64, -12]",
 		[]interface{}{int64(12), int64(-12)},
 		[]interface{}{int64(12), int64(-12)},
+		false,
 	}, // FIXME: negative int128 are not correctly parsed
-	// {
-	// 	"Int128",
-	// 	"Int128",
-	// 	nil,
-	// 	"def output = 123456789101112131415, int[128, 0], int[128, -10^10]",
-	// 	[]interface{}{[]interface{}{uint64(12776324658854821719), uint64(6)}, []interface{}{uint64(0), uint64(0)}, []interface{}{uint64(18446744063709551616), uint64(18446744073709551615)}},
-	// 	[]interface{}{strToBig("123456789101112131415"), new(big.Int).SetBits([]big.Word{0, 0}), strToBig("-10000000000")},
-	// },
+	{
+		"Int128",
+		"Int128",
+		nil,
+		"def output = 123456789101112131415, int[128, 0], int[128, -10^10]",
+		[]interface{}{[]interface{}{uint64(12776324658854821719), uint64(6)}, []interface{}{uint64(0), uint64(0)}, []interface{}{uint64(18446744063709551616), uint64(18446744073709551615)}},
+		[]interface{}{strToBig("123456789101112131415"), new(big.Int).SetBits([]big.Word{0, 0}), strToBig("-10000000000")},
+		true,
+	},
 	{
 		"UInt8",
 		"UInt8",
@@ -253,6 +280,7 @@ var testInputs = []testInput{
 		"def output = uint[8, 12]",
 		[]interface{}{uint8(12)},
 		[]interface{}{uint8(12)},
+		false,
 	},
 	{
 		"UInt16",
@@ -261,6 +289,7 @@ var testInputs = []testInput{
 		"def output = uint[16, 123]",
 		[]interface{}{int16(123)},
 		[]interface{}{int16(123)},
+		false,
 	},
 	{
 		"UInt32",
@@ -269,6 +298,7 @@ var testInputs = []testInput{
 		"def output = uint[32, 1234]",
 		[]interface{}{uint32(1234)},
 		[]interface{}{uint32(1234)},
+		false,
 	},
 	{
 		"UInt64",
@@ -277,6 +307,7 @@ var testInputs = []testInput{
 		"def output = uint[64, 12345]",
 		[]interface{}{uint64(12345)},
 		[]interface{}{uint64(12345)},
+		false,
 	},
 	// FIXME: strToBig("0") is different from the parsed value
 	{
@@ -286,6 +317,7 @@ var testInputs = []testInput{
 		"def output = uint[128, 123456789101112131415], uint[128, 0], 0xdade49b564ec827d92f4fd30f1023a1e",
 		[]interface{}{[]interface{}{uint64(12776324658854821719), uint64(6)}, []interface{}{uint64(0), uint64(0)}, []interface{}{uint64(10589367010498591262), uint64(15771123988529185405)}},
 		[]interface{}{strToBig("123456789101112131415"), new(big.Int).SetBits([]big.Word{0, 0}), strToBig("290925887971139297379988470542779955742")},
+		false,
 	},
 	{
 		"Float16",
@@ -294,6 +326,7 @@ var testInputs = []testInput{
 		"def output = float[16, 12], float[16, 42.5]",
 		[]interface{}{float32(12), float32(42.5)},
 		[]interface{}{float32(12), float32(42.5)},
+		false,
 	},
 	{
 		"Float32",
@@ -302,6 +335,7 @@ var testInputs = []testInput{
 		"def output = float[32, 12], float[32, 42.5]",
 		[]interface{}{float32(12), float32(42.5)},
 		[]interface{}{float32(12), float32(42.5)},
+		false,
 	},
 	{
 		"Float64",
@@ -310,6 +344,7 @@ var testInputs = []testInput{
 		"def output = float[64, 12], float[64, 42.5]",
 		[]interface{}{float64(12), float64(42.5)},
 		[]interface{}{float64(12), float64(42.5)},
+		false,
 	},
 	{
 		"FixedPointDecimals.FixedDecimal{Int16, 2}",
@@ -318,6 +353,7 @@ var testInputs = []testInput{
 		`def output = parse_decimal[16, 2, "12.34"]`,
 		[]interface{}{int16(1234)},
 		[]interface{}{decimal.New(1234, -2)},
+		false,
 	},
 	{
 		"FixedPointDecimals.FixedDecimal{Int32, 2}",
@@ -326,6 +362,7 @@ var testInputs = []testInput{
 		`def output = parse_decimal[32, 2, "12.34"]`,
 		[]interface{}{int32(1234)},
 		[]interface{}{decimal.New(1234, -2)},
+		false,
 	},
 	{
 		"FixedPointDecimals.FixedDecimal{Int64, 2}",
@@ -334,16 +371,18 @@ var testInputs = []testInput{
 		`def output = parse_decimal[64, 2, "12.34"]`,
 		[]interface{}{int64(1234)},
 		[]interface{}{decimal.New(1234, -2)},
+		false,
 	},
 	// FIXME: decimal package doesn't support big.Int
-	// {
-	// 	"FixedPointDecimals.FixedDecimal{Int128, 2}",
-	// 	"Decimal128",
-	// 	"2",
-	// 	`def output = parse_decimal[128, 2, "12345678901011121314.34"]`,
-	// 	[]interface{}{[]interface{}{uint64(17082781236281724778), uint64(66)}},
-	// 	[]interface{}{decimal.New(123, -2)},
-	// },
+	{
+		"FixedPointDecimals.FixedDecimal{Int128, 2}",
+		"Decimal128",
+		"2",
+		`def output = parse_decimal[128, 2, "12345678901011121314.34"]`,
+		[]interface{}{[]interface{}{uint64(17082781236281724778), uint64(66)}},
+		[]interface{}{decimal.New(123, -2)},
+		true,
+	},
 	{
 		"Rational{Int8}",
 		"Rational8",
@@ -351,6 +390,7 @@ var testInputs = []testInput{
 		"def output = rational[8, 1, 2]",
 		[]interface{}{[]interface{}{int8(1), int8(2)}},
 		[]interface{}{big.NewRat(1, 2)},
+		false,
 	},
 	{
 		"Rational{Int16}",
@@ -359,6 +399,7 @@ var testInputs = []testInput{
 		"def output = rational[16, 1, 2]",
 		[]interface{}{[]interface{}{int16(1), int16(2)}},
 		[]interface{}{big.NewRat(1, 2)},
+		false,
 	},
 	{
 		"Rational{Int32}",
@@ -367,6 +408,7 @@ var testInputs = []testInput{
 		"def output = rational[32, 1, 2]",
 		[]interface{}{[]interface{}{int32(1), int32(2)}},
 		[]interface{}{big.NewRat(1, 2)},
+		false,
 	},
 	{
 		"Rational{Int64}",
@@ -375,15 +417,17 @@ var testInputs = []testInput{
 		"def output = rational[64, 1, 2]",
 		[]interface{}{[]interface{}{int64(1), int64(2)}},
 		[]interface{}{big.NewRat(1, 2)},
+		false,
 	},
 	// FIXME: big.NewRat don't support big.Int as value
-	// {
-	// 	"Rational{Int128}",
-	// 	"Rational128",
-	// 	nil,
-	// 	"def output = rational[128, 123456789101112313, 9123456789101112313]",
-	// 	//[]interface{}{[]interface{}{uint64(123456789101112313), uint64(0)}, []interface{}{uint64(9123456789101112313), uint64(0)}},
-	// 	[]interface{}{[]interface{}{[]interface{}{uint64(123456789101112313), uint64(0), uint64(9123456789101112313), uint64(0)}}},
-	// 	[]interface{}{big.NewRat(strToBig("9123456789101112313").Int64(), strToBig("123456789101112313").Int64())},
-	// },
+	{
+		"Rational{Int128}",
+		"Rational128",
+		nil,
+		"def output = rational[128, 123456789101112313, 9123456789101112313]",
+		//[]interface{}{[]interface{}{uint64(123456789101112313), uint64(0)}, []interface{}{uint64(9123456789101112313), uint64(0)}},
+		[]interface{}{[]interface{}{[]interface{}{uint64(123456789101112313), uint64(0), uint64(9123456789101112313), uint64(0)}}},
+		[]interface{}{big.NewRat(strToBig("9123456789101112313").Int64(), strToBig("123456789101112313").Int64())},
+		true,
+	},
 }
