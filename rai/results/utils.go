@@ -308,23 +308,7 @@ func convertValue(typeDef TypeDef, value interface{}) (interface{}, error) {
 		return time.UnixMilli(ms).Format("2006-01-02"), nil
 	case "Month":
 		return time.Month(value.(int64)), nil
-	case "Year":
-		return value.(int64), nil
-	case "Day":
-		return value.(int64), nil
-	case "Week":
-		return value.(int64), nil
-	case "Hour":
-		return value.(int64), nil
-	case "Minute":
-		return value.(int64), nil
-	case "Second":
-		return value.(int64), nil
-	case "Millisecond":
-		return value.(int64), nil
-	case "Microsecond":
-		return value.(int64), nil
-	case "Nanosecond":
+	case "Year", "Day", "Week", "Hour", "Minute", "Second", "Millisecond", "Microsecond", "Nanosecond":
 		return value.(int64), nil
 	case "Missing":
 		return nil, nil
@@ -332,23 +316,11 @@ func convertValue(typeDef TypeDef, value interface{}) (interface{}, error) {
 		return value.(int64), nil
 	case "Hash":
 		return uint128ToMathInt128(value), nil
-	case "UInt8":
-		return value, nil
-	case "UInt16":
-		return value, nil
-	case "UInt32":
-		return value, nil
-	case "UInt64":
+	case "UInt8", "UInt16", "UInt32", "UInt64":
 		return value, nil
 	case "UInt128":
 		return uint128ToMathInt128(value), nil
-	case "Int8":
-		return value, nil
-	case "Int16":
-		return value, nil
-	case "Int32":
-		return value, nil
-	case "Int64":
+	case "Int8", "Int16", "Int32", "Int64":
 		return value, nil
 	case "Int128":
 		return int128ToMathInt128(value), nil
