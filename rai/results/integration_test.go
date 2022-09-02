@@ -15,7 +15,6 @@
 package results
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -104,7 +103,30 @@ func TestValueTypesIntegration(t *testing.T) {
 			typeDefs := table.TypeDefs()
 			values := table.Get(0)
 
-			fmt.Println(values)
+			assert.Equal(t, typeDefs, test.TypeDefs)
+			assert.Equal(t, values, test.Values)
+			t.Logf("test: %s, OK", test.Name)
+		}
+
+	}
+}
+
+func TestMiscValueTypeIntegration(t *testing.T) {
+	client, err := createClient()
+	if err != nil {
+		panic(err)
+	}
+
+	for _, test := range miscValueTypeTests {
+		if !test.Skip {
+			rsp, err := client.Execute("hnr-db", "hnr-engine", test.Query, nil, true)
+			if err != nil {
+				panic(err)
+			}
+
+			table := NewResultTable(rsp.Results[0])
+			typeDefs := table.TypeDefs()
+			values := table.Get(0)
 
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
@@ -3287,5 +3309,310 @@ var valueTypeTests = []test{
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
 		true,
+	},
+}
+
+var miscValueTypeTests = []test{
+	{
+		"Int",
+		`
+		value type MyType = Int
+		def output = ^MyType[123]
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "ValueType",
+				"typeDefs": []interface{}{
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "MyType",
+						},
+					},
+					map[string]interface{}{
+						"type": "Int64",
+					},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{"MyType", int64(123)}},
+		false,
+	},
+	{ // FixMe: big.Int wrong conversion
+		"Int128",
+		`
+		value type MyType = SignedInt[128]
+		def output = ^MyType[123445677777999999999]
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "ValueType",
+				"typeDefs": []interface{}{
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "MyType",
+						},
+					},
+					map[string]interface{}{
+						"type": "Int128",
+					},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{"MyType", strToBig("123445677777999999999")}},
+		true,
+	},
+	{
+		"Date",
+		`
+		value type MyType = Date
+		def output = ^MyType[2021-10-12]
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "ValueType",
+				"typeDefs": []interface{}{
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "MyType",
+						},
+					},
+					map[string]interface{}{
+						"type": "Date",
+					},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{"MyType", "2021-10-12"}},
+		false,
+	},
+	{
+		"OuterType(InnerType(Int, String), String)",
+		`
+		value type InnerType = Int, String
+		value type OuterType = InnerType, String
+		def output = ^OuterType[^InnerType[123, "inner"], "outer"]
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "ValueType",
+				"typeDefs": []interface{}{
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "OuterType",
+						},
+					}, map[string]interface{}{
+						"type": "ValueType",
+						"typeDefs": []interface{}{
+							map[string]interface{}{
+								"type": "Constant",
+								"value": map[string]interface{}{
+									"type":  "String",
+									"value": "InnerType",
+								},
+							},
+							map[string]interface{}{
+								"type": "Int64",
+							},
+							map[string]interface{}{
+								"type": "String",
+							},
+						},
+					},
+					map[string]interface{}{"type": "String"},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{"OuterType", []interface{}{"InnerType", int64(123), "inner"}, "outer"}},
+		false,
+	},
+	{
+		"Module",
+		`
+		module Foo
+        	module Bar
+          		value type MyType = Int, Int
+        	end
+      	end
+      	def output = Foo:Bar:^MyType[12, 34]
+		`,
+		[]map[string]interface{}{
+			map[string]interface{}{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			map[string]interface{}{
+				"type": "ValueType",
+				"typeDefs": []interface{}{
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "Foo",
+						},
+					},
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "Bar",
+						},
+					},
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "MyType",
+						},
+					},
+					map[string]interface{}{
+						"type": "Int64",
+					},
+					map[string]interface{}{
+						"type": "Int64",
+					},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{"Foo", "Bar", "MyType", int64(12), int64(34)}},
+		false,
+	},
+	{ // FIXME: enable this when specialization on value types isfixed
+		"String(symbol)",
+		`
+		value type MyType = :foo; :bar; :baz
+		def v = ^MyType[:foo]
+		def output = #(v)
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "ValueType",
+				"typeDefs": []interface{}{
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "MyType",
+						},
+					},
+					map[string]interface{}{
+						"type": "Constant",
+						"value": map[string]interface{}{
+							"type":  "String",
+							"value": "foo",
+						},
+					},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{"MyType", "foo"}},
+		true,
+	},
+	{
+		"Int",
+		`
+		value type MyType = Int
+		def v = ^MyType[123]
+		def output = #(v)
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "Int64",
+					"value": int64(123),
+				},
+			},
+		},
+		[]interface{}{"output", int64(123)},
+		false,
+	},
+	{
+		"Int, Int",
+		`
+		value type MyType = Int, Int
+		def v = ^MyType[123, 456]
+		def output = #(v)
+		`,
+		[]map[string]interface{}{
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type":  "String",
+					"value": "output",
+				},
+			},
+			{
+				"type": "Constant",
+				"value": map[string]interface{}{
+					"type": "ValueType",
+					"typeDefs": []interface{}{
+						map[string]interface{}{
+							"type": "Int64",
+						},
+						map[string]interface{}{
+							"type": "Int64",
+						},
+					},
+					"value": []interface{}{
+						int64(123), int64(456),
+					},
+				},
+			},
+		},
+		[]interface{}{"output", []interface{}{int64(123), int64(456)}},
+		false,
 	},
 }

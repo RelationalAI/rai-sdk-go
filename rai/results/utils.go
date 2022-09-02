@@ -239,6 +239,7 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 
 // FIXME: can't handle negative values
 func int128ToMathInt128(tuple interface{}) *big.Int {
+	fmt.Println(tuple)
 	switch tuple.(type) {
 	case []interface{}:
 		t1 := tuple.([]interface{})[0]
@@ -256,6 +257,14 @@ func int128ToMathInt128(tuple interface{}) *big.Int {
 			[]big.Word{
 				big.Word(t1),
 				big.Word(t2),
+			},
+		)
+	case uint64:
+		v := tuple.(uint64)
+		return new(big.Int).SetBits(
+			[]big.Word{
+				big.Word(v),
+				0,
 			},
 		)
 	default:

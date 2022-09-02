@@ -392,6 +392,7 @@ func (r *ResultTable) ToArray() ([]interface{}, error) {
 func (r *ResultTable) ToArrayRow() ([][]interface{}, error) {
 	var out [][]interface{}
 	m, err := r.ToMap()
+
 	if err != nil {
 		return out, nil
 	}
@@ -525,6 +526,7 @@ func (r *ResultTable) Values() ([][]interface{}, error) {
 	}
 
 	arr, err := r.ToArrayRow()
+
 	if err != nil {
 		return nil, nil
 	}
