@@ -61,11 +61,7 @@ We need to install `protoc` then
 ```shell
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 export PATH=$PATH:$HOME/go/bin
-protoc --proto_path=/path/to/rai-sdk-go/protos/proto \
-    --go_out=/path/to/rai-sdk-go/protos \
-    --go_opt=Mschema.proto=./generated \
-    --go_opt=Mmessage.proto=./generated \
-    /path/to/rai-sdk-go/protos/proto/*.proto
+protoc -I protos --go_out=. --go_opt=Mschema.proto=./rai/pb --go_opt=Mmessage.proto=./rai/pb protos/*.proto
 ```
 
 ## Examples
