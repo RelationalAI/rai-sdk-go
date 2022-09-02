@@ -251,7 +251,9 @@ func TestColumnAt(t *testing.T) {
 	}
 	table := mockResultTable()
 	for i := 0; i < table.ColumnsCount(); i++ {
-		assert.Equal(t, table.ColmunAt(i), expectedColumns[i])
+		col, err := table.ColmunAt(i)
+		assert.Nil(t, err)
+		assert.Equal(t, col, expectedColumns[i])
 	}
 
 	table.Record.Release()
@@ -269,7 +271,8 @@ func TestValues(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, values, expectedValues)
 
-	v := table.Get(2)
+	v, err := table.Get(2)
+	assert.Nil(t, err)
 	assert.Equal(t, v, expectedValues[2])
 
 	table.Record.Release()
