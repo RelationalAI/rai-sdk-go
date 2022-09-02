@@ -3,7 +3,6 @@ module github.com/relationalai/rai-sdk-go
 go 1.17
 
 require (
-	github.com/apache/arrow/go/v7 v7.0.1
 	github.com/apache/arrow/go/v9 v9.0.0
 	github.com/google/uuid v1.3.0
 	github.com/jessevdk/go-flags v1.5.0
