@@ -19,12 +19,6 @@ import (
 	"github.com/relationalai/rai-sdk-go/rai/pb"
 )
 
-type ColumnDefOld struct {
-	TypeDef    map[string]interface{}
-	Metadata   string
-	ArrowIndex int
-}
-
 type ColumnDef struct {
 	TypeDef    map[string]interface{}
 	Metadata   pb.RelType
