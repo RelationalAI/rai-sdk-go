@@ -212,7 +212,7 @@ func TestRowColumnLength(t *testing.T) {
 }
 
 func TestColumnAt(t *testing.T) {
-	var expectedColumns = []ResultColumn{
+	var expectedColumns = []*ResultColumn{
 		{
 			[]interface{}{"output", "output", "output", "output"},
 			TypeDef{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
