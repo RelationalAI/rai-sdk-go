@@ -1114,10 +1114,11 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Constant", TypeDef{"String", "foo", nil, nil}, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", "foo"}},
@@ -1131,11 +1132,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"String", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"String", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "abc"}},
@@ -1149,11 +1151,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Bool", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Bool", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), false}},
@@ -1167,11 +1170,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Char", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Char", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "👍"}},
@@ -1185,11 +1189,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"DateTime", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"DateTime", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "2021-10-11T15:22:31Z"}},
@@ -1203,11 +1208,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Date", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Date", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), "2021-10-12"}},
@@ -1221,11 +1227,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Year", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Year", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2022)}},
@@ -1239,11 +1246,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Month", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Month", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), time.Month(2)}},
@@ -1257,11 +1265,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Week", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Week", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1275,11 +1284,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Day", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Day", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1293,11 +1303,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Hour", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Hour", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1311,11 +1322,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Minute", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Minute", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1329,11 +1341,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Second", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Second", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1347,11 +1360,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Millisecond", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Millisecond", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1365,11 +1379,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Microsecond", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Microsecond", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1383,11 +1398,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Nanosecond", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Nanosecond", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1402,11 +1418,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Hash", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Hash", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), strToBig("59005302613613978016770438099762432572")}},
@@ -1420,11 +1437,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Missing", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Missing", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), nil}},
@@ -1445,11 +1463,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"FilePos", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"FilePos", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(2)}},
@@ -1463,11 +1482,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Int8", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Int8", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int8(-12)}},
@@ -1481,11 +1501,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Int16", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Int16", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int16(-123)}},
@@ -1499,11 +1520,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Int32", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Int32", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int32(-1234)}},
@@ -1517,11 +1539,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Int64", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Int64", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), int64(-12345)}},
@@ -1535,11 +1558,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Int128", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Int128", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), strToBig("123456789101112131415")}},
@@ -1553,11 +1577,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"UInt8", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"UInt8", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint8(12)}},
@@ -1571,11 +1596,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"UInt16", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"UInt16", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint16(123)}},
@@ -1589,11 +1615,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"UInt32", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"UInt32", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint32(1234)}},
@@ -1607,11 +1634,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"UInt64", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"UInt64", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), uint64(12345)}},
@@ -1625,11 +1653,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"UInt128", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"UInt128", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), strToBig("123456789101112131415")}},
@@ -1643,11 +1672,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Float16", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Float16", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), float32(42.5)}},
@@ -1661,11 +1691,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Float32", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Float32", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), float32(42.5)}},
@@ -1679,11 +1710,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Float64", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Float64", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), float64(42.5)}},
@@ -1697,11 +1729,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Decimal16", nil, int32(2), nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Decimal16", nil, int32(2), nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(1234, -2)}},
@@ -1715,11 +1748,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Decimal32", nil, int32(2), nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Decimal32", nil, int32(2), nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(1234, -2)}},
@@ -1733,11 +1767,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Decimal64", nil, int32(2), nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Decimal64", nil, int32(2), nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(1234, -2)}},
@@ -1751,11 +1786,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Decimal64", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Decimal64", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), decimal.New(123456789010111213, -2)}},
@@ -1769,11 +1805,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Rational8", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Rational8", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -1787,11 +1824,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Rational16", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Rational16", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -1805,11 +1843,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Rational32", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Rational32", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -1823,11 +1862,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Rational64", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Rational64", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -1841,11 +1881,12 @@ var valueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil},
-				{"Rational128", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil},
+					{"Rational128", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(1), big.NewRat(1, 2)}},
@@ -1862,9 +1903,10 @@ var miscValueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int64", nil, nil, nil}},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int64", nil, nil, nil}},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", int64(123)}},
@@ -1878,10 +1920,11 @@ var miscValueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Int128", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Int128", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", strToBig("123445677777999999999")}},
@@ -1895,10 +1938,11 @@ var miscValueTypeTests = []test{
 		`,
 		[]TypeDef{
 			{"Constant", TypeDef{"String", "output", nil, nil}, nil, nil},
-			{"ValueType", nil, nil, []*TypeDef{
-				{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
-				{"Date", nil, nil, nil},
-			},
+			{"ValueType", nil, nil,
+				[]*TypeDef{
+					{"Constant", TypeDef{"String", "MyType", nil, nil}, nil, nil},
+					{"Date", nil, nil, nil},
+				},
 			},
 		},
 		[]interface{}{"output", []interface{}{"MyType", "2021-10-12"}},
@@ -1916,11 +1960,12 @@ var miscValueTypeTests = []test{
 			{"ValueType", nil, nil,
 				[]*TypeDef{
 					{"Constant", TypeDef{"String", "OuterType", nil, nil}, nil, nil},
-					{"ValueType", nil, nil, []*TypeDef{
-						{"Constant", TypeDef{"String", "InnerType", nil, nil}, nil, nil},
-						{"Int64", nil, nil, nil},
-						{"String", nil, nil, nil},
-					},
+					{"ValueType", nil, nil,
+						[]*TypeDef{
+							{"Constant", TypeDef{"String", "InnerType", nil, nil}, nil, nil},
+							{"Int64", nil, nil, nil},
+							{"String", nil, nil, nil},
+						},
 					},
 					{"String", nil, nil, nil},
 				},
