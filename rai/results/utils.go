@@ -496,13 +496,6 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		// FIXME: big.Rat doesn't support big.Int
 		return big.NewRat(v1.Int64(), v2.Int64()), nil
 	case "ValueType":
-		// var physicalTypeDefs []map[string]interface{}
-		// for _, tp := range typeDef["typeDefs"].([]interface{}) {
-		// 	if tp.(map[string]interface{})["type"] != "Constant" {
-		// 		physicalTypeDefs = append(physicalTypeDefs, tp.(map[string]interface{}))
-		// 	}
-		// }
-
 		physicalIndex := -1
 
 		var values []interface{}
@@ -523,14 +516,12 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 					}
 					values = append(values, v)
 				} else {
-					vx := []interface{}{value}
-					v, err := convertValue(tp.(map[string]interface{}), vx[physicalIndex])
+					v, err := convertValue(tp.(map[string]interface{}), value)
 					if err != nil {
 						return values, err
 					}
 					values = append(values, v)
 				}
-
 			}
 		}
 		return values, nil
