@@ -48,7 +48,7 @@ func convertValue(typeDef map[string]interface{}, value interface{}) (interface{
 		return value, nil
 	case "DateTime":
 		sec, dec := math.Modf(float64(value.(int64)-unixEPOCH) / 1000.0)
-		return time.Unix(int64(sec), int64(dec*(1e9))).Format(time.RFC3339), nil
+		return time.Unix(int64(sec), int64(dec*(1e9))).UTC().Format(time.RFC3339), nil
 	case "Date":
 		ms := int64(value.(int64)*millisPerDay - unixEPOCH)
 		return time.UnixMilli(ms).Format("2006-01-02"), nil

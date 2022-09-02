@@ -62,7 +62,6 @@ func TestStandardTypesIntegration(t *testing.T) {
 			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
-			t.Logf("test: %s, OK", test.Name)
 		}
 
 	}
@@ -91,7 +90,6 @@ func TestSpecializationIntegration(t *testing.T) {
 			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
-			t.Logf("test: %s, OK", test.Name)
 		}
 
 	}
@@ -120,7 +118,6 @@ func TestValueTypesIntegration(t *testing.T) {
 			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
-			t.Logf("test: %s, OK", test.Name)
 		}
 
 	}
@@ -149,7 +146,6 @@ func TestMiscValueTypeIntegration(t *testing.T) {
 			t.Logf("test: %s", test.Name)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
-			t.Logf("test: %s, OK", test.Name)
 		}
 
 	}
@@ -219,7 +215,7 @@ var standardTypeTests = []test{
 			},
 			{"type": "DateTime"},
 		},
-		[]interface{}{"output", "2021-10-11T16:22:31+01:00"},
+		[]interface{}{"output", "2021-10-11T15:22:31Z"},
 		false,
 	},
 	{
@@ -929,11 +925,11 @@ var specializationTests = []test{
 				"type": "Constant",
 				"value": map[string]interface{}{
 					"type":  "DateTime",
-					"value": "2021-10-11T16:22:31+01:00",
+					"value": "2021-10-11T15:22:31Z",
 				},
 			},
 		},
-		[]interface{}{"output", "2021-10-11T16:22:31+01:00"},
+		[]interface{}{"output", "2021-10-11T15:22:31Z"},
 		true, // enable back when DateTime serialization is fixed
 	},
 	{
@@ -2018,7 +2014,7 @@ var valueTypeTests = []test{
 				},
 			},
 		},
-		[]interface{}{"output", []interface{}{"MyType", int64(1), "2021-10-11T16:22:31+01:00"}},
+		[]interface{}{"output", []interface{}{"MyType", int64(1), "2021-10-11T15:22:31Z"}},
 		false,
 	},
 	{

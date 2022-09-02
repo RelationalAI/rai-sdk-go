@@ -48,7 +48,6 @@ func TestConvertValue(t *testing.T) {
 				t.Logf("test: %s", testInput.Type)
 				assert.Nil(t, err)
 				assert.Equal(t, v, testInput.Values[i])
-				t.Logf("test: %s, OK", testInput.Type)
 			}
 		}
 	}
@@ -88,7 +87,7 @@ var testInputs = []testInput{
 		nil,
 		"def output = 2021-10-12T01:22:31+10:00",
 		[]interface{}{int64(63769648951000)},
-		[]interface{}{"2021-10-11T16:22:31+01:00"},
+		[]interface{}{"2021-10-11T15:22:31Z"},
 		false,
 	},
 	{
