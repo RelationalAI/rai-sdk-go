@@ -52,10 +52,6 @@ func (r *ResultTable) ToArrowArray() []arrow.Array {
 	return out
 }
 
-func (r *ResultTable) ToJson() {
-
-}
-
 // ToMap returns the json presentation of result in array of maps structured form
 func (r *ResultTable) ToMap() (map[string][]interface{}, error) {
 	out := make(map[string][]interface{})
@@ -153,45 +149,45 @@ func (r *ResultTable) Columns() ([]ResultColumn, error) {
 	return out, nil
 }
 
-func (r *ResultTable) ColmunAt(index int) ResultColumn {
+func (r *ResultTable) ColmunAt(index int) (*ResultColumn, error) {
 	if index >= r.ColumnsCount() {
 		panic(fmt.Sprintf("index out of range [%d] with length %d", index, r.ColumnsCount()))
 	}
 
 	column, err := r.Columns()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return column[index]
+	return &column[index], nil
 }
 
-func (r *ResultTable) Get(index int) []interface{} {
+func (r *ResultTable) Get(index int) ([]interface{}, error) {
 	if isFullySpecialized(r.ColDefs) && index == 0 {
 		var row []interface{}
 		for _, colDef := range r.ColDefs {
 			v, err := convertValue(colDef.TypeDef, nil)
 			if err != nil {
-				panic(err)
+				return nil, err
 			}
 
 			row = append(row, v)
 		}
-		return row
+		return row, nil
 	}
 
 	arr, err := r.ToArrayRow()
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	arrowRow, err := arrowRowToValues(arr[index], r.ColDefs)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return arrowRow
+	return arrowRow, nil
 }
 
 func (r *ResultTable) Values() ([][]interface{}, error) {

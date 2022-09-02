@@ -50,20 +50,18 @@ func TestStandardTypesIntegration(t *testing.T) {
 
 	for _, test := range standardTypeTests {
 		if !test.Skip {
+			t.Logf("test: %s", test.Name)
 			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
-			if err != nil {
-				panic(err)
-			}
+			assert.Nil(t, err)
 
 			table := NewResultTable(rsp.Results[0])
 			typeDefs := table.TypeDefs()
-			values := table.Get(0)
+			values, err := table.Get(0)
 
-			t.Logf("test: %s", test.Name)
+			assert.Nil(t, err)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 		}
-
 	}
 }
 
@@ -78,20 +76,18 @@ func TestSpecializationIntegration(t *testing.T) {
 
 	for _, test := range specializationTests {
 		if !test.Skip {
+			t.Logf("test: %s", test.Name)
 			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
-			if err != nil {
-				panic(err)
-			}
+			assert.Nil(t, err)
 
 			table := NewResultTable(rsp.Results[0])
 			typeDefs := table.TypeDefs()
-			values := table.Get(0)
+			values, err := table.Get(0)
 
-			t.Logf("test: %s", test.Name)
+			assert.Nil(t, err)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 		}
-
 	}
 }
 
@@ -106,20 +102,18 @@ func TestValueTypesIntegration(t *testing.T) {
 
 	for _, test := range valueTypeTests {
 		if !test.Skip {
+			t.Logf("test: %s", test.Name)
 			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
-			if err != nil {
-				panic(err)
-			}
+			assert.Nil(t, err)
 
 			table := NewResultTable(rsp.Results[0])
 			typeDefs := table.TypeDefs()
-			values := table.Get(0)
+			values, err := table.Get(0)
 
-			t.Logf("test: %s", test.Name)
+			assert.Nil(t, err)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 		}
-
 	}
 }
 
@@ -134,20 +128,18 @@ func TestMiscValueTypeIntegration(t *testing.T) {
 
 	for _, test := range miscValueTypeTests {
 		if !test.Skip {
+			t.Logf("test: %s", test.Name)
 			rsp, err := client.Execute(dbname, engine, test.Query, nil, true)
-			if err != nil {
-				panic(err)
-			}
+			assert.Nil(t, err)
 
 			table := NewResultTable(rsp.Results[0])
 			typeDefs := table.TypeDefs()
-			values := table.Get(0)
+			values, err := table.Get(0)
 
-			t.Logf("test: %s", test.Name)
+			assert.Nil(t, err)
 			assert.Equal(t, typeDefs, test.TypeDefs)
 			assert.Equal(t, values, test.Values)
 		}
-
 	}
 }
 
