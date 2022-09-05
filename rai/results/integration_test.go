@@ -42,8 +42,8 @@ type test struct {
 func TestStandardTypesIntegration(t *testing.T) {
 	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer rai.TearDownDatabase(client, dbname)
-	defer rai.TearDownEngine(client, engine)
+	defer client.DeleteDatabase(dbname)
+	defer client.DeleteEngine(engine)
 
 	rai.EnsureDatabase(t, client, dbname)
 	rai.EnsureEngine(t, client, engine)
@@ -68,8 +68,8 @@ func TestStandardTypesIntegration(t *testing.T) {
 func TestSpecializationIntegration(t *testing.T) {
 	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer rai.TearDownDatabase(client, dbname)
-	defer rai.TearDownEngine(client, engine)
+	defer client.DeleteDatabase(dbname)
+	defer client.DeleteEngine(engine)
 
 	rai.EnsureDatabase(t, client, dbname)
 	rai.EnsureEngine(t, client, engine)
@@ -94,8 +94,8 @@ func TestSpecializationIntegration(t *testing.T) {
 func TestValueTypesIntegration(t *testing.T) {
 	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer rai.TearDownDatabase(client, dbname)
-	defer rai.TearDownEngine(client, engine)
+	defer client.DeleteDatabase(dbname)
+	defer client.DeleteEngine(engine)
 
 	rai.EnsureDatabase(t, client, dbname)
 	rai.EnsureEngine(t, client, engine)
@@ -120,8 +120,8 @@ func TestValueTypesIntegration(t *testing.T) {
 func TestMiscValueTypeIntegration(t *testing.T) {
 	client, err := rai.NewTestClient()
 	assert.Nil(t, err)
-	defer rai.TearDownDatabase(client, dbname)
-	defer rai.TearDownEngine(client, engine)
+	defer client.DeleteDatabase(dbname)
+	defer client.DeleteEngine(engine)
 
 	rai.EnsureDatabase(t, client, dbname)
 	rai.EnsureEngine(t, client, engine)

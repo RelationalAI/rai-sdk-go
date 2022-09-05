@@ -88,14 +88,6 @@ func EnsureEngine(t *testing.T, client *Client, engine string) {
 	}
 }
 
-func TearDownEngine(client *Client, engine string) {
-	client.DeleteEngine(engine)
-}
-
-func TearDownDatabase(client *Client, dbname string) {
-	client.DeleteDatabase(dbname)
-}
-
 func TearDownUser(client *Client, userEmail string) {
 	user, _ := client.FindUser(userEmail)
 	if user != nil {

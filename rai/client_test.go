@@ -67,8 +67,8 @@ func findModel(models []Model, name string) *Model {
 func TestDatabase(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -157,8 +157,8 @@ func findEngine(engines []Engine, name string) *Engine {
 func TestEngine(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	if err := client.DeleteEngine(engineName); err != nil {
 		assert.True(t, isErrNotFound(err))
@@ -212,8 +212,8 @@ func TestEngine(t *testing.T) {
 func TestExecuteV1(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -243,8 +243,8 @@ func TestExecuteV1(t *testing.T) {
 func TestExecuteAsync(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -324,8 +324,8 @@ const sampleCSV = "" +
 func TestLoadCSV(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -379,8 +379,8 @@ func TestLoadCSV(t *testing.T) {
 func TestLoadCSVNoHeader(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -441,8 +441,8 @@ func TestLoadCSVNoHeader(t *testing.T) {
 func TestLoadCSVAltSyntax(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -505,8 +505,8 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 func TestLoadCSVWithSchema(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -566,8 +566,8 @@ func TestLoadCSVWithSchema(t *testing.T) {
 func TestLoadJSON(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -617,8 +617,8 @@ func TestLoadJSON(t *testing.T) {
 func TestModels(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	EnsureEngine(t, client, engineName)
 	EnsureDatabase(t, client, databaseName)
@@ -676,8 +676,8 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 func TestOAuthClient(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	rsp, err := client.FindOAuthClient(clientName)
 	assert.Nil(t, err)
@@ -739,8 +739,8 @@ func findUser(users []User, id string) *User {
 func TestUser(t *testing.T) {
 	client, err := NewTestClient()
 	assert.Nil(t, err)
-	defer TearDownEngine(client, engineName)
-	defer TearDownDatabase(client, databaseName)
+	defer client.DeleteDatabase(databaseName)
+	defer client.DeleteEngine(engineName)
 
 	rsp, err := client.FindUser(userEmail)
 	assert.Nil(t, err)
