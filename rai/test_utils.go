@@ -36,7 +36,7 @@ func NewTestClient() (*Client, error) {
 	clientSecret := os.Getenv("CLIENT_SECRET")
 	clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
 
-	placeHolderConfig := `
+	configFmt := `
 		[default]
 		host=azure.relationalai.com
 		region=us-east
@@ -46,7 +46,7 @@ func NewTestClient() (*Client, error) {
 		client_secret=%s
 		client_credentials_url=%s
 	`
-	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
+	configSrc := fmt.Sprintf(configFmt, clientId, clientSecret, clientCredentialsUrl)
 	LoadConfigString(configSrc, "default", &cfg)
 	opts := ClientOptions{Config: cfg}
 	return NewClient(context.Background(), &opts), nil
