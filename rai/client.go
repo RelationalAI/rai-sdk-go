@@ -918,13 +918,13 @@ func (c *Client) DeleteModelsAsync(
 }
 
 func (c *Client) GetModel(database, engine, model string) (*Model, error) {
-	resp, err := c.Execute(database, engine, fmt.Sprintf("def output:__model__ = rel:catalog:model[\"%s\"]", model), nil, true)
+	resp, err := c.Execute(database, engine, fmt.Sprintf("def output:model = rel:catalog:model[\"%s\"]", model), nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, res := range resp.Results {
-		if strings.Contains(res.RelationID, "/:output/:__model__") {
+		if strings.Contains(res.RelationID, "/:output/:model") {
 			return &Model{model, fmt.Sprintf("%v", res.Table[0][0])}, nil
 		}
 	}
@@ -973,13 +973,13 @@ func (c *Client) LoadModelsAsync(
 // Returns a list of model names for the given database.
 func (c *Client) ListModelNames(database, engine string) ([]string, error) {
 	modelNames := make([]string, 0)
-	resp, err := c.Execute(database, engine, "def output:__models__[name] = rel:catalog:model(name, _)", nil, true)
+	resp, err := c.Execute(database, engine, "def output:models[name] = rel:catalog:model(name, _)", nil, true)
 	if err != nil {
 		return modelNames, err
 	}
 
 	for _, res := range resp.Results {
-		if strings.Contains(res.RelationID, "/:output/:__models__") {
+		if strings.Contains(res.RelationID, "/:output/:models") {
 			for i := 0; i < len(res.Table[0]); i++ {
 				modelNames = append(modelNames, fmt.Sprintf("%v", res.Table[0][i]))
 			}
@@ -992,13 +992,13 @@ func (c *Client) ListModelNames(database, engine string) ([]string, error) {
 // Returns the names of models installed in the given database.
 func (c *Client) ListModels(database, engine string) ([]Model, error) {
 	models := make([]Model, 0)
-	resp, err := c.Execute(database, engine, "def output:__models__ = rel:catalog:model", nil, true)
+	resp, err := c.Execute(database, engine, "def output:models = rel:catalog:model", nil, true)
 	if err != nil {
 		return models, err
 	}
 
 	for _, res := range resp.Results {
-		if strings.Contains(res.RelationID, "/:output/:__models__") {
+		if strings.Contains(res.RelationID, "/:output/:models") {
 			for i := 0; i < len(res.Table[0]); i++ {
 				models = append(models, Model{fmt.Sprintf("%v", res.Table[0][i]), fmt.Sprintf("%v", res.Table[1][i])})
 			}
