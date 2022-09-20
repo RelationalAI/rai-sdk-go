@@ -34,7 +34,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.ListModels(opts.Database, opts.Engine)
+	rsp, err := client.GetModel(opts.Database, opts.Engine, opts.Model)
 	if err != nil {
 		return err
 	}

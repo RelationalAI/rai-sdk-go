@@ -918,14 +918,14 @@ func (c *Client) DeleteModelsAsync(
 }
 
 func (c *Client) GetModel(database, engine, model string) (*Model, error) {
-	models, err := c.ListModels(database, engine)
+	resp, err := c.Execute(database, engine, fmt.Sprintf("def output:__model__ = rel:catalog:model[\"%s\"]", model), nil, true)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, item := range models {
-		if item.Name == model {
-			return &item, nil
+	for _, res := range resp.Results {
+		if strings.Contains(res.RelationID, "/:output/:__model__") {
+			return &Model{model, fmt.Sprintf("%v", res.Table[0][0])}, nil
 		}
 	}
 
