@@ -948,7 +948,7 @@ func (c *Client) LoadModels(
 			return nil, err
 		}
 
-		queries = append(queries, fmt.Sprintf("def insert:rel:catalog:model[\"%s\"] = \"\"\"%s\"\"\"", name, model))
+		queries = append(queries, fmt.Sprintf("def insert:rel:catalog:model[\"%s\"] = \"\"\" %s \"\"\"", name, model))
 	}
 
 	return c.Execute(database, engine, strings.Join(queries, "\n"), nil, false)
