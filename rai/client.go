@@ -973,13 +973,17 @@ func (c *Client) LoadModelsAsync(
 // Returns a list of model names for the given database.
 func (c *Client) ListModelNames(database, engine string) ([]string, error) {
 	modelNames := make([]string, 0)
-	models, err := c.ListModels(database, engine)
+	resp, err := c.Execute(database, engine, "def output:__models__[name] = rel:catalog:model(name, _)", nil, true)
 	if err != nil {
 		return modelNames, err
 	}
 
-	for _, model := range models {
-		modelNames = append(modelNames, model.Name)
+	for _, res := range resp.Results {
+		if strings.Contains(res.RelationID, "/:output/:__models__") {
+			for i := 0; i < len(res.Table[0]); i++ {
+				modelNames = append(modelNames, fmt.Sprintf("%v", res.Table[0][i]))
+			}
+		}
 	}
 
 	return modelNames, nil
