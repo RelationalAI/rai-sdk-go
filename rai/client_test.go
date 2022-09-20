@@ -689,7 +689,7 @@ func TestModels(t *testing.T) {
 	model = findModel(models, "test_model")
 	assert.NotNil(t, model)
 
-	rsp, err = client.DeleteModel(databaseName, engineName, "test_model")
+	rsp, err := client.DeleteModel(databaseName, engineName, "test_model")
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
