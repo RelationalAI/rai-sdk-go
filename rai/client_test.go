@@ -672,8 +672,7 @@ func TestModels(t *testing.T) {
 	r := strings.NewReader(testModel)
 	rsp, err := client.LoadModel(databaseName, engineName, "test_model", r)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	model, err := client.GetModel(databaseName, engineName, "test_model")
@@ -689,10 +688,9 @@ func TestModels(t *testing.T) {
 	model = findModel(models, "test_model")
 	assert.NotNil(t, model)
 
-	rsp, err := client.DeleteModel(databaseName, engineName, "test_model")
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	deleteResp, err := client.DeleteModel(databaseName, engineName, "test_model")
+	assert.Equal(t, "COMPLETED", deleteResp.Transaction.State)
+	assert.Equal(t, 0, len(deleteResp.Problems))
 
 	_, err = client.GetModel(databaseName, engineName, "test_model")
 	assert.True(t, isErrNotFound(err))
