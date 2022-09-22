@@ -134,15 +134,6 @@ func findEDB(edbs []EDB, name string) *EDB {
 	return nil
 }
 
-func findModel(models []Model, name string) *Model {
-	for _, model := range models {
-		if model.Name == name {
-			return &model
-		}
-	}
-	return nil
-}
-
 // Test database management APIs.
 func TestDatabase(t *testing.T) {
 	client, err := newTestClient()
@@ -193,19 +184,17 @@ func TestDatabase(t *testing.T) {
 	edb := findEDB(edbs, "rel")
 	assert.NotNil(t, edb)
 
-	modelNames, err := client.ListModelNames(databaseName, engineName)
+	modelNames, err := client.ListModels(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
 	assert.True(t, contains(modelNames, "rel/stdlib"))
 
-	models, err := client.ListModels(databaseName, engineName)
+	modelNames, err = client.ListModels(databaseName, engineName)
 	assert.Nil(t, err)
-	assert.True(t, len(models) > 0)
-	model := findModel(models, "rel/stdlib")
-	assert.NotNil(t, model)
-	assert.True(t, len(model.Value) > 0)
+	assert.True(t, len(modelNames) > 0)
+	assert.True(t, contains(modelNames, "rel/stdlib"))
 
-	model, err = client.GetModel(databaseName, engineName, "rel/stdlib")
+	model, err := client.GetModel(databaseName, engineName, "rel/stdlib")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
@@ -679,14 +668,9 @@ func TestModels(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "test_model", model.Name)
 
-	modelNames, err := client.ListModelNames(databaseName, engineName)
+	modelNames, err := client.ListModels(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.True(t, contains(modelNames, "test_model"))
-
-	models, err := client.ListModels(databaseName, engineName)
-	assert.Nil(t, err)
-	model = findModel(models, "test_model")
-	assert.NotNil(t, model)
 
 	deleteResp, err := client.DeleteModel(databaseName, engineName, "test_model")
 	assert.Equal(t, "COMPLETED", deleteResp.Transaction.State)
@@ -695,14 +679,9 @@ func TestModels(t *testing.T) {
 	_, err = client.GetModel(databaseName, engineName, "test_model")
 	assert.True(t, isErrNotFound(err))
 
-	modelNames, err = client.ListModelNames(databaseName, engineName)
+	modelNames, err = client.ListModels(databaseName, engineName)
 	assert.Nil(t, err)
 	assert.False(t, contains(modelNames, "test_model"))
-
-	models, err = client.ListModels(databaseName, engineName)
-	assert.Nil(t, err)
-	model = findModel(models, "test_model")
-	assert.Nil(t, model)
 }
 
 func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {

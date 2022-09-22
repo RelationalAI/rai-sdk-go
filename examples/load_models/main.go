@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -41,16 +42,12 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	r, err := os.Open(opts.File)
-	if err != nil {
-		return err
-	}
-	name := sansext(opts.File)
-	rsp, err := client.LoadModel(opts.Database, opts.Engine, name, r)
-	if err != nil {
-		return err
-	}
-	rsp.Show()
+
+	const testModel = "def R = \"hello\", \"world\""
+
+	r := strings.NewReader(testModel)
+	rsp, err := client.LoadModel("hnr-db", "hnr-engine", "test_model", r)
+	fmt.Println(rsp.Problems)
 	return nil
 }
 
