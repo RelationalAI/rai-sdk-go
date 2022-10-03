@@ -656,10 +656,9 @@ func TestModels(t *testing.T) {
 
 	ensureDatabase(t, client)
 
-	const testModel = "def R = \"hello\", \"world\""
+	testModel := map[string]string{"test_model": "def R = \"hello\", \"world\""}
 
-	r := strings.NewReader(testModel)
-	rsp, err := client.LoadModel(databaseName, engineName, "test_model", r)
+	rsp, err := client.LoadModels(databaseName, engineName, testModel)
 	assert.Nil(t, err)
 	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -672,7 +671,8 @@ func TestModels(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, contains(modelNames, "test_model"))
 
-	deleteResp, err := client.DeleteModel(databaseName, engineName, "test_model")
+	deleteResp, err := client.DeleteModels(databaseName, engineName, []string{"test_model"})
+	assert.Nil(t, err)
 	assert.Equal(t, "COMPLETED", deleteResp.Transaction.State)
 	assert.Equal(t, 0, len(deleteResp.Problems))
 

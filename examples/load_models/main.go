@@ -43,11 +43,21 @@ func run(opts *Options) error {
 		return err
 	}
 
-	const testModel = "def R = \"hello\", \"world\""
+	value, err := os.ReadFile(opts.File)
+	if err != nil {
+		return err
+	}
 
-	r := strings.NewReader(testModel)
-	rsp, err := client.LoadModel("hnr-db", "hnr-engine", "test_model", r)
-	fmt.Println(rsp.Problems)
+	model := map[string]string{
+		sansext(opts.File): string(value),
+	}
+
+	rsp, err := client.LoadModels("hnr-db", "hnr-engine", model)
+	if err != nil {
+		return nil
+	}
+
+	fmt.Println(rsp)
 	return nil
 }
 

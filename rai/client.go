@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -883,16 +884,105 @@ func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
 // Models
 //
 
-func (c *Client) DeleteModel(
-	database, engine, name string,
+func (c *Client) LoadModels(
+	database, engine string, models map[string]string,
 ) (*TransactionAsyncResult, error) {
-	return c.DeleteModels(database, engine, []string{name})
+	randUint := rand.Uint32()
+	queries := make([]string, 0)
+	queryInputs := make(map[string]string)
+
+	index := 0
+	for name, value := range models {
+		index++
+		inputName := fmt.Sprintf("input_%d_%d", randUint, index)
+		queries = append(queries,
+			fmt.Sprintf(`
+				def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]
+				def insert:rel:catalog:model["%s"] = %s
+			`, name, name, name, inputName,
+			),
+		)
+		queryInputs[inputName] = value
+	}
+
+	return c.Execute(database, engine, strings.Join(queries, "\n"), queryInputs, false)
 }
 
-func (c *Client) DeleteModelAsync(
-	database, engine, name string,
+func (c *Client) LoadModelsAsync(
+	database, engine string, models map[string]string,
 ) (*TransactionAsyncResult, error) {
-	return c.DeleteModelsAsync(database, engine, []string{name})
+	randUint := rand.Uint32()
+	queries := make([]string, 0)
+	queryInputs := make(map[string]string)
+
+	index := 0
+	for name, value := range models {
+		inputName := fmt.Sprintf("input_%d_%d", randUint, index)
+		queries = append(queries,
+			fmt.Sprintf(`
+				def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]
+				def insert:rel:catallog:model["%s"] = %s
+			`, name, name, name, inputName,
+			),
+		)
+		queryInputs[inputName] = value
+		index++
+	}
+
+	return c.ExecuteAsync(database, engine, strings.Join(queries, "\n"), queryInputs, false)
+}
+
+// Returns a list of model names for the given database.
+func (c *Client) ListModels(database, engine string) ([]string, error) {
+	outName := fmt.Sprintf("models_%d", rand.Uint32())
+	query := fmt.Sprintf("def output:%s[name] = rel:catalog:model(name, _)", outName)
+	resp, err := c.Execute(database, engine, query, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ArrowRelation
+	for _, res := range resp.Results {
+		// use proto metadata instead
+		if res.RelationID == fmt.Sprintf("/:output/:%s/String", outName) {
+			result = res
+		}
+	}
+
+	models := make([]string, 0)
+	if len(result.Table) > 0 {
+		for _, name := range result.Table[0] {
+			models = append(models, name.(string))
+		}
+
+		return models, nil
+	}
+
+	return models, nil
+}
+
+func (c *Client) GetModel(database, engine, model string) (*Model, error) {
+	outName := fmt.Sprintf("model_%d", rand.Uint32())
+	query := fmt.Sprintf(`def output:%s = rel:catalog:model["%s"]`, outName, model)
+	resp, err := c.Execute(database, engine, query, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var result ArrowRelation
+	for _, res := range resp.Results {
+		if res.RelationID == fmt.Sprintf("/:output/:%s/String", outName) {
+			result = res
+		}
+	}
+
+	if len(result.Table) > 0 {
+		name := model
+		value := result.Table[0][0].(string)
+		return &Model{name, value}, nil
+	}
+
+	return nil, nil
 }
 
 func (c *Client) DeleteModels(
@@ -915,78 +1005,6 @@ func (c *Client) DeleteModelsAsync(
 	}
 
 	return c.ExecuteAsync(database, engine, strings.Join(queries, "\n"), nil, false)
-}
-
-func (c *Client) GetModel(database, engine, model string) (*Model, error) {
-	resp, err := c.Execute(database, engine, fmt.Sprintf("def output:model = rel:catalog:model[\"%s\"]", model), nil, true)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, res := range resp.Results {
-		if strings.Contains(res.RelationID, "/:output/:model") {
-			return &Model{model, fmt.Sprintf("%v", res.Table[0][0])}, nil
-		}
-	}
-
-	return nil, ErrNotFound
-}
-
-func (c *Client) LoadModel(
-	database, engine, name string, r io.Reader,
-) (*TransactionAsyncResult, error) {
-	return c.LoadModels(database, engine, map[string]io.Reader{name: r})
-}
-
-func (c *Client) LoadModels(
-	database, engine string, models map[string]io.Reader,
-) (*TransactionAsyncResult, error) {
-	queries := make([]string, 0)
-	for name, r := range models {
-		model, err := ioutil.ReadAll(r)
-		if err != nil {
-			return nil, err
-		}
-
-		queries = append(queries, fmt.Sprintf("def insert:rel:catalog:model[\"%s\"] = \"\"\" %s \"\"\"", name, model))
-	}
-
-	return c.Execute(database, engine, strings.Join(queries, "\n"), nil, false)
-}
-
-func (c *Client) LoadModelsAsync(
-	database, engine string, models map[string]io.Reader,
-) (*TransactionAsyncResult, error) {
-	queries := make([]string, 0)
-	for name, r := range models {
-		model, err := ioutil.ReadAll(r)
-		if err != nil {
-			return nil, err
-		}
-
-		queries = append(queries, fmt.Sprintf("def insert:rel:catalog:model[\"%s\"] = \"\"\"%s\"\"\"", name, model))
-	}
-
-	return c.ExecuteAsync(database, engine, strings.Join(queries, "\n"), nil, false)
-}
-
-// Returns a list of model names for the given database.
-func (c *Client) ListModels(database, engine string) ([]string, error) {
-	models := make([]string, 0)
-	resp, err := c.Execute(database, engine, "def output:models[name] = rel:catalog:model(name, _)", nil, true)
-	if err != nil {
-		return models, err
-	}
-
-	for _, res := range resp.Results {
-		if strings.Contains(res.RelationID, "/:output/:models") {
-			for i := 0; i < len(res.Table[0]); i++ {
-				models = append(models, fmt.Sprintf("%v", res.Table[0][i]))
-			}
-		}
-	}
-
-	return models, nil
 }
 
 //
