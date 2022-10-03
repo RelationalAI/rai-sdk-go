@@ -982,7 +982,7 @@ func (c *Client) GetModel(database, engine, model string) (*Model, error) {
 		return &Model{name, value}, nil
 	}
 
-	return nil, nil
+	return nil, ErrNotFound
 }
 
 func (c *Client) DeleteModels(

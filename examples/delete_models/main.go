@@ -34,7 +34,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.DeleteModel(opts.Database, opts.Engine, opts.Model)
+	rsp, err := client.DeleteModels(opts.Database, opts.Engine, []string{opts.Model})
 	if err != nil {
 		return err
 	}
