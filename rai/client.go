@@ -990,7 +990,7 @@ func (c *Client) DeleteModels(
 ) (*TransactionAsyncResult, error) {
 	queries := make([]string, 0)
 	for _, model := range models {
-		queries = append(queries, fmt.Sprintf("def delete:rel:catalog:model[\"%s\"] = rel:catalog:model[\"%s\"]", model, model))
+		queries = append(queries, fmt.Sprintf(`def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]`, model, model))
 	}
 
 	return c.Execute(database, engine, strings.Join(queries, "\n"), nil, false)
@@ -1001,7 +1001,7 @@ func (c *Client) DeleteModelsAsync(
 ) (*TransactionAsyncResult, error) {
 	queries := make([]string, 0)
 	for _, model := range models {
-		queries = append(queries, fmt.Sprintf("def delete:rel:catalog:model[\"%s\"] = rel:catalog:model[\"%s\"]", model, model))
+		queries = append(queries, fmt.Sprintf(`def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]`, model, model))
 	}
 
 	return c.ExecuteAsync(database, engine, strings.Join(queries, "\n"), nil, false)
