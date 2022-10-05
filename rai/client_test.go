@@ -665,6 +665,7 @@ func TestModels(t *testing.T) {
 
 	model, err := client.GetModel(databaseName, engineName, "test_model")
 	assert.Nil(t, err)
+	assert.Equal(t, testModel["test_model"], model.Value)
 	assert.Equal(t, "test_model", model.Name)
 
 	modelNames, err := client.ListModels(databaseName, engineName)
