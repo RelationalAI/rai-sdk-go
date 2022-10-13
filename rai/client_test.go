@@ -31,10 +31,8 @@ import (
 
 var uid = uuid.New().String()
 
-//var databaseName = fmt.Sprintf("go-sdk-%s", uid)
-//var engineName = fmt.Sprintf("go-sdk-%s", uid)
-var databaseName = "hnr-db"
-var engineName = "hnr-engine"
+var databaseName = fmt.Sprintf("go-sdk-%s", uid)
+var engineName = fmt.Sprintf("go-sdk-%s", uid)
 var userEmail = fmt.Sprintf("go-sdk-%s@example.com", uid)
 var clientName = fmt.Sprintf("go-sdk-%s", uid)
 
@@ -405,9 +403,9 @@ func TestLoadCSV(t *testing.T) {
 func TestLoadCSVNoHeader(t *testing.T) {
 	client, err := newTestClient()
 	assert.Nil(t, err)
-	//defer tearDown(client)
+	defer tearDown(client)
 
-	//ensureDatabase(t, client)
+	ensureDatabase(t, client)
 
 	const sampleNoHeader = "" +
 		"\"martini\",2,12.50,\"2020-01-01\"\n" +
