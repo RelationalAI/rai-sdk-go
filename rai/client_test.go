@@ -355,20 +355,6 @@ func TestExecuteAsync(t *testing.T) {
 	assert.Equal(t, io.String(), expectedOutput)
 }
 
-func findRelation(relations []Relation, colName string) *Relation {
-	for _, relation := range relations {
-		keys := relation.RelKey.Keys
-		if len(keys) == 0 {
-			continue
-		}
-		name := keys[0]
-		if name == colName {
-			return &relation
-		}
-	}
-	return nil
-}
-
 const sampleCSV = "" +
 	"cocktail,quantity,price,date\n" +
 	"\"martini\",2,12.50,\"2020-01-01\"\n" +
