@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -54,7 +55,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp.Show()
+	fmt.Println(rsp)
 	return nil
 }
 
