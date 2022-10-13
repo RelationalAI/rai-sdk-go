@@ -1474,19 +1474,19 @@ func genLoadCSV(relation string, opts *CSVOptions) string {
 
 func (c *Client) LoadCSV(
 	database, engine, relation string, r io.Reader, opts *CSVOptions,
-) (*TransactionResult, error) {
+) (*TransactionAsyncResult, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 	source := genLoadCSV(relation, opts)
 	inputs := map[string]string{"data": string(data)}
-	return c.ExecuteV1(database, engine, source, inputs, false)
+	return c.Execute(database, engine, source, inputs, false)
 }
 
 func (c *Client) LoadJSON(
 	database, engine, relation string, r io.Reader,
-) (*TransactionResult, error) {
+) (*TransactionAsyncResult, error) {
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -1495,7 +1495,7 @@ func (c *Client) LoadJSON(
 	b.WriteString("def config:data = data\n")
 	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
 	inputs := map[string]string{"data": string(data)}
-	return c.ExecuteV1(database, engine, b.String(), inputs, false)
+	return c.Execute(database, engine, b.String(), inputs, false)
 }
 
 //

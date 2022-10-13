@@ -31,8 +31,10 @@ import (
 
 var uid = uuid.New().String()
 
-var databaseName = fmt.Sprintf("go-sdk-%s", uid)
-var engineName = fmt.Sprintf("go-sdk-%s", uid)
+//var databaseName = fmt.Sprintf("go-sdk-%s", uid)
+//var engineName = fmt.Sprintf("go-sdk-%s", uid)
+var databaseName = "hnr-db"
+var engineName = "hnr-engine"
 var userEmail = fmt.Sprintf("go-sdk-%s@example.com", uid)
 var clientName = fmt.Sprintf("go-sdk-%s", uid)
 
@@ -387,55 +389,25 @@ func TestLoadCSV(t *testing.T) {
 	r := strings.NewReader(sampleCSV)
 	rsp, err := client.LoadCSV(databaseName, engineName, "sample_csv", r, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_csv", nil, true)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample_csv", nil, true)
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
-
-	rel := findRelation(rsp.Output, ":date")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":price")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"12.50", "14.25", "11.00", "12.25"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":quantity")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2", "4", "4", "3"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":cocktail")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"martini", "sazerac", "cosmopolitan", "bellini"}}, rsp.Results[0].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"}}, rsp.Results[1].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"12.50", "14.25", "11.00", "12.25"}}, rsp.Results[2].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"2", "4", "4", "3"}}, rsp.Results[3].Table)
 }
 
 // Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
 	client, err := newTestClient()
 	assert.Nil(t, err)
-	defer tearDown(client)
+	//defer tearDown(client)
 
-	ensureDatabase(t, client)
+	//ensureDatabase(t, client)
 
 	const sampleNoHeader = "" +
 		"\"martini\",2,12.50,\"2020-01-01\"\n" +
@@ -447,46 +419,16 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	opts := NewCSVOptions().WithHeaderRow(0)
 	rsp, err := client.LoadCSV(databaseName, engineName, "sample_no_header", r, opts)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_no_header", nil, true)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample_no_header", nil, true)
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
-
-	rel := findRelation(rsp.Output, ":COL1")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":COL2")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"2", "4", "4", "3"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":COL3")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"12.50", "14.25", "11.00", "12.25"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":COL4")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
+	assert.Equal(t, [][]interface{}{{1., 2., 3., 4.}, {"martini", "sazerac", "cosmopolitan", "bellini"}}, rsp.Results[0].Table)
+	assert.Equal(t, [][]interface{}{{1., 2., 3., 4.}, {"2", "4", "4", "3"}}, rsp.Results[1].Table)
+	assert.Equal(t, [][]interface{}{{1., 2., 3., 4.}, {"12.50", "14.25", "11.00", "12.25"}}, rsp.Results[2].Table)
+	assert.Equal(t, [][]interface{}{{1., 2., 3., 4.}, {"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"}}, rsp.Results[3].Table)
 }
 
 // Test loading CSV data with alternate syntax options.
@@ -508,47 +450,17 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	opts := NewCSVOptions().WithDelim('|').WithQuoteChar('\'')
 	rsp, err := client.LoadCSV(databaseName, engineName, "sample_alt_syntax", r, opts)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(
+	rsp, err = client.Execute(
 		databaseName, engineName, "def output = sample_alt_syntax", nil, true)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
-
-	rel := findRelation(rsp.Output, ":date")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":price")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"12.50", "14.25", "11.00", "12.25"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":quantity")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2", "4", "4", "3"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":cocktail")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"martini", "sazerac", "cosmopolitan", "bellini"}}, rsp.Results[0].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"}}, rsp.Results[1].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"12.50", "14.25", "11.00", "12.25"}}, rsp.Results[2].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"2", "4", "4", "3"}}, rsp.Results[3].Table)
 }
 
 // Test loading CSV data with a schema definition.
@@ -568,46 +480,16 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	opts := NewCSVOptions().WithSchema(schema)
 	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", r, opts)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_with_schema", nil, true)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
+	rsp, err = client.Execute(databaseName, engineName, "def output = sample_with_schema", nil, true)
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
-
-	rel := findRelation(rsp.Output, ":date")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":price")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{12.50, 14.25, 11.00, 12.25},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":quantity")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{2., 4., 4., 3.},
-	}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":cocktail")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {"martini", "sazerac", "cosmopolitan", "bellini"}}, rsp.Results[0].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {737425., 737457., 737487., 737519.}}, rsp.Results[1].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {1250., 1425., 1100., 1225.}}, rsp.Results[2].Table)
+	assert.Equal(t, [][]interface{}{{2., 3., 4., 5.}, {2., 4., 4., 3.}}, rsp.Results[3].Table)
 }
 
 // Test loading JSON data.
@@ -627,36 +509,19 @@ func TestLoadJSON(t *testing.T) {
 	r := strings.NewReader(sampleJSON)
 	rsp, err := client.LoadJSON(databaseName, engineName, "sample_json", r)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(
+	rsp, err = client.Execute(
 		databaseName, engineName, "def output = sample_json", nil, true)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
+	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rel := findRelation(rsp.Output, ":name")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 1, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{"Amira"}}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":age")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 1, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{32.}}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":height")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 1, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{nil}}, rel.Columns)
-
-	rel = findRelation(rsp.Output, ":pets")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{1., 2.}, {"dog", "rabbit"}}, rel.Columns)
+	assert.Equal(t, [][]interface{}{{32.}}, rsp.Results[0].Table)
+	assert.Equal(t, [][]interface{}{{make(map[string]interface{})}}, rsp.Results[1].Table)
+	assert.Equal(t, [][]interface{}{{"Amira"}}, rsp.Results[2].Table)
+	assert.Equal(t, [][]interface{}{{1., 2.}, {"dog", "rabbit"}}, rsp.Results[3].Table)
 }
 
 // Test model APIs.
