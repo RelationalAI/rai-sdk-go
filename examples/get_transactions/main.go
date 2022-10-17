@@ -31,7 +31,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.GetTransactions()
+	rsp, err := client.ListTransactions()
 	if err != nil {
 		return err
 	}

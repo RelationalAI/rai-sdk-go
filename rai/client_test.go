@@ -15,54 +15,11 @@
 package rai
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"net/http"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/relationalai/rai-sdk-go/rai/pb"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/proto"
 )
-
-var uid = uuid.New().String()
-
-var databaseName = fmt.Sprintf("go-sdk-%s", uid)
-var engineName = fmt.Sprintf("go-sdk-%s", uid)
-var userEmail = fmt.Sprintf("go-sdk-%s@example.com", uid)
-var clientName = fmt.Sprintf("go-sdk-%s", uid)
-
-func newTestClient() (*Client, error) {
-	configPath, _ := expandUser(DefaultConfigFile)
-	if _, err := os.Stat(configPath); err == nil {
-		return NewDefaultClient()
-	}
-
-	var cfg Config
-
-	clientId := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
-
-	placeHolderConfig := `
-		[default]
-		host=azure.relationalai.com
-		region=us-east
-		port=443
-		scheme=https
-		client_id=%s
-		client_secret=%s
-		client_credentials_url=%s
-	`
-	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
-	LoadConfigString(configSrc, "default", &cfg)
-	opts := ClientOptions{Config: cfg}
-	return NewClient(context.Background(), &opts), nil
-}
 
 // Answers if the given list contains the given value
 func contains(items []string, value string) bool {
@@ -72,48 +29,6 @@ func contains(items []string, value string) bool {
 		}
 	}
 	return false
-}
-
-func isErrNotFound(err error) bool {
-	e, ok := err.(HTTPError)
-	if !ok {
-		return false
-	}
-	return e.StatusCode == http.StatusNotFound
-}
-
-// Ensure that the test database exists.
-func ensureDatabase(t *testing.T, client *Client) {
-	ensureEngine(t, client)
-	if _, err := client.GetDatabase(databaseName); err != nil {
-		assert.True(t, isErrNotFound(err))
-		_, err := client.CreateDatabase(databaseName)
-		assert.Nil(t, err)
-	}
-}
-
-func tearDown(client *Client) {
-	client.DeleteDatabase(databaseName)
-	client.DeleteEngine(engineName)
-
-	user, _ := client.FindUser(userEmail)
-	if user != nil {
-		client.DeleteUser(user.ID)
-	}
-
-	c, _ := client.FindOAuthClient(clientName)
-	if c != nil {
-		client.DeleteOAuthClient(c.ID)
-	}
-}
-
-// Ensure that the test engine exists.
-func ensureEngine(t *testing.T, client *Client) {
-	if _, err := client.GetEngine(engineName); err != nil {
-		assert.True(t, isErrNotFound(err))
-		_, err = client.CreateEngine(engineName, "XS")
-		assert.Nil(t, err)
-	}
 }
 
 func findDatabase(databases []Database, name string) *Database {
@@ -145,81 +60,66 @@ func findModel(models []Model, name string) *Model {
 
 // Test database management APIs.
 func TestDatabase(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
+	client := testClient
 
-	ensureEngine(t, client)
-
-	if err := client.DeleteDatabase(databaseName); err != nil {
+	if err := client.DeleteDatabase(testDatabaseName); err != nil {
 		assert.True(t, isErrNotFound(err))
 	}
 
-	database, err := client.CreateDatabase(databaseName)
+	database, err := client.CreateDatabase(testDatabaseName)
 	assert.Nil(t, err)
-	assert.Equal(t, databaseName, database.Name)
+	assert.Equal(t, testDatabaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
-	database, err = client.GetDatabase(databaseName)
+	database, err = client.GetDatabase(testDatabaseName)
 	assert.Nil(t, err)
-	assert.Equal(t, databaseName, database.Name)
+	assert.Equal(t, testDatabaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
 	databases, err := client.ListDatabases()
 	assert.Nil(t, err)
-	database = findDatabase(databases, databaseName)
+	database = findDatabase(databases, testDatabaseName)
 	assert.NotNil(t, database)
-	assert.Equal(t, databaseName, database.Name)
+	assert.Equal(t, testDatabaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
 	databases, err = client.ListDatabases("state", "CREATED")
 	assert.Nil(t, err)
-	database = findDatabase(databases, databaseName)
+	database = findDatabase(databases, testDatabaseName)
 	assert.NotNil(t, database)
-	assert.Equal(t, databaseName, database.Name)
+	assert.Equal(t, testDatabaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
 	databases, err = client.ListDatabases("state", "NONSENSE")
 	assert.Nil(t, err)
-	database = findDatabase(databases, databaseName)
+	database = findDatabase(databases, testDatabaseName)
 	assert.Nil(t, database)
 
 	// missing filter value
 	databases, err = client.ListDatabases("state")
 	assert.Equal(t, ErrMissingFilterValue, err)
 
-	edbs, err := client.ListEDBs(databaseName, engineName)
+	edbs, err := client.ListEDBs(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	edb := findEDB(edbs, "rel")
 	assert.NotNil(t, edb)
 
-	modelNames, err := client.ListModelNames(databaseName, engineName)
+	modelNames, err := client.ListModelNames(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
 	assert.True(t, contains(modelNames, "rel/stdlib"))
 
-	models, err := client.ListModels(databaseName, engineName)
+	models, err := client.ListModels(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	assert.True(t, len(models) > 0)
 	model := findModel(models, "rel/stdlib")
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
-	model, err = client.GetModel(databaseName, engineName, "rel/stdlib")
+	model, err = client.GetModel(testDatabaseName, testEngineName, "rel/stdlib")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
-
-	err = client.DeleteDatabase(databaseName)
-	assert.Nil(t, err)
-
-	_, err = client.GetDatabase(databaseName)
-	assert.True(t, isErrNotFound(err))
-
-	databases, err = client.ListDatabases()
-	assert.Nil(t, err)
-	database = findDatabase(databases, databaseName)
-	assert.Nil(t, err)
 }
 
 func findEngine(engines []Engine, name string) *Engine {
@@ -233,69 +133,43 @@ func findEngine(engines []Engine, name string) *Engine {
 
 // Test engine management APIs.
 func TestEngine(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
+	client := testClient
 
-	if err := client.DeleteEngine(engineName); err != nil {
-		assert.True(t, isErrNotFound(err))
-	}
-
-	engine, err := client.CreateEngine(engineName, "XS")
+	engine, err := client.GetEngine(testEngineName)
 	assert.Nil(t, err)
-	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, testEngineName, engine.Name)
 	assert.Equal(t, "PROVISIONED", engine.State)
-
-	engine, err = client.GetEngine(engineName)
-	assert.Nil(t, err)
-	assert.Equal(t, engineName, engine.Name)
-	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, "XS", engine.Size)
+	assert.Equal(t, testEngineSize, engine.Size)
 
 	engines, err := client.ListEngines()
 	assert.Nil(t, err)
-	engine = findEngine(engines, engineName)
+	engine = findEngine(engines, testEngineName)
 	assert.NotNil(t, engine)
-	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, testEngineName, engine.Name)
 	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, "XS", engine.Size)
+	assert.Equal(t, testEngineSize, engine.Size)
 
 	engines, err = client.ListEngines("state", "PROVISIONED")
 	assert.Nil(t, err)
-	engine = findEngine(engines, engineName)
+	engine = findEngine(engines, testEngineName)
 	assert.NotNil(t, engine)
-	assert.Equal(t, engineName, engine.Name)
+	assert.Equal(t, testEngineName, engine.Name)
 	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, "XS", engine.Size)
+	assert.Equal(t, testEngineSize, engine.Size)
 
 	engines, err = client.ListEngines("state", "NONSENSE")
 	assert.Nil(t, err)
-	engine = findEngine(engines, engineName)
-	assert.Nil(t, engine)
-
-	err = client.DeleteEngine(engineName)
-	assert.Nil(t, err)
-
-	_, err = client.GetEngine(engineName)
-	assert.True(t, isErrNotFound(err))
-
-	engines, err = client.ListEngines()
-	assert.Nil(t, err)
-	engine = findEngine(engines, engineName)
+	engine = findEngine(engines, testEngineName)
 	assert.Nil(t, engine)
 }
 
 // Test transaction execution.
 func TestExecuteV1(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
-	rsp, err := client.ExecuteV1(databaseName, engineName, query, nil, true)
+	rsp, err := client.ExecuteV1(testDatabaseName, testEngineName, query, nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	output := rsp.Output
@@ -314,16 +188,13 @@ func TestExecuteV1(t *testing.T) {
 	assert.Equal(t, expected, columns)
 }
 
+/*
 // Test transaction asynchronous execution
 func TestExecuteAsync(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-	rsp, err := client.Execute(databaseName, engineName, query, nil, true)
+	rsp, err := client.Execute(testDatabaseName, testEngineName, query, nil, true)
 	assert.Nil(t, err)
 
 	expectedResults := []ArrowRelation{
@@ -354,8 +225,9 @@ func TestExecuteAsync(t *testing.T) {
 
 	assert.Equal(t, io.String(), expectedOutput)
 }
+*/
 
-func findRelation(relations []Relation, colName string) *Relation {
+func findRelation(relations []RelationV1, colName string) *RelationV1 {
 	for _, relation := range relations {
 		keys := relation.RelKey.Keys
 		if len(keys) == 0 {
@@ -378,20 +250,16 @@ const sampleCSV = "" +
 
 // Test loading CSV data using default options.
 func TestLoadCSV(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	r := strings.NewReader(sampleCSV)
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_csv", r, nil)
+	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_csv", r, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_csv", nil, true)
+	rsp, err = client.ExecuteV1(testDatabaseName, testEngineName, "def output = sample_csv", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -431,11 +299,7 @@ func TestLoadCSV(t *testing.T) {
 
 // Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	const sampleNoHeader = "" +
 		"\"martini\",2,12.50,\"2020-01-01\"\n" +
@@ -445,13 +309,13 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 	r := strings.NewReader(sampleNoHeader)
 	opts := NewCSVOptions().WithHeaderRow(0)
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_no_header", r, opts)
+	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_no_header", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_no_header", nil, true)
+	rsp, err = client.ExecuteV1(testDatabaseName, testEngineName, "def output = sample_no_header", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -491,11 +355,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 // Test loading CSV data with alternate syntax options.
 func TestLoadCSVAltSyntax(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	const sampleAltSyntax = "" +
 		"cocktail|quantity|price|date\n" +
@@ -506,14 +366,14 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 	r := strings.NewReader(sampleAltSyntax)
 	opts := NewCSVOptions().WithDelim('|').WithQuoteChar('\'')
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_alt_syntax", r, opts)
+	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_alt_syntax", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(
-		databaseName, engineName, "def output = sample_alt_syntax", nil, true)
+		testDatabaseName, testEngineName, "def output = sample_alt_syntax", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -553,11 +413,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 // Test loading CSV data with a schema definition.
 func TestLoadCSVWithSchema(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	schema := map[string]string{
 		"cocktail": "string",
@@ -566,13 +422,13 @@ func TestLoadCSVWithSchema(t *testing.T) {
 		"date":     "date"}
 	r := strings.NewReader(sampleCSV)
 	opts := NewCSVOptions().WithSchema(schema)
-	rsp, err := client.LoadCSV(databaseName, engineName, "sample_with_schema", r, opts)
+	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_with_schema", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(databaseName, engineName, "def output = sample_with_schema", nil, true)
+	rsp, err = client.ExecuteV1(testDatabaseName, testEngineName, "def output = sample_with_schema", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -612,11 +468,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 
 // Test loading JSON data.
 func TestLoadJSON(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	const sampleJSON = "{" +
 		"\"name\":\"Amira\",\n" +
@@ -625,14 +477,14 @@ func TestLoadJSON(t *testing.T) {
 		"\"pets\":[\"dog\",\"rabbit\"]}"
 
 	r := strings.NewReader(sampleJSON)
-	rsp, err := client.LoadJSON(databaseName, engineName, "sample_json", r)
+	rsp, err := client.LoadJSON(testDatabaseName, testEngineName, "sample_json", r)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(
-		databaseName, engineName, "def output = sample_json", nil, true)
+		testDatabaseName, testEngineName, "def output = sample_json", nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
@@ -661,47 +513,43 @@ func TestLoadJSON(t *testing.T) {
 
 // Test model APIs.
 func TestModels(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
-
-	ensureDatabase(t, client)
+	client := testClient
 
 	const testModel = "def R = \"hello\", \"world\""
 
 	r := strings.NewReader(testModel)
-	rsp, err := client.LoadModel(databaseName, engineName, "test_model", r)
+	rsp, err := client.LoadModel(testDatabaseName, testEngineName, "test_model", r)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	model, err := client.GetModel(databaseName, engineName, "test_model")
+	model, err := client.GetModel(testDatabaseName, testEngineName, "test_model")
 	assert.Nil(t, err)
 	assert.Equal(t, "test_model", model.Name)
 
-	modelNames, err := client.ListModelNames(databaseName, engineName)
+	modelNames, err := client.ListModelNames(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	assert.True(t, contains(modelNames, "test_model"))
 
-	models, err := client.ListModels(databaseName, engineName)
+	models, err := client.ListModels(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	model = findModel(models, "test_model")
 	assert.NotNil(t, model)
 
-	rsp, err = client.DeleteModel(databaseName, engineName, "test_model")
+	rsp, err = client.DeleteModel(testDatabaseName, testEngineName, "test_model")
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	_, err = client.GetModel(databaseName, engineName, "test_model")
+	_, err = client.GetModel(testDatabaseName, testEngineName, "test_model")
 	assert.True(t, isErrNotFound(err))
 
-	modelNames, err = client.ListModelNames(databaseName, engineName)
+	modelNames, err = client.ListModelNames(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	assert.False(t, contains(modelNames, "test_model"))
 
-	models, err = client.ListModels(databaseName, engineName)
+	models, err = client.ListModels(testDatabaseName, testEngineName)
 	assert.Nil(t, err)
 	model = findModel(models, "test_model")
 	assert.Nil(t, model)
@@ -718,45 +566,43 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 
 // Test OAuth Client APIs.
 func TestOAuthClient(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
+	client := testClient
 
-	rsp, err := client.FindOAuthClient(clientName)
+	rsp, err := client.FindOAuthClient(testOAuthClientName)
 	assert.Nil(t, err)
 	if rsp != nil {
 		_, err = client.DeleteOAuthClient(rsp.ID)
 		assert.Nil(t, err)
 	}
 
-	rsp, err = client.FindOAuthClient(clientName)
+	rsp, err = client.FindOAuthClient(testOAuthClientName)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 
-	rspExtra, err := client.CreateOAuthClient(clientName, nil)
+	rspExtra, err := client.CreateOAuthClient(testOAuthClientName, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, clientName, rspExtra.Name)
+	assert.Equal(t, testOAuthClientName, rspExtra.Name)
 
 	clientID := rspExtra.ID
 
-	rsp, err = client.FindOAuthClient(clientName)
+	rsp, err = client.FindOAuthClient(testOAuthClientName)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, clientID, rsp.ID)
-	assert.Equal(t, clientName, rsp.Name)
+	assert.Equal(t, testOAuthClientName, rsp.Name)
 
 	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, clientID, rspExtra.ID)
-	assert.Equal(t, clientName, rspExtra.Name)
+	assert.Equal(t, testOAuthClientName, rspExtra.Name)
 
 	clients, err := client.ListOAuthClients()
 	assert.Nil(t, err)
 	item := findOAuthClient(clients, clientID)
 	assert.NotNil(t, item)
 	assert.Equal(t, clientID, item.ID)
-	assert.Equal(t, clientName, item.Name)
+	assert.Equal(t, testOAuthClientName, item.Name)
 
 	deleteRsp, err := client.DeleteOAuthClient(clientID)
 	assert.Nil(t, err)
@@ -765,7 +611,7 @@ func TestOAuthClient(t *testing.T) {
 	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.True(t, isErrNotFound(err))
 
-	rsp, err = client.FindOAuthClient(clientName)
+	rsp, err = client.FindOAuthClient(testOAuthClientName)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 }
@@ -780,46 +626,44 @@ func findUser(users []User, id string) *User {
 }
 
 func TestUser(t *testing.T) {
-	client, err := newTestClient()
-	assert.Nil(t, err)
-	defer tearDown(client)
+	client := testClient
 
-	rsp, err := client.FindUser(userEmail)
+	rsp, err := client.FindUser(testUserEmail)
 	assert.Nil(t, err)
 	if rsp != nil {
 		_, err = client.DeleteUser(rsp.ID)
 		assert.Nil(t, err)
 	}
 
-	rsp, err = client.FindUser(userEmail)
+	rsp, err = client.FindUser(testUserEmail)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 
-	rsp, err = client.CreateUser(userEmail, nil)
-	assert.Equal(t, userEmail, rsp.Email)
+	rsp, err = client.CreateUser(testUserEmail, nil)
+	assert.Equal(t, testUserEmail, rsp.Email)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 	assert.Equal(t, []string{"user"}, rsp.Roles)
 
 	var userID = rsp.ID
 
-	rsp, err = client.FindUser(userEmail)
+	rsp, err = client.FindUser(testUserEmail)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, userID, rsp.ID)
-	assert.Equal(t, userEmail, rsp.Email)
+	assert.Equal(t, testUserEmail, rsp.Email)
 
 	rsp, err = client.GetUser(userID)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, userID, rsp.ID)
-	assert.Equal(t, userEmail, rsp.Email)
+	assert.Equal(t, testUserEmail, rsp.Email)
 
 	users, err := client.ListUsers()
 	assert.Nil(t, err)
 	user := findUser(users, userID)
 	assert.NotNil(t, user)
 	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, userEmail, user.Email)
+	assert.Equal(t, testUserEmail, user.Email)
 
 	rsp, err = client.DisableUser(userID)
 	assert.Nil(t, err)
@@ -857,12 +701,11 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, "INACTIVE", rsp.Status)
 	assert.Equal(t, []string{"user"}, rsp.Roles)
 
-	// Cleanup
 	deleteRsp, err := client.DeleteUser(userID)
 	assert.Nil(t, err)
 	assert.Equal(t, userID, deleteRsp.ID)
 
-	rsp, err = client.FindUser(userEmail)
+	rsp, err = client.FindUser(testUserEmail)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 }

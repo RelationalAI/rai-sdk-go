@@ -1,12 +1,12 @@
 module github.com/relationalai/rai-sdk-go
 
-go 1.17
+go 1.18
 
 require (
 	github.com/apache/arrow/go/v7 v7.0.0
-	github.com/google/uuid v1.3.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/pkg/errors v0.9.1
+	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.1
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/ini.v1 v1.66.4
