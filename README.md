@@ -16,9 +16,7 @@ The RelationalAI Software Development Kit for Go enables developers to access th
 
 ### Requirements
 
-* Go 1.17+
-
-The SDK has been tested on golang version 1.17+, but likely works with earlier versions.
+* Go 1.18+
 
 ### Building the SDK
 
@@ -29,8 +27,7 @@ The SDK has been tested on golang version 1.17+, but likely works with earlier v
 
 **Run the tests**
 
-    cd ./rai
-    go test
+    ./run-tests
     
 Note, the test are run against the account configured in your SDK config file.
 

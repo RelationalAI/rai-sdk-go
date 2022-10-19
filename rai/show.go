@@ -34,6 +34,13 @@ func makeIndent(indent int) string {
 	return string(result)
 }
 
+func print(level int, format string, args ...any) {
+	for i := 0; i < level; i++ {
+		fmt.Print("    ")
+	}
+	fmt.Printf(format, args...)
+}
+
 // Encode the given item as JSON to the given writer.
 func Encode(w io.Writer, item interface{}, indent int) error {
 	enc := json.NewEncoder(w)
@@ -42,11 +49,20 @@ func Encode(w io.Writer, item interface{}, indent int) error {
 }
 
 // Print the given item as JSON to stdout.
+func ShowJSON(item interface{}, indent int) error {
+	return Encode(os.Stdout, item, indent)
+}
+
+// Deprecated: Use `ShowJSON` instead.
 func Print(item interface{}, indent int) error {
 	return Encode(os.Stdout, item, indent)
 }
 
-// Pretty printers for Relation and TransactionResult
+type Showable interface {
+	Show()
+}
+
+// Pretty printers for RelationV1 and TransactionResult
 
 func (r *RelationV1) Name() string {
 	return r.RelKey.Name
@@ -101,10 +117,6 @@ func showRow(row []interface{}) {
 	fmt.Println()
 }
 
-type Showable interface {
-	Show()
-}
-
 func (r *RelationV1) Show() {
 	fmt.Printf("# %s (%s)\n", r.Name(), r.Schema())
 	for i := 0; i < r.RowCount(); i++ {
@@ -131,43 +143,15 @@ func (tx *TransactionResult) Show() {
 	}
 }
 
-func print(level int, format string, args ...any) {
-	for i := 0; i < level; i++ {
-		fmt.Print("    ")
-	}
-	fmt.Printf(format, args...)
-}
-
-// Show protobuf metadata.
-func ShowMetadata(m *pb.MetadataInfo) {
-	for _, rm := range m.Relations {
-		print(0, "%s\n", rm.FileName)
-		ShowMetadataArgs(0, rm.RelationId.Arguments)
-	}
-}
-
-func ShowMetadataArgs(level int, args []*pb.RelType) {
-	for _, rt := range args {
-		ShowRelType(level, rt)
-	}
-}
-
-// Show a tabular value and its signature.
-func ShowTabular(d Tabular) {
-	for rnum := 0; rnum < d.NumRows(); rnum++ {
-		fmt.Println(d.String(rnum))
-	}
-}
-
-func ShowConstantType(level int, ct *pb.ConstantType) {
+func showConstantType(level int, ct *pb.ConstantType) {
 	switch ct.RelType.Tag {
 	case pb.Kind_PRIMITIVE_TYPE:
 		print(level, "PRIMITIVE_TYPE\n")
-		ShowRelTuple(level+1, ct.Value)
+		showRelTuple(level+1, ct.Value)
 	case pb.Kind_VALUE_TYPE:
 		print(level, "VALUE_TYPE\n")
-		ShowValueType(level+1, ct.RelType.ValueType)
-		ShowRelTuple(level+1, ct.Value)
+		showValueType(level+1, ct.RelType.ValueType)
+		showRelTuple(level+1, ct.Value)
 	default:
 		print(level, "UNKNOWN\n")
 	}
@@ -211,15 +195,21 @@ func primValueString(v *pb.PrimitiveValue) string {
 	return "UNKNOWN"
 }
 
-func ShowPrimitiveType(level int, pt pb.PrimitiveType) {
+func showPrimitiveType(level int, pt pb.PrimitiveType) {
 	print(level, "%s\n", pt.String())
 }
 
-func ShowValueType(level int, vt *pb.ValueType) {
-	ShowMetadataArgs(level, vt.ArgumentTypes)
+func showMetadataArgs(level int, args []*pb.RelType) {
+	for _, rt := range args {
+		showRelType(level, rt)
+	}
 }
 
-func ShowRelTuple(level int, rt *pb.RelTuple) {
+func showValueType(level int, vt *pb.ValueType) {
+	showMetadataArgs(level, vt.ArgumentTypes)
+}
+
+func showRelTuple(level int, rt *pb.RelTuple) {
 	args := make([]string, len(rt.Arguments))
 	for i, arg := range rt.Arguments {
 		args[i] = primValueString(arg)
@@ -234,17 +224,60 @@ func ShowRelTuple(level int, rt *pb.RelTuple) {
 	}
 }
 
-func ShowRelType(level int, rt *pb.RelType) {
+func showRelType(level int, rt *pb.RelType) {
 	switch rt.Tag {
 	case pb.Kind_PRIMITIVE_TYPE:
-		ShowPrimitiveType(level, rt.PrimitiveType)
+		showPrimitiveType(level, rt.PrimitiveType)
 	case pb.Kind_CONSTANT_TYPE:
 		print(level, "CONSTANT_TYPE\n")
-		ShowConstantType(level+1, rt.ConstantType)
+		showConstantType(level+1, rt.ConstantType)
 	case pb.Kind_VALUE_TYPE:
 		print(level, "VALUE_TYPE\n")
-		ShowValueType(level+1, rt.ValueType)
+		showValueType(level+1, rt.ValueType)
 	default:
 		print(level, "UNKNOWN\n")
 	}
+}
+
+// Show protobuf metadata.
+func ShowMetadata(m *pb.MetadataInfo) {
+	for _, rm := range m.Relations {
+		print(0, "%s\n", rm.FileName)
+		showMetadataArgs(0, rm.RelationId.Arguments)
+	}
+}
+
+// Show a tabular data value.
+func ShowTabularData(d Tabular) {
+	for rnum := 0; rnum < d.NumRows(); rnum++ {
+		fmt.Println(d.String(rnum))
+	}
+}
+
+func ShowRelation(r Relation) {
+	sig := r.Signature()
+	fmt.Printf("// %s\n", strings.Join(sig.Strings(), ", "))
+	ShowTabularData(r)
+}
+
+func (r *baseRelation) Show() {
+	ShowRelation(r)
+}
+
+func (r derivedRelation) Show() {
+	ShowRelation(r)
+}
+
+func (rc RelationCollection) Show() {
+	for _, r := range rc {
+		r.Show()
+	}
+}
+
+func (rsp *TransactionResponse) Show() {
+	ShowJSON(&rsp.Transaction, 4)
+	if rsp.Metadata == nil {
+		return
+	}
+	rsp.Relations().Show()
 }

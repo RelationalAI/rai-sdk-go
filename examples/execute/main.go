@@ -38,7 +38,7 @@ func getCode(opts *Options) (string, error) {
 	}
 	bytes, err := ioutil.ReadFile(opts.File)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return string(bytes), nil
 }
@@ -56,7 +56,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rai.Print(rsp, 4)
+	rsp.Show()
 	return nil
 }
 

@@ -3,10 +3,10 @@
 package rai
 
 import (
-	"fmt"
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/apache/arrow/go/v7/arrow/float16"
 	"github.com/shopspring/decimal"
@@ -1803,7 +1803,7 @@ func checkResponse(t *testing.T, test test, rsp *TransactionResponse) {
 func runTests(t *testing.T, tests []test) {
 	for _, tst := range tests {
 		q := dindent(tst.query)
-		fmt.Println(q)
+		// fmt.Println(q)
 		rsp, err := testClient.Execute(testDatabaseName, testEngineName, q, nil, true)
 		assert.Nil(t, err)
 		checkResponse(t, tst, rsp)
@@ -1826,50 +1826,136 @@ func TestValueTypes(t *testing.T) {
 	runTests(t, valueTypeTests)
 	runTests(t, extraValueTypeTests)
 }
+
 func TestInterfaceTypes(t *testing.T) {
-	var v any
-	var ok bool
+	var c Column
 
-	v = &ConstColumn{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
+	c = boolColumn{}
+	_ = c.(SimpleColumn[bool])
 
-	v = &ListColumn[any]{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
+	c = float16Column{}
+	_ = c.(SimpleColumn[float16.Num])
 
-	v = &StructColumn{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
+	c = primitiveColumn[float32]{}
+	_ = c.(SimpleColumn[float32])
 
-	v = &ValueColumn{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
-	v = &Partition{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
+	c = primitiveColumn[float64]{}
+	_ = c.(SimpleColumn[float64])
 
-	v = &baseRelation{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
+	c = stringColumn{}
+	_ = c.(SimpleColumn[string])
 
-	v = &derivedRelation{}
-	_, ok = v.(Column)
-	assert.True(t, ok)
-	_, ok = v.(Tabular)
-	assert.True(t, ok)
+	c = listColumn[float64]{}
+	_ = c.(TabularColumn[float64])
+	_ = c.(Tabular)
+
+	c = listColumn[int8]{}
+	_ = c.(TabularColumn[int8])
+	_ = c.(Tabular)
+
+	c = listColumn[int16]{}
+	_ = c.(TabularColumn[int16])
+	_ = c.(Tabular)
+
+	c = listColumn[int32]{}
+	_ = c.(TabularColumn[int32])
+	_ = c.(Tabular)
+
+	c = listColumn[int64]{}
+	_ = c.(TabularColumn[int64])
+	_ = c.(Tabular)
+
+	c = listColumn[uint64]{}
+	_ = c.(TabularColumn[uint64])
+	_ = c.(Tabular)
+
+	c = structColumn{}
+	_ = c.(TabularColumn[any])
+	_ = c.(Tabular)
+
+	c = unknownColumn{}
+	_ = c.(SimpleColumn[string])
+
+	c = charColumn{}
+	_ = c.(SimpleColumn[rune])
+
+	c = dateColumn{}
+	_ = c.(SimpleColumn[time.Time])
+
+	c = dateTimeColumn{}
+	_ = c.(SimpleColumn[time.Time])
+
+	c = decimal8Column{}
+	_ = c.(SimpleColumn[decimal.Decimal])
+
+	c = decimal16Column{}
+	_ = c.(SimpleColumn[decimal.Decimal])
+
+	c = decimal32Column{}
+	_ = c.(SimpleColumn[decimal.Decimal])
+
+	c = decimal64Column{}
+	_ = c.(SimpleColumn[decimal.Decimal])
+
+	c = decimal128Column{}
+	_ = c.(SimpleColumn[decimal.Decimal])
+
+	c = int128Column{}
+	_ = c.(SimpleColumn[*big.Int])
+
+	c = uint128Column{}
+	_ = c.(SimpleColumn[*big.Int])
+
+	c = literalColumn[bool]{}
+	_ = c.(SimpleColumn[bool])
+
+	c = rational8Column{}
+	_ = c.(SimpleColumn[*big.Rat])
+
+	c = rational16Column{}
+	_ = c.(SimpleColumn[*big.Rat])
+
+	c = rational32Column{}
+	_ = c.(SimpleColumn[*big.Rat])
+
+	c = rational64Column{}
+	_ = c.(SimpleColumn[*big.Rat])
+
+	c = rational128Column{}
+	_ = c.(SimpleColumn[*big.Rat])
+
+	c = symbolColumn{}
+	_ = c.(SimpleColumn[string])
+
+	c = missingColumn{}
+	_ = c.(SimpleColumn[string])
+
+	c = constColumn{}
+	_ = c.(TabularColumn[any])
+	_ = c.(Tabular)
+
+	c = valueColumn{}
+	_ = c.(TabularColumn[any])
+	_ = c.(Tabular)
+
+	c = nilColumn{}
+	_ = c.(DataColumn[any])
+
+	c = unionColumn{}
+	_ = c.(DataColumn[any])
+
+	var p any = (&Partition{})
+	_ = p.(TabularColumn[any])
+	_ = p.(Tabular)
+
+	var r Relation
+	r = &baseRelation{}
+	_ = r.(TabularColumn[any])
+	_ = r.(Tabular)
+
+	r = &derivedRelation{}
+	_ = r.(TabularColumn[any])
+	_ = r.(Tabular)
 }
 
 func TestPrefixMatch(t *testing.T) {

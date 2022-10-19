@@ -2,9 +2,9 @@
 
 # Run all SDK examples
 
-DATABASE="sdk-test"
+DATABASE="rai-sdk-go"
 DATABASECLONE="$DATABASE-clone"
-ENGINE="sdk-test3"
+ENGINE="rai-sdk-go"
 
 set -x
 

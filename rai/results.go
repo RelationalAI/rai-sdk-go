@@ -52,8 +52,61 @@ type intTypes interface {
 	int8 | int16 | int32 | int64 | uint8 | uint16 | uint32 | uint64
 }
 
-type primTypes interface {
+type PrimitiveTypes interface {
 	bool | floatTypes | intTypes | string
+}
+
+type SimpleTypes interface {
+	PrimitiveTypes | *big.Int | *big.Rat | decimal.Decimal | time.Time
+}
+
+// Column provides access to a single column of data.
+type Column interface {
+	NumRows() int
+	String(int) string
+	Type() any // reflect.Type | MixedType
+	Value(int) any
+}
+
+// DataColumn is a Column with a typed accessor.
+type DataColumn[T any] interface {
+	Column
+	Item(int) T
+}
+
+// SimpleColumn is a DataColumn with a typed placement accessor for simple
+// types.
+type SimpleColumn[T SimpleTypes] interface {
+	DataColumn[T]
+	GetItem(int, *T)
+}
+
+// TabularColumn is a DataColumn with a typed placement accessor for composite
+// types.
+type TabularColumn[T any] interface {
+	DataColumn[[]T]
+	GetItem(int, []T)
+	NumCols() int
+	Strings(int) []string
+}
+
+// Tabular is a generic interface to a sequence of columns of data with a
+// type siganture.
+type Tabular interface {
+	Column
+	Column(int) Column
+	Columns() []Column
+	GetRow(int, []any)
+	NumCols() int
+	Row(int) []any
+	Signature() Signature
+	Strings(int) []string
+}
+
+type Relation interface {
+	Tabular
+	Showable
+	Slice(int, ...int) Relation
 }
 
 func asString(v any) string {
@@ -91,155 +144,235 @@ func matchPrefix(sig []any, terms ...string) bool {
 	return true
 }
 
-// Column is the standard interface to a single column of data.
-type Column interface {
-	NumRows() int
-	String(int) string
-	Type() any // reflect.Type | UnionType
-	Value(int) any
-}
-
-// DataColumn is the standard interface to a single, typed column of data.
-type DataColumn[T any] interface {
-	Column
-	GetItem(int, *T)
-	Item(int) T
-}
-
-// Tabular is the standard interface to a sequence of columns of data.
-type Tabular interface {
-	Column
-	Column(int) Column
-	Columns() []Column
-	NumCols() int
-	GetRow(int, []any)
-	Row(int) []any
-	Signature() Signature
-	Strings(int) []string
-}
-
-type PrimitiveColumn[T primTypes] struct {
+// Represents a column of primitive values.
+type primitiveColumn[T PrimitiveTypes] struct {
 	data []T
 }
 
-func (c PrimitiveColumn[T]) GetItem(rnum int, out *T) {
+func newPrimitiveColumn[T PrimitiveTypes](d []T) SimpleColumn[T] {
+	return primitiveColumn[T]{d}
+}
+
+func (c primitiveColumn[T]) GetItem(rnum int, out *T) {
 	*out = c.data[rnum]
 }
 
-func (c PrimitiveColumn[T]) Item(rnum int) T {
+func (c primitiveColumn[T]) Item(rnum int) T {
 	return c.data[rnum]
 }
 
-func (c PrimitiveColumn[T]) NumRows() int {
+func (c primitiveColumn[T]) NumRows() int {
 	return len(c.data)
 }
 
-func (c PrimitiveColumn[T]) String(rnum int) string {
+func (c primitiveColumn[T]) String(rnum int) string {
 	return fmt.Sprintf("%v", c.data[rnum])
 }
 
-func (c PrimitiveColumn[T]) Type() any {
+func (c primitiveColumn[T]) Type() any {
 	return typeOf[T]()
 }
 
-func (c PrimitiveColumn[T]) Value(rnum int) any {
+func (c primitiveColumn[T]) Value(rnum int) any {
 	return c.data[rnum]
 }
 
 // Sadly, the `array.Boolean` type does not have a `Values` accessor.
-type BoolColumn struct {
+type boolColumn struct {
 	data *array.Boolean
 }
 
-func newBoolColumn(data *array.Boolean) BoolColumn {
-	return BoolColumn{data}
+func newBoolColumn(data *array.Boolean) SimpleColumn[bool] {
+	return boolColumn{data}
 }
 
-func (c BoolColumn) GetItem(rnum int, out *bool) {
+func (c boolColumn) GetItem(rnum int, out *bool) {
 	*out = c.data.Value(rnum)
 }
 
-func (c BoolColumn) Item(rnum int) bool {
+func (c boolColumn) Item(rnum int) bool {
 	return c.data.Value(rnum)
 }
 
-func (c BoolColumn) NumRows() int {
+func (c boolColumn) NumRows() int {
 	return c.data.Len()
 }
 
-func (c BoolColumn) String(rnum int) string {
+func (c boolColumn) String(rnum int) string {
 	return strconv.FormatBool(c.data.Value(rnum))
 }
 
-func (c BoolColumn) Type() any {
+func (c boolColumn) Type() any {
 	return BoolType
 }
 
-func (c BoolColumn) Value(rnum int) any {
+func (c boolColumn) Value(rnum int) any {
 	return c.data.Value(rnum)
 }
 
-type Float16Column struct {
-	PrimitiveColumn[float16.Num]
+type float16Column struct {
+	primitiveColumn[float16.Num]
 }
 
-func newFloat16Column(data []float16.Num) Float16Column {
-	return Float16Column{PrimitiveColumn[float16.Num]{data}}
+func newFloat16Column(data []float16.Num) SimpleColumn[float16.Num] {
+	return float16Column{primitiveColumn[float16.Num]{data}}
 }
 
-func (c Float16Column) Item(rnum int) float16.Num {
+func (c float16Column) Item(rnum int) float16.Num {
 	return c.data[rnum]
 }
 
-func (c Float16Column) Type() any {
+func (c float16Column) Type() any {
 	return Float16Type
 }
 
-func newFloat32Column(data []float32) PrimitiveColumn[float32] {
-	return PrimitiveColumn[float32]{data}
+func newFloat32Column(data []float32) SimpleColumn[float32] {
+	return primitiveColumn[float32]{data}
 }
 
-func newFloat64Column(data []float64) PrimitiveColumn[float64] {
-	return PrimitiveColumn[float64]{data}
+func newFloat64Column(data []float64) SimpleColumn[float64] {
+	return primitiveColumn[float64]{data}
 }
 
 // Sadly, the `array.String“ type does not have a `Values` accessor.
-type StringColumn struct {
+type stringColumn struct {
 	data *array.String
 }
 
-func newStringColumn(data *array.String) StringColumn {
-	return StringColumn{data}
+func newStringColumn(data *array.String) SimpleColumn[string] {
+	return stringColumn{data}
 }
 
-func (c StringColumn) GetItem(rnum int, out *string) {
+func (c stringColumn) GetItem(rnum int, out *string) {
 	*out = c.data.Value(rnum)
 }
 
-func (c StringColumn) Item(rnum int) string {
+func (c stringColumn) Item(rnum int) string {
 	return c.data.Value(rnum)
 }
 
-func (c StringColumn) NumRows() int {
+func (c stringColumn) NumRows() int {
 	return c.data.Len()
 }
 
-func (c StringColumn) String(rnum int) string {
+func (c stringColumn) String(rnum int) string {
 	return c.data.Value(rnum)
 }
 
-func (c StringColumn) Type() any {
+func (c stringColumn) Type() any {
 	return StringType
 }
 
-func (c StringColumn) Value(rnum int) any {
+func (c stringColumn) Value(rnum int) any {
 	return c.data.Value(rnum)
 }
 
-type ListColumn[T any] struct {
+type listColumn[T any] struct {
 	data  []T // raw arrow data
 	ncols int
 	cols  []Column
+}
+
+func (c listColumn[T]) Column(cnum int) Column {
+	return listItemColumn[T]{c.data, cnum, c.ncols}
+}
+
+func (c listColumn[T]) Columns() []Column {
+	if c.cols == nil {
+		c.cols = make([]Column, c.ncols)
+		for i := 0; i < c.ncols; i++ {
+			c.cols[i] = listItemColumn[T]{c.data, c.ncols, i}
+		}
+	}
+	return c.cols
+}
+
+func (c listColumn[T]) GetItem(rnum int, out []T) {
+	roffs := rnum * c.ncols
+	for cnum := 0; cnum < c.ncols; cnum++ {
+		out[cnum] = c.data[roffs+cnum]
+	}
+}
+
+func (c listColumn[T]) Item(rnum int) []T {
+	result := make([]T, c.ncols)
+	c.GetItem(rnum, result)
+	return result
+}
+
+func (c listColumn[T]) NumCols() int {
+	return c.ncols
+}
+
+func (c listColumn[T]) NumRows() int {
+	return len(c.data) / c.ncols
+}
+
+func (c listColumn[T]) GetRow(rnum int, out []any) {
+	roffs := rnum * c.ncols
+	for cnum := 0; cnum < c.ncols; cnum++ {
+		out[cnum] = c.data[roffs+cnum]
+	}
+}
+
+func (c listColumn[T]) Row(rnum int) []any {
+	result := make([]any, c.ncols)
+	c.GetRow(rnum, result)
+	return result
+}
+
+func (c listColumn[T]) Signature() Signature {
+	t := typeOf[T]()
+	result := make([]any, c.ncols)
+	for i := 0; i < c.ncols; i++ {
+		result[i] = t
+	}
+	return result
+}
+
+func (c listColumn[T]) String(rnum int) string {
+	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
+}
+
+func (c listColumn[T]) Strings(rnum int) []string {
+	roffs := rnum * c.ncols
+	result := make([]string, c.ncols)
+	for cnum := 0; cnum < c.ncols; cnum++ {
+		result[cnum] = asString(c.data[roffs+cnum])
+	}
+	return result
+}
+
+func (c listColumn[T]) Type() any {
+	return reflect.TypeOf(*new([]T))
+}
+
+func (c listColumn[T]) Value(rnum int) any {
+	return c.Item(rnum)
+}
+
+func newFloat64ListColumn(v []float64, ncols int) TabularColumn[float64] {
+	return listColumn[float64]{v, ncols, nil}
+}
+
+func newInt8ListColumn(data []int8, ncols int) TabularColumn[int8] {
+	return listColumn[int8]{data, ncols, nil}
+}
+
+func newInt16ListColumn(data []int16, ncols int) TabularColumn[int16] {
+	return listColumn[int16]{data, ncols, nil}
+}
+
+func newInt32ListColumn(data []int32, ncols int) TabularColumn[int32] {
+	return listColumn[int32]{data, ncols, nil}
+}
+
+func newInt64ListColumn(data []int64, ncols int) TabularColumn[int64] {
+	return listColumn[int64]{data, ncols, nil}
+}
+
+func newUint64ListColumn(data []uint64, ncols int) TabularColumn[uint64] {
+	return listColumn[uint64]{data, ncols, nil}
 }
 
 func newListColumn(c *array.FixedSizeList) Column {
@@ -249,215 +382,113 @@ func newListColumn(c *array.FixedSizeList) Column {
 	ncols := nvals / nrows
 	switch cc := col.(type) {
 	case *array.Float64:
-		return ListColumn[float64]{cc.Float64Values(), ncols, nil}
+		return newFloat64ListColumn(cc.Float64Values(), ncols)
 	case *array.Int8:
-		return ListColumn[int8]{cc.Int8Values(), ncols, nil}
+		return newInt8ListColumn(cc.Int8Values(), ncols)
 	case *array.Int16:
-		return ListColumn[int16]{cc.Int16Values(), ncols, nil}
+		return newInt16ListColumn(cc.Int16Values(), ncols)
 	case *array.Int32:
-		return ListColumn[int32]{cc.Int32Values(), ncols, nil}
+		return newInt32ListColumn(cc.Int32Values(), ncols)
 	case *array.Int64:
-		return ListColumn[int64]{cc.Int64Values(), ncols, nil}
+		return newInt64ListColumn(cc.Int64Values(), ncols)
 	case *array.Uint64:
-		return ListColumn[uint64]{cc.Uint64Values(), ncols, nil}
+		return newUint64ListColumn(cc.Uint64Values(), ncols)
 	case *array.FixedSizeList: // Rational128
 		ccv := cc.ListValues().(*array.Uint64)
-		return ListColumn[uint64]{ccv.Uint64Values(), 4, nil}
+		return newUint64ListColumn(ccv.Uint64Values(), 4)
 	}
 	return newUnknownColumn(nrows)
 }
 
-// ListColumn:DataColumn
-
-func (c ListColumn[T]) GetItem(rnum int, out []T) {
-	roffs := rnum * c.ncols
-	for cnum := 0; cnum < c.ncols; cnum++ {
-		out[cnum] = c.data[roffs+cnum]
-	}
-}
-
-func (c ListColumn[T]) Item(rnum int) []T {
-	result := make([]T, c.ncols)
-	c.GetItem(rnum, result)
-	return result
-}
-
-func (c ListColumn[T]) NumRows() int {
-	return len(c.data) / c.ncols
-}
-
-func (c ListColumn[T]) String(rnum int) string {
-	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
-}
-
-func (c ListColumn[T]) Type() any {
-	return reflect.TypeOf(*new([]T))
-}
-
-func (c ListColumn[T]) Value(rnum int) any {
-	return c.Item(rnum)
-}
-
-// ListColumn:Tabular
-
-func (c ListColumn[T]) Column(cnum int) Column {
-	return ListItemColumn[T]{c.data, cnum, c.ncols}
-}
-
-func (c ListColumn[T]) Columns() []Column {
-	if c.cols == nil {
-		c.cols = make([]Column, c.ncols)
-		for i := 0; i < c.ncols; i++ {
-			c.cols[i] = ListItemColumn[T]{c.data, c.ncols, i}
-		}
-	}
-	return c.cols
-}
-
-func (c ListColumn[T]) NumCols() int {
-	return c.ncols
-}
-
-func (c ListColumn[T]) GetRow(rnum int, out []any) {
-	roffs := rnum * c.ncols
-	for cnum := 0; cnum < c.ncols; cnum++ {
-		out[cnum] = c.data[roffs+cnum]
-	}
-}
-
-func (c ListColumn[T]) Row(rnum int) []any {
-	result := make([]any, c.ncols)
-	c.GetRow(rnum, result)
-	return result
-}
-
-func (c ListColumn[T]) Signature() Signature {
-	t := typeOf[T]()
-	result := make([]any, c.ncols)
-	for i := 0; i < c.ncols; i++ {
-		result[i] = t
-	}
-	return result
-}
-
-func (c ListColumn[T]) Strings(rnum int) []string {
-	roffs := rnum * c.ncols
-	result := make([]string, c.ncols)
-	for cnum := 0; cnum < c.ncols; cnum++ {
-		result[cnum] = asString(c.data[roffs+cnum])
-	}
-	return result
-}
-
-// Represents one item of a `ListColumn`
-type ListItemColumn[T any] struct {
+// Represents one sub-column of a `listColumn`
+type listItemColumn[T any] struct {
 	data  []T
 	cnum  int
 	ncols int
 }
 
-func (c ListItemColumn[T]) GetItem(rnum int, out *T) {
+func (c listItemColumn[T]) GetItem(rnum int, out *T) {
 	*out = c.data[(rnum*c.ncols)+c.cnum]
 }
 
-func (c ListItemColumn[T]) Item(rnum int) T {
+func (c listItemColumn[T]) Item(rnum int) T {
 	return c.data[(rnum*c.ncols)+c.cnum]
 }
 
-func (c ListItemColumn[T]) NumRows() int {
+func (c listItemColumn[T]) NumRows() int {
 	return len(c.data) / c.ncols
 }
 
-func (c ListItemColumn[T]) String(rnum int) string {
+func (c listItemColumn[T]) String(rnum int) string {
 	return asString(c.Item(rnum))
 }
 
-func (c ListItemColumn[T]) Type() any {
+func (c listItemColumn[T]) Type() any {
 	return typeOf[T]()
 }
 
-func (c ListItemColumn[T]) Value(rnum int) any {
+func (c listItemColumn[T]) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type StructColumn struct {
+type structColumn struct {
 	cols []Column
 }
 
-// Note, its possible for a `StructColumn` to be empty.
-func newStructColumn(c *array.Struct) StructColumn {
+// Note, its possible for a `structColumn` to be empty.
+func newStructColumn(c *array.Struct) TabularColumn[any] {
 	ncols := c.NumField()
 	cols := make([]Column, ncols)
 	for i := 0; i < ncols; i++ {
 		cols[i] = newPartitionColumn(c.Field(i), c.Len())
 	}
-	return StructColumn{cols}
+	return structColumn{cols}
 }
 
-// StructColumn:DataColumn
+func (c structColumn) Column(rnum int) Column {
+	return c.cols[rnum]
+}
 
-func (c StructColumn) GetItem(rnum int, out []any) {
+func (c structColumn) Columns() []Column {
+	return c.cols
+}
+
+func (c structColumn) GetItem(rnum int, out []any) {
 	for n, c := range c.cols {
 		out[n] = c.Value(rnum)
 	}
 }
 
-func newUnknownColumn(nrows int) UnknownColumn {
-	return UnknownColumn{nrows}
+func (c structColumn) GetRow(rnum int, out []any) {
+	for cnum := 0; cnum < len(c.cols); cnum++ {
+		out[cnum] = c.cols[cnum].Value(rnum)
+	}
 }
 
-func (c StructColumn) Item(rnum int) []any {
+func (c structColumn) Item(rnum int) []any {
 	row := make([]any, len(c.cols))
 	c.GetItem(rnum, row)
 	return row
 }
 
-func (c StructColumn) NumRows() int {
+func (c structColumn) NumCols() int {
+	return len(c.cols)
+}
+
+func (c structColumn) NumRows() int {
 	if len(c.cols) == 0 {
 		return 0
 	}
 	return c.cols[0].NumRows()
 }
 
-func (c StructColumn) String(rnum int) string {
-	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
-}
-
-func (c StructColumn) Type() any {
-	return AnyListType
-}
-
-func (c StructColumn) Value(rnum int) any {
-	return c.Item(rnum)
-}
-
-// StructColumn:Tabular
-
-func (c StructColumn) Column(rnum int) Column {
-	return c.cols[rnum]
-}
-
-func (c StructColumn) Columns() []Column {
-	return c.cols
-}
-
-func (c StructColumn) NumCols() int {
-	return len(c.cols)
-}
-
-func (c StructColumn) GetRow(rnum int, out []any) {
-	for cnum := 0; cnum < len(c.cols); cnum++ {
-		out[cnum] = c.cols[cnum].Value(rnum)
-	}
-}
-
-func (c StructColumn) Row(rnum int) []any {
+func (c structColumn) Row(rnum int) []any {
 	result := make([]any, len(c.cols))
 	c.GetRow(rnum, result)
 	return result
 }
 
-func (c StructColumn) Signature() Signature {
+func (c structColumn) Signature() Signature {
 	ncols := len(c.cols)
 	result := make([]any, ncols)
 	for i := 0; i < ncols; i++ {
@@ -466,7 +497,19 @@ func (c StructColumn) Signature() Signature {
 	return result
 }
 
-func (c StructColumn) Strings(rnum int) []string {
+func (c structColumn) String(rnum int) string {
+	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
+}
+
+func (c structColumn) Type() any {
+	return AnyListType
+}
+
+func (c structColumn) Value(rnum int) any {
+	return c.Item(rnum)
+}
+
+func (c structColumn) Strings(rnum int) []string {
 	ncols := len(c.cols)
 	result := make([]string, ncols)
 	for cnum := 0; cnum < ncols; cnum++ {
@@ -476,33 +519,37 @@ func (c StructColumn) Strings(rnum int) []string {
 }
 
 // Represents a column with an unknown data type.
-type UnknownColumn struct {
+type unknownColumn struct {
 	nrows int
 }
 
-func (c UnknownColumn) NumRows() int {
+func newUnknownColumn(nrows int) SimpleColumn[string] {
+	return unknownColumn{nrows}
+}
+
+func (c unknownColumn) NumRows() int {
 	return c.nrows
 }
 
 const unknown = "unknown"
 
-func (c UnknownColumn) GetItem(_ int, out *string) {
+func (c unknownColumn) GetItem(_ int, out *string) {
 	*out = unknown
 }
 
-func (c UnknownColumn) Item(_ int) string {
+func (c unknownColumn) Item(_ int) string {
 	return unknown
 }
 
-func (c UnknownColumn) String(_ int) string {
+func (c unknownColumn) String(_ int) string {
 	return unknown
 }
 
-func (c UnknownColumn) Type() any {
+func (c unknownColumn) Type() any {
 	return StringType
 }
 
-func (c UnknownColumn) Value(_ int) any {
+func (c unknownColumn) Value(_ int) any {
 	return unknown
 }
 
@@ -562,13 +609,6 @@ func columnType(c arrow.Array) reflect.Type {
 	}
 }
 
-// Partition is the physical representation of relation data. Partitions may
-// be shared by relations in the case where they only differ by constant values
-// in the relation signature.
-func newPartition(record arrow.Record) *Partition {
-	return (&Partition{record: record}).init()
-}
-
 func (p *Partition) init() *Partition {
 	if p.cols == nil {
 		ncols := p.NumCols()
@@ -580,34 +620,12 @@ func (p *Partition) init() *Partition {
 	return p
 }
 
-func (p *Partition) Record() arrow.Record {
-	return p.record
+// Partition is the physical representation of relation data. Partitions may
+// be shared by relations in the case where they only differ by constant values
+// in the relation signature.
+func newPartition(record arrow.Record) *Partition {
+	return (&Partition{record: record}).init()
 }
-
-// Returns the Arrow schema for the partition.
-func (p *Partition) Schema() arrow.Schema {
-	return *p.record.Schema()
-}
-
-// Partition:Column
-
-func (p *Partition) String(rnum int) string {
-	return "(" + strings.Join(p.Strings(rnum), ", ") + ")"
-}
-
-func (p *Partition) Type() any {
-	return AnyListType
-}
-
-func (p *Partition) NumRows() int {
-	return int(p.record.NumRows())
-}
-
-func (p *Partition) Value(rnum int) any {
-	return p.Row(rnum)
-}
-
-// Partition:Tabular
 
 func (p *Partition) Column(rnum int) Column {
 	return p.cols[rnum]
@@ -617,8 +635,8 @@ func (p *Partition) Columns() []Column {
 	return p.cols
 }
 
-func (p *Partition) NumCols() int {
-	return int(p.record.NumCols())
+func (p *Partition) GetItem(rnum int, out []any) {
+	p.GetRow(rnum, out)
 }
 
 func (p *Partition) GetRow(rnum int, out []any) {
@@ -626,6 +644,18 @@ func (p *Partition) GetRow(rnum int, out []any) {
 	for c := 0; c < ncols; c++ {
 		out[c] = p.cols[c].Value(rnum)
 	}
+}
+
+func (p *Partition) Item(rnum int) []any {
+	return p.Row(rnum)
+}
+
+func (p *Partition) NumCols() int {
+	return int(p.record.NumCols())
+}
+
+func (p *Partition) NumRows() int {
+	return int(p.record.NumRows())
 }
 
 func (p *Partition) Row(rnum int) []any {
@@ -653,9 +683,20 @@ func (p *Partition) Strings(rnum int) []string {
 	return row
 }
 
-// Returns a column accessor for the given partition column index.
-func (p *Partition) newColumn(rnum int) Column {
-	return newPartitionColumn(p.record.Column(rnum), p.NumRows())
+func (p *Partition) Record() arrow.Record {
+	return p.record
+}
+
+func (p *Partition) String(rnum int) string {
+	return "(" + strings.Join(p.Strings(rnum), ", ") + ")"
+}
+
+func (p *Partition) Type() any {
+	return AnyListType
+}
+
+func (p *Partition) Value(rnum int) any {
+	return p.Row(rnum)
 }
 
 // Returns a column accessor for the given arrow array.
@@ -670,23 +711,23 @@ func newPartitionColumn(a arrow.Array, nrows int) Column {
 	case *array.Float64:
 		return newFloat64Column(aa.Float64Values())
 	case *array.Int8:
-		return PrimitiveColumn[int8]{aa.Int8Values()}
+		return newPrimitiveColumn(aa.Int8Values())
 	case *array.Int16:
-		return PrimitiveColumn[int16]{aa.Int16Values()}
+		return newPrimitiveColumn(aa.Int16Values())
 	case *array.Int32:
-		return PrimitiveColumn[int32]{aa.Int32Values()}
+		return newPrimitiveColumn(aa.Int32Values())
 	case *array.Int64:
-		return PrimitiveColumn[int64]{aa.Int64Values()}
+		return newPrimitiveColumn(aa.Int64Values())
 	case *array.String:
 		return newStringColumn(aa)
 	case *array.Uint8:
-		return PrimitiveColumn[uint8]{aa.Uint8Values()}
+		return newPrimitiveColumn(aa.Uint8Values())
 	case *array.Uint16:
-		return PrimitiveColumn[uint16]{aa.Uint16Values()}
+		return newPrimitiveColumn(aa.Uint16Values())
 	case *array.Uint32:
-		return PrimitiveColumn[uint32]{aa.Uint32Values()}
+		return newPrimitiveColumn(aa.Uint32Values())
 	case *array.Uint64:
-		return PrimitiveColumn[uint64]{aa.Uint64Values()}
+		return newPrimitiveColumn(aa.Uint64Values())
 	case *array.FixedSizeList:
 		return newListColumn(aa)
 	case *array.Struct:
@@ -695,250 +736,255 @@ func newPartitionColumn(a arrow.Array, nrows int) Column {
 	return newUnknownColumn(nrows)
 }
 
+// Returns a column accessor for the given partition column index.
+func (p *Partition) newColumn(rnum int) Column {
+	return newPartitionColumn(p.record.Column(rnum), p.NumRows())
+}
+
 // Characters are represented in arrow as uint32.
-type CharColumn struct {
-	col PrimitiveColumn[uint32]
+type charColumn struct {
+	col SimpleColumn[uint32]
 }
 
-func newCharColumn(c PrimitiveColumn[uint32]) CharColumn {
-	return CharColumn{c}
+func newCharColumn(c SimpleColumn[uint32]) SimpleColumn[rune] {
+	return charColumn{c}
 }
 
-func (c CharColumn) GetItem(rnum int, out *rune) {
-	*out = rune(c.col.data[rnum])
+func (c charColumn) GetItem(rnum int, out *rune) {
+	*out = rune(c.col.Item(rnum))
 }
 
-func (c CharColumn) Item(rnum int) rune {
-	return rune(c.col.data[rnum])
+func (c charColumn) Item(rnum int) rune {
+	return rune(c.col.Item(rnum))
 }
 
-func (c CharColumn) NumRows() int {
+func (c charColumn) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c CharColumn) String(rnum int) string {
-	return string(rune(c.col.data[rnum]))
+func (c charColumn) String(rnum int) string {
+	return string(rune(c.col.Item(rnum)))
 }
 
-func (c CharColumn) Type() any {
+func (c charColumn) Type() any {
 	return RuneType
 }
 
-func (c CharColumn) Value(rnum int) any {
-	return rune(c.col.data[rnum])
+func (c charColumn) Value(rnum int) any {
+	return rune(c.col.Item(rnum))
 }
 
-type DateColumn struct {
+type dateColumn struct {
 	col DataColumn[int64]
 }
 
-func newDateColumn(col DataColumn[int64]) DateColumn {
-	return DateColumn{col}
+func newDateColumn(col DataColumn[int64]) SimpleColumn[time.Time] {
+	return dateColumn{col}
 }
 
-func (c DateColumn) GetItem(rnum int, out *time.Time) {
+func (c dateColumn) GetItem(rnum int, out *time.Time) {
 	*out = c.Item(rnum)
 }
 
-func (c DateColumn) Item(rnum int) time.Time {
+func (c dateColumn) Item(rnum int) time.Time {
 	v := c.col.Item(rnum) // days since 1AD (Rata Die)
 	return DateFromRataDie(v)
 }
 
-func (c DateColumn) NumRows() int {
+func (c dateColumn) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c DateColumn) String(rnum int) string {
+func (c dateColumn) String(rnum int) string {
 	return c.Item(rnum).Format("2006-01-02")
 }
 
-func (c DateColumn) Type() any {
+func (c dateColumn) Type() any {
 	return TimeType
 }
 
-func (c DateColumn) Value(rnum int) any {
+func (c dateColumn) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type DateTimeColumn struct {
+type dateTimeColumn struct {
 	col DataColumn[int64]
 }
 
-func newDateTimeColumn(c DataColumn[int64]) DateTimeColumn {
-	return DateTimeColumn{c}
+func newDateTimeColumn(c DataColumn[int64]) SimpleColumn[time.Time] {
+	return dateTimeColumn{c}
 }
 
-func (c DateTimeColumn) GetItem(rnum int, out *time.Time) {
+func (c dateTimeColumn) GetItem(rnum int, out *time.Time) {
 	*out = c.Item(rnum)
 }
 
-func (c DateTimeColumn) Item(rnum int) time.Time {
+func (c dateTimeColumn) Item(rnum int) time.Time {
 	v := c.col.Item(rnum) // millis since 1AD
 	return DateFromRataMillis(v)
 }
 
-func (c DateTimeColumn) NumRows() int {
+func (c dateTimeColumn) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c DateTimeColumn) String(rnum int) string {
+func (c dateTimeColumn) String(rnum int) string {
 	return c.Item(rnum).Format(time.RFC3339)
 }
 
-func (c DateTimeColumn) Type() any {
+func (c dateTimeColumn) Type() any {
 	return TimeType
 }
 
-func (c DateTimeColumn) Value(rnum int) any {
+func (c dateTimeColumn) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-// DecimalColumn projects the underlying pair of values as a decimal.
-type DecimalColumn[T int8 | int16 | int32 | int64] struct {
+// decimalColumn projects the underlying pair of values as a decimal.
+type decimalColumn[T int8 | int16 | int32 | int64] struct {
 	col    DataColumn[T]
 	digits int32
 }
 
-func (c DecimalColumn[T]) NumRows() int {
+func (c decimalColumn[T]) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c DecimalColumn[T]) Type() any {
+func (c decimalColumn[T]) Type() any {
 	return DecimalType
 }
 
-type Decimal8Column struct {
-	DecimalColumn[int8]
+type decimal8Column struct {
+	decimalColumn[int8]
 }
 
-func newDecimal8Column(col DataColumn[int8], digits int32) Decimal8Column {
-	return Decimal8Column{DecimalColumn[int8]{col, digits}}
+func newDecimal8Column(col DataColumn[int8], digits int32) SimpleColumn[decimal.Decimal] {
+	return decimal8Column{decimalColumn[int8]{col, digits}}
 }
 
-func (c Decimal8Column) GetItem(rnum int, out *decimal.Decimal) {
+func (c decimal8Column) GetItem(rnum int, out *decimal.Decimal) {
 	*out = decimal.New(int64(c.col.Item(rnum)), -c.digits)
 }
 
-func (c Decimal8Column) Item(rnum int) decimal.Decimal {
+func (c decimal8Column) Item(rnum int) decimal.Decimal {
 	return decimal.New(int64(c.col.Item(rnum)), -c.digits)
 }
 
-func (c Decimal8Column) String(rnum int) string {
+func (c decimal8Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Decimal8Column) Value(rnum int) any {
+func (c decimal8Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Decimal16Column struct {
-	DecimalColumn[int16]
+type decimal16Column struct {
+	decimalColumn[int16]
 }
 
-func newDecimal16Column(col DataColumn[int16], digits int32) Decimal16Column {
-	return Decimal16Column{DecimalColumn[int16]{col, digits}}
+func newDecimal16Column(col DataColumn[int16], digits int32) SimpleColumn[decimal.Decimal] {
+	return decimal16Column{decimalColumn[int16]{col, digits}}
 }
 
-func (c Decimal16Column) GetItem(rnum int, out *decimal.Decimal) {
+func (c decimal16Column) GetItem(rnum int, out *decimal.Decimal) {
 	*out = c.Item(rnum)
 }
 
-func (c Decimal16Column) Item(rnum int) decimal.Decimal {
+func (c decimal16Column) Item(rnum int) decimal.Decimal {
 	v := c.col.Item(rnum)
 	return decimal.New(int64(v), -c.digits)
 }
 
-func (c Decimal16Column) String(rnum int) string {
+func (c decimal16Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Decimal16Column) Value(rnum int) any {
+func (c decimal16Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Decimal32Column struct {
-	DecimalColumn[int32]
+type decimal32Column struct {
+	decimalColumn[int32]
 }
 
-func newDecimal32Column(col DataColumn[int32], digits int32) Decimal32Column {
-	return Decimal32Column{DecimalColumn[int32]{col, digits}}
+func newDecimal32Column(col DataColumn[int32], digits int32) SimpleColumn[decimal.Decimal] {
+	return decimal32Column{decimalColumn[int32]{col, digits}}
 }
 
-func (c Decimal32Column) GetItem(rnum int, out *decimal.Decimal) {
+func (c decimal32Column) GetItem(rnum int, out *decimal.Decimal) {
 	*out = c.Item(rnum)
 }
 
-func (c Decimal32Column) Item(rnum int) decimal.Decimal {
+func (c decimal32Column) Item(rnum int) decimal.Decimal {
 	v := c.col.Item(rnum)
 	return decimal.New(int64(v), -c.digits)
 }
 
-func (c Decimal32Column) String(rnum int) string {
+func (c decimal32Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Decimal32Column) Value(rnum int) any {
+func (c decimal32Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Decimal64Column struct {
-	DecimalColumn[int64]
+type decimal64Column struct {
+	decimalColumn[int64]
 }
 
-func newDecimal64Column(col DataColumn[int64], digits int32) Decimal64Column {
-	return Decimal64Column{DecimalColumn[int64]{col, digits}}
+func newDecimal64Column(col DataColumn[int64], digits int32) SimpleColumn[decimal.Decimal] {
+	return decimal64Column{decimalColumn[int64]{col, digits}}
 }
 
-func (c Decimal64Column) GetItem(rnum int, out *decimal.Decimal) {
+func (c decimal64Column) GetItem(rnum int, out *decimal.Decimal) {
 	*out = c.Item(rnum)
 }
 
-func (c Decimal64Column) Item(rnum int) decimal.Decimal {
+func (c decimal64Column) Item(rnum int) decimal.Decimal {
 	v := c.col.Item(rnum)
 	return decimal.New(int64(v), -c.digits)
 }
 
-func (c Decimal64Column) String(rnum int) string {
+func (c decimal64Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Decimal64Column) Value(rnum int) any {
+func (c decimal64Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Decimal128Column struct {
-	col    ListColumn[uint64]
+type decimal128Column struct {
+	col    TabularColumn[uint64]
 	digits int32
 }
 
-func newDecimal128Column(col ListColumn[uint64], digits int32) Decimal128Column {
-	return Decimal128Column{col, digits}
+func newDecimal128Column(col TabularColumn[uint64], digits int32) SimpleColumn[decimal.Decimal] {
+	return decimal128Column{col, digits}
 }
 
-func (c Decimal128Column) GetItem(rnum int, out *decimal.Decimal) {
+func (c decimal128Column) GetItem(rnum int, out *decimal.Decimal) {
 	*out = c.Item(rnum)
 }
 
-func (c Decimal128Column) Item(rnum int) decimal.Decimal {
+func (c decimal128Column) Item(rnum int) decimal.Decimal {
 	var v [2]uint64
 	c.col.GetItem(rnum, v[:])
 	return NewDecimal128(v[0], v[1], -c.digits)
 }
 
-func (c Decimal128Column) NumRows() int {
+func (c decimal128Column) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c Decimal128Column) String(rnum int) string {
+func (c decimal128Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Decimal128Column) Type() any {
+func (c decimal128Column) Type() any {
 	return DecimalType
 }
 
-func (c Decimal128Column) Value(rnum int) any {
+func (c decimal128Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
@@ -955,251 +1001,254 @@ func newDecimalColumn(vt ValueType, c Column) Column {
 	case 64:
 		return newDecimal64Column(c.(DataColumn[int64]), digits)
 	case 128:
-		return newDecimal128Column(c.(ListColumn[uint64]), digits)
+		return newDecimal128Column(c.(TabularColumn[uint64]), digits)
 	}
 	return newUnknownColumn(c.NumRows())
 }
 
-// Int128Column projects the underlying `[2]int64“ value as a `big.Int`.
-type Int128Column struct {
-	col ListColumn[uint64]
+// int128Column projects the underlying `[2]int64“ value as a `big.Int`.
+type int128Column struct {
+	col TabularColumn[uint64]
 }
 
-func newInt128Column(c ListColumn[uint64]) Int128Column {
-	return Int128Column{c}
+func newInt128Column(c TabularColumn[uint64]) SimpleColumn[*big.Int] {
+	return int128Column{c}
 }
 
-func (c Int128Column) GetItem(rnum int, out **big.Int) {
+func (c int128Column) GetItem(rnum int, out **big.Int) {
 	*out = c.Item(rnum)
 }
 
-func (c Int128Column) Item(rnum int) *big.Int {
+func (c int128Column) Item(rnum int) *big.Int {
 	v := c.col.Item(rnum)
 	// assert len(v) == 2
 	return NewBigInt128(v[0], v[1])
 }
 
-func (c Int128Column) NumRows() int {
+func (c int128Column) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c Int128Column) String(rnum int) string {
+func (c int128Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Int128Column) Type() any {
+func (c int128Column) Type() any {
 	return BigIntType
 }
 
-func (c Int128Column) Value(rnum int) any {
+func (c int128Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type LiteralColumn[T any] struct {
-	value T
-	nrows int
+// uint128Column projects the underlying `[2]uint64“ value as `big.Int`.
+type uint128Column struct {
+	col TabularColumn[uint64]
 }
 
-func newLiteralColumn[T any](v T, nrows int) LiteralColumn[T] {
-	return LiteralColumn[T]{v, nrows}
+func newUint128Column(c TabularColumn[uint64]) SimpleColumn[*big.Int] {
+	return uint128Column{c}
 }
 
-func (c LiteralColumn[T]) GetItem(rnum int, out *T) {
-	*out = c.value
-}
-
-func (c LiteralColumn[T]) Item(rnum int) T {
-	return c.value
-}
-
-func (c LiteralColumn[T]) NumRows() int {
-	return c.nrows
-}
-
-func (c LiteralColumn[T]) String(_ int) string {
-	return asString(c.value)
-}
-
-func (c LiteralColumn[T]) Type() any {
-	return reflect.TypeOf(c.value)
-}
-
-func (c LiteralColumn[T]) Value(_ int) any {
-	return c.value
-}
-
-// Uint128Column projects the underlying `[2]uint64“ value as `big.Int`.
-type Uint128Column struct {
-	col ListColumn[uint64]
-}
-
-func newUint128Column(c ListColumn[uint64]) Uint128Column {
-	return Uint128Column{c}
-}
-
-func (c Uint128Column) GetItem(rnum int, out **big.Int) {
+func (c uint128Column) GetItem(rnum int, out **big.Int) {
 	*out = c.Item(rnum)
 }
 
-func (c Uint128Column) Item(rnum int) *big.Int {
+func (c uint128Column) Item(rnum int) *big.Int {
 	var v [2]uint64
 	c.col.GetItem(rnum, v[:])
 	return NewBigUint128(v[0], v[1])
 }
 
-func (c Uint128Column) NumRows() int {
+func (c uint128Column) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c Uint128Column) String(rnum int) string {
+func (c uint128Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Uint128Column) Type() any {
+func (c uint128Column) Type() any {
 	return BigIntType
 }
 
-func (c Uint128Column) Value(rnum int) any {
+func (c uint128Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-// RationalColumn projects the underlying pair of values as a `*big.Rat“.
-type RationalColumn[T int8 | int16 | int32 | int64] struct {
-	col ListColumn[T]
+// Note, type param should be constrained to SimpleTypes, but this is used
+// in too many places where we dont have the type of the parameter, and its
+// extra overhead to recapture it.
+type literalColumn[T any] struct {
+	value T
+	nrows int
 }
 
-func newRational8Column(col ListColumn[int8]) Rational8Column {
-	return Rational8Column{RationalColumn[int8]{col}}
+func newLiteralColumn[T any](v T, nrows int) Column {
+	return literalColumn[T]{v, nrows}
 }
 
-func (c RationalColumn[T]) NumRows() int {
+func (c literalColumn[T]) GetItem(rnum int, out *T) {
+	*out = c.value
+}
+
+func (c literalColumn[T]) Item(rnum int) T {
+	return c.value
+}
+
+func (c literalColumn[T]) NumRows() int {
+	return c.nrows
+}
+
+func (c literalColumn[T]) String(_ int) string {
+	return asString(c.value)
+}
+
+func (c literalColumn[T]) Type() any {
+	return reflect.TypeOf(c.value)
+}
+
+func (c literalColumn[T]) Value(_ int) any {
+	return c.value
+}
+
+// rationalColumn projects the underlying pair of values as a `*big.Rat“.
+type rationalColumn[T int8 | int16 | int32 | int64] struct {
+	col TabularColumn[T]
+}
+
+func (c rationalColumn[T]) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c RationalColumn[T]) Type() any {
+func (c rationalColumn[T]) Type() any {
 	return RationalType
 }
 
-type Rational8Column struct {
-	RationalColumn[int8]
+type rational8Column struct {
+	rationalColumn[int8]
 }
 
-func (c Rational8Column) GetItem(rnum int, out **big.Rat) {
+func (c rational8Column) GetItem(rnum int, out **big.Rat) {
 	*out = c.Item(rnum)
 }
 
-func (c Rational8Column) Item(rnum int) *big.Rat {
+func newRational8Column(col TabularColumn[int8]) SimpleColumn[*big.Rat] {
+	return rational8Column{rationalColumn[int8]{col}}
+}
+
+func (c rational8Column) Item(rnum int) *big.Rat {
 	var v [2]int8
 	c.col.GetItem(rnum, v[:])
 	n, d := int64(v[0]), int64(v[1])
 	return big.NewRat(n, d)
 }
 
-func (c Rational8Column) String(rnum int) string {
+func (c rational8Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Rational8Column) Value(rnum int) any {
+func (c rational8Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Rational16Column struct {
-	RationalColumn[int16]
+type rational16Column struct {
+	rationalColumn[int16]
 }
 
-func newRational16Column(col ListColumn[int16]) Rational16Column {
-	return Rational16Column{RationalColumn[int16]{col}}
+func newRational16Column(col TabularColumn[int16]) SimpleColumn[*big.Rat] {
+	return rational16Column{rationalColumn[int16]{col}}
 }
 
-func (c Rational16Column) GetItem(rnum int, out **big.Rat) {
+func (c rational16Column) GetItem(rnum int, out **big.Rat) {
 	*out = c.Item(rnum)
 }
 
-func (c Rational16Column) Item(rnum int) *big.Rat {
+func (c rational16Column) Item(rnum int) *big.Rat {
 	var v [2]int16
 	c.col.GetItem(rnum, v[:])
 	n, d := int64(v[0]), int64(v[1])
 	return big.NewRat(n, d)
 }
 
-func (c Rational16Column) String(rnum int) string {
+func (c rational16Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Rational16Column) Value(rnum int) any {
+func (c rational16Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Rational32Column struct {
-	RationalColumn[int32]
+type rational32Column struct {
+	rationalColumn[int32]
 }
 
-func newRational32Column(col ListColumn[int32]) Rational32Column {
-	return Rational32Column{RationalColumn[int32]{col}}
+func newRational32Column(col TabularColumn[int32]) SimpleColumn[*big.Rat] {
+	return rational32Column{rationalColumn[int32]{col}}
 }
 
-func (c Rational32Column) GetItem(rnum int, out **big.Rat) {
+func (c rational32Column) GetItem(rnum int, out **big.Rat) {
 	*out = c.Item(rnum)
 }
 
-func (c Rational32Column) Item(rnum int) *big.Rat {
+func (c rational32Column) Item(rnum int) *big.Rat {
 	var v [2]int32
 	c.col.GetItem(rnum, v[:])
 	n, d := int64(v[0]), int64(v[1])
 	return big.NewRat(n, d)
 }
 
-func (c Rational32Column) String(rnum int) string {
+func (c rational32Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Rational32Column) Value(rnum int) any {
+func (c rational32Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Rational64Column struct {
-	RationalColumn[int64]
+type rational64Column struct {
+	rationalColumn[int64]
 }
 
-func newRational64Column(col ListColumn[int64]) Rational64Column {
-	return Rational64Column{RationalColumn[int64]{col}}
+func newRational64Column(col TabularColumn[int64]) SimpleColumn[*big.Rat] {
+	return rational64Column{rationalColumn[int64]{col}}
 }
 
-func (c Rational64Column) GetItem(rnum int, out **big.Rat) {
+func (c rational64Column) GetItem(rnum int, out **big.Rat) {
 	*out = c.Item(rnum)
 }
 
-func (c Rational64Column) Item(rnum int) *big.Rat {
+func (c rational64Column) Item(rnum int) *big.Rat {
 	var v [2]int64
 	c.col.GetItem(rnum, v[:])
 	return big.NewRat(v[0], v[1])
 }
 
-func (c Rational64Column) String(rnum int) string {
+func (c rational64Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Rational64Column) Value(rnum int) any {
+func (c rational64Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-type Rational128Column struct {
-	col ListColumn[uint64]
+type rational128Column struct {
+	col TabularColumn[uint64]
 }
 
-func newRational128Column(col ListColumn[uint64]) Rational128Column {
-	return Rational128Column{col}
+func newRational128Column(col TabularColumn[uint64]) SimpleColumn[*big.Rat] {
+	return rational128Column{col}
 }
 
-func (c Rational128Column) GetItem(rnum int, out **big.Rat) {
+func (c rational128Column) GetItem(rnum int, out **big.Rat) {
 	*out = c.Item(rnum)
 }
 
-func (c Rational128Column) NumRows() int {
+func (c rational128Column) NumRows() int {
 	return c.col.NumRows()
 }
 
-func (c Rational128Column) Item(rnum int) *big.Rat {
+func (c rational128Column) Item(rnum int) *big.Rat {
 	var v [4]uint64
 	c.col.GetItem(rnum, v[:])
 	n := NewBigInt128(v[0], v[1])
@@ -1207,98 +1256,98 @@ func (c Rational128Column) Item(rnum int) *big.Rat {
 	return NewRational128(n, d)
 }
 
-func (c Rational128Column) String(rnum int) string {
+func (c rational128Column) String(rnum int) string {
 	return c.Item(rnum).String()
 }
 
-func (c Rational128Column) Type() any {
+func (c rational128Column) Type() any {
 	return RationalType
 }
 
-func (c Rational128Column) Value(rnum int) any {
+func (c rational128Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
 func newRationalColumn(c Column) Column {
 	switch cc := c.(type) {
-	case ListColumn[int8]:
+	case listColumn[int8]:
 		return newRational8Column(cc)
-	case ListColumn[int16]:
+	case listColumn[int16]:
 		return newRational16Column(cc)
-	case ListColumn[int32]:
+	case listColumn[int32]:
 		return newRational32Column(cc)
-	case ListColumn[int64]:
+	case listColumn[int64]:
 		return newRational64Column(cc)
-	case ListColumn[uint64]:
+	case listColumn[uint64]:
 		return newRational128Column(cc)
 	}
 	return newUnknownColumn(c.NumRows())
 }
 
-type SymbolColumn struct {
+type symbolColumn struct {
 	value string
 	nrows int
 }
 
-func newSymbolColumn(v string, nrows int) SymbolColumn {
-	return SymbolColumn{v, nrows}
+func newSymbolColumn(v string, nrows int) SimpleColumn[string] {
+	return symbolColumn{v, nrows}
 }
 
-func (c SymbolColumn) GetItem(_ int, out *string) {
+func (c symbolColumn) GetItem(_ int, out *string) {
 	*out = c.value
 }
 
-func (c SymbolColumn) Item(_ int) string {
+func (c symbolColumn) Item(_ int) string {
 	return c.value
 }
 
-func (c SymbolColumn) NumRows() int {
+func (c symbolColumn) NumRows() int {
 	return c.nrows
 }
 
-func (c SymbolColumn) String(_ int) string {
+func (c symbolColumn) String(_ int) string {
 	return c.value
 }
 
-func (c SymbolColumn) Type() any {
+func (c symbolColumn) Type() any {
 	return StringType
 }
 
-func (c SymbolColumn) Value(_ int) any {
+func (c symbolColumn) Value(_ int) any {
 	return c.value
 }
 
 const missing = "missing"
 
-type MissingColumn struct {
+type missingColumn struct {
 	nrows int
 }
 
-func newMissingColumn(nrows int) MissingColumn {
-	return MissingColumn{nrows}
+func newMissingColumn(nrows int) SimpleColumn[string] {
+	return missingColumn{nrows}
 }
 
-func (c MissingColumn) GetItem(_ int, out *any) {
+func (c missingColumn) GetItem(_ int, out *string) {
 	*out = missing
 }
 
-func (c MissingColumn) Item(_ int) any {
+func (c missingColumn) Item(_ int) string {
 	return missing
 }
 
-func (c MissingColumn) NumRows() int {
+func (c missingColumn) NumRows() int {
 	return c.nrows
 }
 
-func (c MissingColumn) String(_ int) string {
+func (c missingColumn) String(_ int) string {
 	return missing
 }
 
-func (c MissingColumn) Type() any {
+func (c missingColumn) Type() any {
 	return MissingType
 }
 
-func (c MissingColumn) Value(_ int) any {
+func (c missingColumn) Value(_ int) any {
 	return missing
 }
 
@@ -1348,82 +1397,10 @@ func newConstRationalColumn(t ConstType, nrows int) Column {
 	return newLiteralColumn(r, nrows)
 }
 
-type ConstColumn struct {
+type constColumn struct {
 	cols  []Column
 	nrows int
 	vals  []any
-}
-
-// ConstColumn:DataColumn
-
-func (c ConstColumn) GetItem(rnum int, out []any) {
-	for cnum := 0; cnum < len(out); cnum++ {
-		out[cnum] = c.cols[cnum].Value(rnum)
-	}
-}
-
-func (c ConstColumn) Item(_ int) []any {
-	if c.vals == nil {
-		c.vals = make([]any, len(c.cols))
-		c.GetItem(0, c.vals)
-	}
-	return c.vals
-}
-
-func (c ConstColumn) NumRows() int {
-	return c.nrows
-}
-
-func (c ConstColumn) String(rnum int) string {
-	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
-}
-
-func (c ConstColumn) Type() any {
-	return AnyListType
-}
-
-func (c ConstColumn) Value(rnum int) any {
-	return c.Item(rnum)
-}
-
-// ConstColumn:Tabular
-
-func (c ConstColumn) Column(cnum int) Column {
-	return c.cols[cnum]
-}
-
-func (c ConstColumn) Columns() []Column {
-	return c.cols
-}
-
-func (c ConstColumn) NumCols() int {
-	return len(c.cols)
-}
-
-func (c ConstColumn) GetRow(rnum int, out []any) {
-	c.GetItem(rnum, out)
-}
-
-func (c ConstColumn) Row(rnum int) []any {
-	return c.Item(rnum)
-}
-
-func (c ConstColumn) Signature() Signature {
-	ncols := len(c.cols)
-	result := make([]any, ncols)
-	for i := 0; i < ncols; i++ {
-		result[i] = c.cols[i].Type()
-	}
-	return result
-}
-
-func (c ConstColumn) Strings(rnum int) []string {
-	ncols := len(c.cols)
-	result := make([]string, ncols)
-	for cnum := 0; cnum < ncols; cnum++ {
-		result[cnum] = c.cols[cnum].String(rnum)
-	}
-	return result
 }
 
 func newConstColumn(t ConstType, nrows int) Column {
@@ -1465,28 +1442,96 @@ func newConstColumn(t ConstType, nrows int) Column {
 		}
 		cols[i] = cc
 	}
-	return ConstColumn{cols, nrows, nil}
+	return constColumn{cols, nrows, nil}
 }
 
-type ValueColumn struct {
+func (c constColumn) Column(cnum int) Column {
+	return c.cols[cnum]
+}
+
+func (c constColumn) Columns() []Column {
+	return c.cols
+}
+
+func (c constColumn) GetItem(rnum int, out []any) {
+	for cnum := 0; cnum < len(out); cnum++ {
+		out[cnum] = c.cols[cnum].Value(rnum)
+	}
+}
+
+func (c constColumn) GetRow(rnum int, out []any) {
+	c.GetItem(rnum, out)
+}
+
+func (c constColumn) Item(_ int) []any {
+	if c.vals == nil {
+		c.vals = make([]any, len(c.cols))
+		c.GetItem(0, c.vals)
+	}
+	return c.vals
+}
+
+func (c constColumn) NumCols() int {
+	return len(c.cols)
+}
+
+func (c constColumn) NumRows() int {
+	return c.nrows
+}
+
+func (c constColumn) Row(rnum int) []any {
+	return c.Item(rnum)
+}
+
+func (c constColumn) Signature() Signature {
+	ncols := len(c.cols)
+	result := make([]any, ncols)
+	for i := 0; i < ncols; i++ {
+		result[i] = c.cols[i].Type()
+	}
+	return result
+}
+
+func (c constColumn) String(rnum int) string {
+	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
+}
+
+func (c constColumn) Strings(rnum int) []string {
+	ncols := len(c.cols)
+	result := make([]string, ncols)
+	for cnum := 0; cnum < ncols; cnum++ {
+		result[cnum] = c.cols[cnum].String(rnum)
+	}
+	return result
+}
+
+func (c constColumn) Type() any {
+	return AnyListType
+}
+
+func (c constColumn) Value(rnum int) any {
+	return c.Item(rnum)
+}
+
+type valueColumn struct {
 	cols []Column
 }
 
-func newBuiltinColumn(vt ValueType, c Column, nrows int) Column {
+func newBuiltinValueColumn(vt ValueType, c Column, nrows int) Column {
 	if matchPrefix(vt, "rel", "base", "_") {
 		switch vt[2].(string) {
 		case "AutoNumber":
-			return c // PrimitiveColumn[int64]
+			return c // primitiveColumn[int64]
 		case "Date":
 			return newDateColumn(c.(DataColumn[int64]))
 		case "DateTime":
 			return newDateTimeColumn(c.(DataColumn[int64]))
 		case "FilePos":
-			return c // PrimitiveColumn[int64]
+			return c // primitiveColumn[int64]
 		case "FixedDecimal":
 			return newDecimalColumn(vt, c)
 		case "Hash":
-			return newUint128Column(c.(ListColumn[uint64]))
+			return newUint128Column(c.(listColumn[uint64]))
 		case "Rational":
 			return newRationalColumn(c)
 		case "Missing":
@@ -1499,25 +1544,25 @@ func newBuiltinColumn(vt ValueType, c Column, nrows int) Column {
 	return nil // not a recognized builtin value type
 }
 
-// Projects a ValueColumn from an underlying simple column.
-func newSimpleValueColumn(vt ValueType, c Column, nrows int) ValueColumn {
+// Projects a valueColumn from an underlying simple column.
+func newSimpleValueColumn(vt ValueType, c Column, nrows int) Column {
 	ncols := len(vt)
 	cols := make([]Column, ncols)
 	for i, t := range vt {
 		var cc Column
 		switch tt := t.(type) {
-		case ValueType: // todo: this should implement tabular
+		case ValueType:
 			cc = newValueColumn(tt, c, nrows)
 		default:
 			cc = newRelationColumn(tt, c, nrows)
 		}
 		cols[i] = cc
 	}
-	return ValueColumn{cols}
+	return valueColumn{cols}
 }
 
-// Projects a ValueColumn from an underlying `Tabular` column.
-func newTabularValueColumn(vt ValueType, c Tabular, nrows int) ValueColumn {
+// Projects a valueColumn from an underlying `Tabular` column.
+func newTabularValueColumn(vt ValueType, c Tabular, nrows int) Column {
 	ncol := 0
 	ncols := len(vt)
 	cols := make([]Column, ncols)
@@ -1537,12 +1582,12 @@ func newTabularValueColumn(vt ValueType, c Tabular, nrows int) ValueColumn {
 		}
 		cols[i] = cc
 	}
-	return ValueColumn{cols}
+	return valueColumn{cols}
 }
 
-// Returns a ValueColumn which is a projection of the given partition column.
+// Returns a `valueColumn` which is a projection of the given partition column.
 func newValueColumn(vt ValueType, c Column, nrows int) Column {
-	if cc := newBuiltinColumn(vt, c, nrows); cc != nil {
+	if cc := newBuiltinValueColumn(vt, c, nrows); cc != nil {
 		return cc
 	}
 	if cc, ok := c.(Tabular); ok {
@@ -1551,59 +1596,43 @@ func newValueColumn(vt ValueType, c Column, nrows int) Column {
 	return newSimpleValueColumn(vt, c, nrows)
 }
 
-// ValueColumn:DataColumn
+func (c valueColumn) Column(cnum int) Column {
+	return c.cols[cnum]
+}
 
-func (c ValueColumn) GetItem(rnum int, out []any) {
+func (c valueColumn) Columns() []Column {
+	return c.cols
+}
+
+func (c valueColumn) GetItem(rnum int, out []any) {
 	for cnum := 0; cnum < len(out); cnum++ {
 		out[cnum] = c.cols[cnum].Value(rnum)
 	}
 }
 
-func (c ValueColumn) Item(rnum int) []any {
+func (c valueColumn) GetRow(rnum int, out []any) {
+	c.GetItem(rnum, out)
+}
+
+func (c valueColumn) Item(rnum int) []any {
 	result := make([]any, len(c.cols))
 	c.GetItem(rnum, result)
 	return result
 }
 
-func (c ValueColumn) NumRows() int {
-	return c.cols[0].NumRows()
-}
-
-func (c ValueColumn) String(rnum int) string {
-	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
-}
-
-func (c ValueColumn) Type() any {
-	return AnyListType
-}
-
-func (c ValueColumn) Value(rnum int) any {
-	return c.Item(rnum)
-}
-
-// ValueColumn:Tabular
-
-func (c ValueColumn) Column(cnum int) Column {
-	return c.cols[cnum]
-}
-
-func (c ValueColumn) Columns() []Column {
-	return c.cols
-}
-
-func (c ValueColumn) NumCols() int {
+func (c valueColumn) NumCols() int {
 	return len(c.cols)
 }
 
-func (c ValueColumn) GetRow(rnum int, out []any) {
-	c.GetItem(rnum, out)
+func (c valueColumn) NumRows() int {
+	return c.cols[0].NumRows()
 }
 
-func (c ValueColumn) Row(rnum int) []any {
+func (c valueColumn) Row(rnum int) []any {
 	return c.Item(rnum)
 }
 
-func (c ValueColumn) Signature() Signature {
+func (c valueColumn) Signature() Signature {
 	ncols := len(c.cols)
 	result := make([]any, ncols)
 	for i := 0; i < ncols; i++ {
@@ -1612,7 +1641,11 @@ func (c ValueColumn) Signature() Signature {
 	return result
 }
 
-func (c ValueColumn) Strings(rnum int) []string {
+func (c valueColumn) String(rnum int) string {
+	return "(" + strings.Join(c.Strings(rnum), ", ") + ")"
+}
+
+func (c valueColumn) Strings(rnum int) []string {
 	ncols := len(c.cols)
 	result := make([]string, ncols)
 	for cnum := 0; cnum < ncols; cnum++ {
@@ -1621,9 +1654,12 @@ func (c ValueColumn) Strings(rnum int) []string {
 	return result
 }
 
-type Relation interface {
-	Tabular
-	Slice(int, ...int) Relation
+func (c valueColumn) Type() any {
+	return AnyListType
+}
+
+func (c valueColumn) Value(rnum int) any {
+	return c.Item(rnum)
 }
 
 type baseRelation struct {
@@ -1668,15 +1704,37 @@ func (r *baseRelation) init() *baseRelation {
 	return r
 }
 
+// Ensure the relation's type signature is instantiated.
+func (r *baseRelation) ensureSignature() Signature {
+	if r.sig != nil {
+		return r.sig
+	}
+	r.sig = make([]any, len(r.meta))
+	for i, t := range r.meta {
+		r.sig[i] = relationType(t)
+	}
+	return r.sig
+}
+
 func newBaseRelation(p *Partition, meta Signature) Relation {
 	return (&baseRelation{part: p, meta: meta}).init()
+}
+
+func (r *baseRelation) Metadata() Signature {
+	return r.meta
 }
 
 func (r *baseRelation) Partition() *Partition {
 	return r.part
 }
 
-// baseRelation:Column
+func (r *baseRelation) GetItem(rnum int, out []any) {
+	r.GetRow(rnum, out)
+}
+
+func (r *baseRelation) Item(rnum int) []any {
+	return r.Row(rnum)
+}
 
 func (r *baseRelation) NumRows() int {
 	return r.nrows
@@ -1692,20 +1750,6 @@ func (r *baseRelation) Type() any {
 
 func (r *baseRelation) Value(rnum int) any {
 	return r.Row(rnum)
-}
-
-// baseRelation:Tabular
-
-// Ensure the relations type signature is instantiated.
-func (r *baseRelation) ensureSignature() Signature {
-	if r.sig != nil {
-		return r.sig
-	}
-	r.sig = make([]any, len(r.meta))
-	for i, t := range r.meta {
-		r.sig[i] = relationType(t)
-	}
-	return r.sig
 }
 
 func (r *baseRelation) Column(cnum int) Column {
@@ -1835,16 +1879,17 @@ func relationType(t any) any {
 	}
 }
 
+// Returns the relation column corresponding to the given base data column.
 func newRelationColumn(t any, col Column, nrows int) Column {
 	switch tt := t.(type) {
 	case reflect.Type:
 		switch tt {
 		case CharType:
-			return newCharColumn(col.(PrimitiveColumn[uint32]))
+			return newCharColumn(col.(SimpleColumn[uint32]))
 		case Int128Type:
-			return newInt128Column(col.(ListColumn[uint64]))
+			return newInt128Column(col.(TabularColumn[uint64]))
 		case Uint128Type:
-			return newUint128Column(col.(ListColumn[uint64]))
+			return newUint128Column(col.(TabularColumn[uint64]))
 		default:
 			if isRelationPrimitive(tt) {
 				return col // passed through
@@ -1872,36 +1917,37 @@ func (r baseRelation) Slice(lo int, hi ...int) Relation {
 	return newDerivedRelation(c)
 }
 
-// Introduced when relations of different arity are unioned.
-type NilColumn struct {
+// Represents a column of nil values, only appears when relations of different
+// arity are unioned.
+type nilColumn struct {
 	nrows int
 }
 
-func newNilColumn(nrows int) NilColumn {
-	return NilColumn{nrows}
+func newNilColumn(nrows int) DataColumn[any] {
+	return nilColumn{nrows}
 }
 
-func (c NilColumn) GetItem(_ int, out *any) {
+func (c nilColumn) GetItem(_ int, out *any) {
 	*out = nil
 }
 
-func (c NilColumn) Item(_ int) any {
+func (c nilColumn) Item(_ int) any {
 	return nil
 }
 
-func (c NilColumn) NumRows() int {
+func (c nilColumn) NumRows() int {
 	return c.nrows
 }
 
-func (c NilColumn) String(_ int) string {
+func (c nilColumn) String(_ int) string {
 	return "<nil>"
 }
 
-func (c NilColumn) Type() any {
+func (c nilColumn) Type() any {
 	return reflect.TypeOf(nil)
 }
 
-func (c NilColumn) Value(_ int) any {
+func (c nilColumn) Value(_ int) any {
 	return nil
 }
 
@@ -1924,8 +1970,19 @@ func (c unionColumn) init() unionColumn {
 	return c
 }
 
-func newUnionColumn(cols []Column) unionColumn {
+func newUnionColumn(cols []Column) DataColumn[any] {
 	return (unionColumn{cols, -1, nil}).init()
+}
+
+func (c unionColumn) Item(rnum int) any {
+	for _, cc := range c.cols {
+		nrows := cc.NumRows()
+		if rnum < nrows {
+			return cc.Value(rnum)
+		}
+		rnum -= nrows
+	}
+	return nil // rnum out of range
 }
 
 func (c unionColumn) NumRows() int {
@@ -1948,17 +2005,10 @@ func (c unionColumn) Type() any {
 }
 
 func (c unionColumn) Value(rnum int) any {
-	for _, cc := range c.cols {
-		nrows := cc.NumRows()
-		if rnum < nrows {
-			return cc.Value(rnum)
-		}
-		rnum -= nrows
-	}
-	return nil // rnum out of range
+	return c.Item(rnum)
 }
 
-// Returns the maximum number of colums in the given list or relations.
+// Returns the maximum number of colums in the given list of relations.
 func maxNumCols(rs []Relation) int {
 	max := 0
 	for _, r := range rs {
@@ -1970,7 +2020,9 @@ func maxNumCols(rs []Relation) int {
 	return max
 }
 
-func makeUnionColumn(rels []Relation, cnum int) unionColumn {
+// Note, unioning columns reduces the type to `any` because the columns may
+// be heterogenous.
+func makeUnionColumn(rels []Relation, cnum int) Column {
 	cols := make([]Column, len(rels))
 	for i, r := range rels {
 		if cnum < r.NumCols() {
@@ -2002,7 +2054,17 @@ type derivedRelation struct {
 	cols []Column
 }
 
-// derivedRelation:Column
+func newDerivedRelation(cols []Column) Relation {
+	return derivedRelation{cols}
+}
+
+func (r derivedRelation) GetItem(rnum int, out []any) {
+	r.GetRow(rnum, out)
+}
+
+func (r derivedRelation) Item(rnum int) []any {
+	return r.Row(rnum)
+}
 
 func (r derivedRelation) NumRows() int {
 	return r.cols[0].NumRows()
@@ -2019,8 +2081,6 @@ func (r derivedRelation) Type() any {
 func (r derivedRelation) Value(rnum int) any {
 	return r.Row(rnum)
 }
-
-// derivedRelation:Tabular
 
 func (r derivedRelation) Column(cnum int) Column {
 	return r.cols[cnum]
@@ -2074,16 +2134,14 @@ func (r derivedRelation) Strings(rnum int) []string {
 	return result
 }
 
-func newDerivedRelation(cols []Column) Relation {
-	return derivedRelation{cols}
-}
-
 //
 // RelationCollection
 //
 
 type RelationCollection []Relation
 
+// Select the relations matching the given signature prefix arguments. Match
+// all if no arguments are given.
 func (c RelationCollection) Select(args ...any) RelationCollection {
 	if len(args) == 0 {
 		return c
@@ -2101,93 +2159,4 @@ func (c RelationCollection) Select(args ...any) RelationCollection {
 
 func (c RelationCollection) Union() Relation {
 	return newUnionRelation(c)
-}
-
-//
-// TransactionResponse
-//
-
-func (t *TransactionResponse) EnsureMetadata(c *Client) (*TransactionMetadata, error) {
-	if t.Metadata == nil {
-		metadata, err := c.GetTransactionMetadata(t.Transaction.ID)
-		if err != nil {
-			return nil, err
-		}
-		t.Metadata = metadata
-	}
-	return t.Metadata, nil
-}
-
-func (t *TransactionResponse) EnsureProblems(c *Client) ([]Problem, error) {
-	if t.Problems == nil {
-		problems, err := c.GetTransactionProblems(t.Transaction.ID)
-		if err != nil {
-			return nil, err
-		}
-		t.Problems = problems
-	}
-	return t.Problems, nil
-}
-
-func (t *TransactionResponse) EnsureResults(c *Client) (map[string]*Partition, error) {
-	if t.Partitions == nil {
-		partitions, err := c.GetTransactionResults(t.Transaction.ID)
-		if err != nil {
-			return nil, err
-		}
-		t.Partitions = partitions
-	}
-	return t.Partitions, nil
-}
-
-func (t *TransactionResponse) Partition(id string) *Partition {
-	return t.Partitions[id]
-}
-
-func (t *TransactionResponse) Relation(id string) Relation {
-	return newBaseRelation(t.Partitions[id], t.Signature(id))
-}
-
-// Answers if the given signature prefix matches the given signature, where
-// the value "_" is a position wildcard.
-func matchSig(pre, sig Signature) bool {
-	if pre == nil {
-		return true
-	}
-	if len(pre) > len(sig) {
-		return false
-	}
-	for i, p := range pre {
-		if p == "_" {
-			continue
-		}
-		if p != sig[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// Returns a collection of relations whose signature matches any of the
-// optional prefix arguments, where value "_" in the prefix matches any value in the
-// corresponding signature position.
-func (t *TransactionResponse) Relations(args ...any) RelationCollection {
-	if t.Metadata == nil {
-		// cannot interpret partition data as without metadata
-		return RelationCollection{}
-	}
-	if t.relations == nil {
-		// construct collection of base relations
-		c := RelationCollection{}
-		for id, p := range t.Partitions {
-			c = append(c, newBaseRelation(p, t.Signature(id)))
-		}
-		t.relations = c
-	}
-	return t.relations.Select(args...)
-}
-
-// Returns the type signature corresponding to the given relation ID.
-func (t TransactionResponse) Signature(id string) Signature {
-	return t.Metadata.Signature(id)
 }

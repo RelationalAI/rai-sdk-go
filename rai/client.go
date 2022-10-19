@@ -928,7 +928,7 @@ func makeQueryActionInput(name, value string) (map[string]interface{}, error) {
 	return result, nil
 }
 
-// Execute the given query, with the given optional query inputs.
+// Deprecated: use `Execute`
 func (c *Client) ExecuteV1(
 	database, engine, source string,
 	inputs map[string]string,
@@ -1307,7 +1307,94 @@ func (c *Client) CancelTransaction(id string) (string, error) {
 	return result.Message, nil
 }
 
-// Transaction based opeartions
+// TransactionResponse
+
+func (t *TransactionResponse) EnsureMetadata(c *Client) (*TransactionMetadata, error) {
+	if t.Metadata == nil {
+		metadata, err := c.GetTransactionMetadata(t.Transaction.ID)
+		if err != nil {
+			return nil, err
+		}
+		t.Metadata = metadata
+	}
+	return t.Metadata, nil
+}
+
+func (t *TransactionResponse) EnsureProblems(c *Client) ([]Problem, error) {
+	if t.Problems == nil {
+		problems, err := c.GetTransactionProblems(t.Transaction.ID)
+		if err != nil {
+			return nil, err
+		}
+		t.Problems = problems
+	}
+	return t.Problems, nil
+}
+
+func (t *TransactionResponse) EnsureResults(c *Client) (map[string]*Partition, error) {
+	if t.Partitions == nil {
+		partitions, err := c.GetTransactionResults(t.Transaction.ID)
+		if err != nil {
+			return nil, err
+		}
+		t.Partitions = partitions
+	}
+	return t.Partitions, nil
+}
+
+func (t *TransactionResponse) Partition(id string) *Partition {
+	return t.Partitions[id]
+}
+
+func (t *TransactionResponse) Relation(id string) Relation {
+	return newBaseRelation(t.Partitions[id], t.Signature(id))
+}
+
+// Answers if the given signature prefix matches the given signature, where
+// the value "_" is a position wildcard.
+func matchSig(pre, sig Signature) bool {
+	if pre == nil {
+		return true
+	}
+	if len(pre) > len(sig) {
+		return false
+	}
+	for i, p := range pre {
+		if p == "_" {
+			continue
+		}
+		if p != sig[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Returns a collection of relations whose signature matches any of the
+// optional prefix arguments, where value "_" in the prefix matches any value in the
+// corresponding signature position.
+func (t *TransactionResponse) Relations(args ...any) RelationCollection {
+	if t.Metadata == nil {
+		// cannot interpret partition data as without metadata
+		return RelationCollection{}
+	}
+	if t.relations == nil {
+		// construct collection of base relations
+		c := RelationCollection{}
+		for id, p := range t.Partitions {
+			c = append(c, newBaseRelation(p, t.Signature(id)))
+		}
+		t.relations = c
+	}
+	return t.relations.Select(args...)
+}
+
+// Returns the type signature corresponding to the given relation ID.
+func (t TransactionResponse) Signature(id string) Signature {
+	return t.Metadata.Signature(id)
+}
+
+// Transaction based operations
 
 func (c *Client) ListEDBs(database, engine string) ([]EDB, error) {
 	var result listEDBsResponse

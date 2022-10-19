@@ -131,6 +131,6 @@ func TestMain(m *testing.M) {
 		fatalError(err)
 	}
 	code := m.Run()
-	// tearDown()
+	tearDown(testClient)
 	os.Exit(code)
 }
