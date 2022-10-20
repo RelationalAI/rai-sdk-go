@@ -625,6 +625,8 @@ func findUser(users []User, id string) *User {
 	return nil
 }
 
+/*
+TODO: keep it disabled until we fix the Auth0 API rate limiting issue
 func TestUser(t *testing.T) {
 	client := test.client
 
@@ -709,3 +711,5 @@ func TestUser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 }
+
+*/
