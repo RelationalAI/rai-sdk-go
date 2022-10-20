@@ -250,8 +250,12 @@ func ShowMetadata(m *pb.MetadataInfo) {
 // Show a tabular data value.
 func ShowTabularData(d Tabular) {
 	for rnum := 0; rnum < d.NumRows(); rnum++ {
-		fmt.Println(d.String(rnum))
+		if rnum > 0 {
+			fmt.Println(";")
+		}
+		fmt.Print(strings.Join(d.Strings(rnum), ", "))
 	}
+	fmt.Println()
 }
 
 func ShowRelation(r Relation) {
@@ -269,7 +273,10 @@ func (r derivedRelation) Show() {
 }
 
 func (rc RelationCollection) Show() {
-	for _, r := range rc {
+	for i, r := range rc {
+		if i > 0 {
+			fmt.Println()
+		}
 		r.Show()
 	}
 }
@@ -279,5 +286,14 @@ func (rsp *TransactionResponse) Show() {
 	if rsp.Metadata == nil {
 		return
 	}
-	rsp.Relations().Show()
+	rc := rsp.Relations("output")
+	if len(rc) > 0 {
+		fmt.Println()
+		rc.Show()
+	}
+	rc = rsp.Relations("rel", "catalog", "diagnostic")
+	if len(rc) > 0 {
+		fmt.Printf("\nProblems:\n")
+		ShowTabularData(rc.Union())
+	}
 }

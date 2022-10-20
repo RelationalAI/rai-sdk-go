@@ -28,7 +28,7 @@ The RelationalAI Software Development Kit for Go enables developers to access th
 **Run the tests**
 
     ./run-tests
-    
+
 Note, the test are run against the account configured in your SDK config file.
 
 ### Create a configuration file
@@ -55,11 +55,9 @@ You can copy `config.spec` from the root of this repo and modify as needed.
 
 ## Generate golang sources from protobuf specification
 
-```shell
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-export PATH=$PATH:$HOME/go/bin
-protoc -I protos --go_out=. --go_opt=Mschema.proto=./rai/pb --go_opt=Mmessage.proto=./rai/pb protos/*.proto
-```
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    export PATH=$PATH:$HOME/go/bin
+    protoc -I protos --go_out=. --go_opt=Mschema.proto=./rai/pb --go_opt=Mmessage.proto=./rai/pb protos/*.proto
 
 ## Examples
 
@@ -68,8 +66,8 @@ are located in `./examples` folder.
 
 Each example can be run using the `go` command.
 
-	cd ./examples
-	go run get_database/main.go -d sdk-test
+    cd ./examples
+    go run get_database/main.go -d sdk-test
 
 There is also a bash script in `./examples` that can be used to run
 individual examples.

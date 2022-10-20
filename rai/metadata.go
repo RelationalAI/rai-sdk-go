@@ -2,10 +2,10 @@
 
 package rai
 
-// This file contains code that converts the protobuf representation of
-// relation metadata to a native golang representation. Primitive types
-// are represented as golang reflect.Type values, and const and value type
-// structures are simplified to make the representation easier to navigate.
+// Support for transforming the protobuf representation of relation metadata
+// to its native golang representation. Primitive types are represented as
+// golang reflect.Type values, and const and value type structures are
+// simplified to make the representation easier to navigate.
 
 // There are three kinds of signatures used to describe transaction results.
 //
@@ -74,9 +74,11 @@ func asTypeString(v any) string {
 		return vv.String()
 	case ValueType:
 		return vv.String()
-	case string: // constant string
+	case time.Time:
+		return vv.Format(time.RFC3339)
+	case string:
 		return fmt.Sprintf("\"%s\"", vv)
-	default: // constant value other than string
+	default:
 		return fmt.Sprintf("%v", vv)
 	}
 }

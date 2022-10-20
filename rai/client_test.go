@@ -60,63 +60,63 @@ func findModel(models []Model, name string) *Model {
 
 // Test database management APIs.
 func TestDatabase(t *testing.T) {
-	client := testClient
+	client := test.client
 
-	if err := client.DeleteDatabase(testDatabaseName); err != nil {
+	if err := client.DeleteDatabase(test.databaseName); err != nil {
 		assert.True(t, isErrNotFound(err))
 	}
 
-	database, err := client.CreateDatabase(testDatabaseName)
+	database, err := client.CreateDatabase(test.databaseName)
 	assert.Nil(t, err)
-	assert.Equal(t, testDatabaseName, database.Name)
+	assert.Equal(t, test.databaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
-	database, err = client.GetDatabase(testDatabaseName)
+	database, err = client.GetDatabase(test.databaseName)
 	assert.Nil(t, err)
-	assert.Equal(t, testDatabaseName, database.Name)
+	assert.Equal(t, test.databaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
 	databases, err := client.ListDatabases()
 	assert.Nil(t, err)
-	database = findDatabase(databases, testDatabaseName)
+	database = findDatabase(databases, test.databaseName)
 	assert.NotNil(t, database)
-	assert.Equal(t, testDatabaseName, database.Name)
+	assert.Equal(t, test.databaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
 	databases, err = client.ListDatabases("state", "CREATED")
 	assert.Nil(t, err)
-	database = findDatabase(databases, testDatabaseName)
+	database = findDatabase(databases, test.databaseName)
 	assert.NotNil(t, database)
-	assert.Equal(t, testDatabaseName, database.Name)
+	assert.Equal(t, test.databaseName, database.Name)
 	assert.Equal(t, "CREATED", database.State)
 
 	databases, err = client.ListDatabases("state", "NONSENSE")
 	assert.Nil(t, err)
-	database = findDatabase(databases, testDatabaseName)
+	database = findDatabase(databases, test.databaseName)
 	assert.Nil(t, database)
 
 	// missing filter value
 	databases, err = client.ListDatabases("state")
 	assert.Equal(t, ErrMissingFilterValue, err)
 
-	edbs, err := client.ListEDBs(testDatabaseName, testEngineName)
+	edbs, err := client.ListEDBs(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	edb := findEDB(edbs, "rel")
 	assert.NotNil(t, edb)
 
-	modelNames, err := client.ListModelNames(testDatabaseName, testEngineName)
+	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
 	assert.True(t, contains(modelNames, "rel/stdlib"))
 
-	models, err := client.ListModels(testDatabaseName, testEngineName)
+	models, err := client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(models) > 0)
 	model := findModel(models, "rel/stdlib")
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
 
-	model, err = client.GetModel(testDatabaseName, testEngineName, "rel/stdlib")
+	model, err = client.GetModel(test.databaseName, test.engineName, "rel/stdlib")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
@@ -133,43 +133,43 @@ func findEngine(engines []Engine, name string) *Engine {
 
 // Test engine management APIs.
 func TestEngine(t *testing.T) {
-	client := testClient
+	client := test.client
 
-	engine, err := client.GetEngine(testEngineName)
+	engine, err := client.GetEngine(test.engineName)
 	assert.Nil(t, err)
-	assert.Equal(t, testEngineName, engine.Name)
+	assert.Equal(t, test.engineName, engine.Name)
 	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, testEngineSize, engine.Size)
+	assert.Equal(t, test.engineSize, engine.Size)
 
 	engines, err := client.ListEngines()
 	assert.Nil(t, err)
-	engine = findEngine(engines, testEngineName)
+	engine = findEngine(engines, test.engineName)
 	assert.NotNil(t, engine)
-	assert.Equal(t, testEngineName, engine.Name)
+	assert.Equal(t, test.engineName, engine.Name)
 	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, testEngineSize, engine.Size)
+	assert.Equal(t, test.engineSize, engine.Size)
 
 	engines, err = client.ListEngines("state", "PROVISIONED")
 	assert.Nil(t, err)
-	engine = findEngine(engines, testEngineName)
+	engine = findEngine(engines, test.engineName)
 	assert.NotNil(t, engine)
-	assert.Equal(t, testEngineName, engine.Name)
+	assert.Equal(t, test.engineName, engine.Name)
 	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, testEngineSize, engine.Size)
+	assert.Equal(t, test.engineSize, engine.Size)
 
 	engines, err = client.ListEngines("state", "NONSENSE")
 	assert.Nil(t, err)
-	engine = findEngine(engines, testEngineName)
+	engine = findEngine(engines, test.engineName)
 	assert.Nil(t, engine)
 }
 
 // Test transaction execution.
 func TestExecuteV1(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
-	rsp, err := client.ExecuteV1(testDatabaseName, testEngineName, query, nil, true)
+	rsp, err := client.ExecuteV1(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	output := rsp.Output
@@ -191,10 +191,10 @@ func TestExecuteV1(t *testing.T) {
 /*
 // Test transaction asynchronous execution
 func TestExecuteAsync(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-	rsp, err := client.Execute(testDatabaseName, testEngineName, query, nil, true)
+	rsp, err := client.Execute(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
 
 	expectedResults := []ArrowRelation{
@@ -250,16 +250,16 @@ const sampleCSV = "" +
 
 // Test loading CSV data using default options.
 func TestLoadCSV(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	r := strings.NewReader(sampleCSV)
-	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_csv", r, nil)
+	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_csv", r, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(testDatabaseName, testEngineName, "def output = sample_csv", nil, true)
+	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_csv", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -299,7 +299,7 @@ func TestLoadCSV(t *testing.T) {
 
 // Test loading CSV data with no header.
 func TestLoadCSVNoHeader(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	const sampleNoHeader = "" +
 		"\"martini\",2,12.50,\"2020-01-01\"\n" +
@@ -309,13 +309,13 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 	r := strings.NewReader(sampleNoHeader)
 	opts := NewCSVOptions().WithHeaderRow(0)
-	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_no_header", r, opts)
+	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_no_header", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(testDatabaseName, testEngineName, "def output = sample_no_header", nil, true)
+	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_no_header", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -355,7 +355,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 
 // Test loading CSV data with alternate syntax options.
 func TestLoadCSVAltSyntax(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	const sampleAltSyntax = "" +
 		"cocktail|quantity|price|date\n" +
@@ -366,14 +366,14 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 	r := strings.NewReader(sampleAltSyntax)
 	opts := NewCSVOptions().WithDelim('|').WithQuoteChar('\'')
-	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_alt_syntax", r, opts)
+	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_alt_syntax", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(
-		testDatabaseName, testEngineName, "def output = sample_alt_syntax", nil, true)
+		test.databaseName, test.engineName, "def output = sample_alt_syntax", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -413,7 +413,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 // Test loading CSV data with a schema definition.
 func TestLoadCSVWithSchema(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	schema := map[string]string{
 		"cocktail": "string",
@@ -422,13 +422,13 @@ func TestLoadCSVWithSchema(t *testing.T) {
 		"date":     "date"}
 	r := strings.NewReader(sampleCSV)
 	opts := NewCSVOptions().WithSchema(schema)
-	rsp, err := client.LoadCSV(testDatabaseName, testEngineName, "sample_with_schema", r, opts)
+	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_with_schema", r, opts)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	rsp, err = client.ExecuteV1(testDatabaseName, testEngineName, "def output = sample_with_schema", nil, true)
+	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_with_schema", nil, true)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -468,7 +468,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 
 // Test loading JSON data.
 func TestLoadJSON(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	const sampleJSON = "{" +
 		"\"name\":\"Amira\",\n" +
@@ -477,14 +477,14 @@ func TestLoadJSON(t *testing.T) {
 		"\"pets\":[\"dog\",\"rabbit\"]}"
 
 	r := strings.NewReader(sampleJSON)
-	rsp, err := client.LoadJSON(testDatabaseName, testEngineName, "sample_json", r)
+	rsp, err := client.LoadJSON(test.databaseName, test.engineName, "sample_json", r)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(
-		testDatabaseName, testEngineName, "def output = sample_json", nil, true)
+		test.databaseName, test.engineName, "def output = sample_json", nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
@@ -513,43 +513,43 @@ func TestLoadJSON(t *testing.T) {
 
 // Test model APIs.
 func TestModels(t *testing.T) {
-	client := testClient
+	client := test.client
 
 	const testModel = "def R = \"hello\", \"world\""
 
 	r := strings.NewReader(testModel)
-	rsp, err := client.LoadModel(testDatabaseName, testEngineName, "test_model", r)
+	rsp, err := client.LoadModel(test.databaseName, test.engineName, "test_model", r)
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	model, err := client.GetModel(testDatabaseName, testEngineName, "test_model")
+	model, err := client.GetModel(test.databaseName, test.engineName, "test_model")
 	assert.Nil(t, err)
 	assert.Equal(t, "test_model", model.Name)
 
-	modelNames, err := client.ListModelNames(testDatabaseName, testEngineName)
+	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, contains(modelNames, "test_model"))
 
-	models, err := client.ListModels(testDatabaseName, testEngineName)
+	models, err := client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	model = findModel(models, "test_model")
 	assert.NotNil(t, model)
 
-	rsp, err = client.DeleteModel(testDatabaseName, testEngineName, "test_model")
+	rsp, err = client.DeleteModel(test.databaseName, test.engineName, "test_model")
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
 
-	_, err = client.GetModel(testDatabaseName, testEngineName, "test_model")
+	_, err = client.GetModel(test.databaseName, test.engineName, "test_model")
 	assert.True(t, isErrNotFound(err))
 
-	modelNames, err = client.ListModelNames(testDatabaseName, testEngineName)
+	modelNames, err = client.ListModelNames(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.False(t, contains(modelNames, "test_model"))
 
-	models, err = client.ListModels(testDatabaseName, testEngineName)
+	models, err = client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	model = findModel(models, "test_model")
 	assert.Nil(t, model)
@@ -566,43 +566,43 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 
 // Test OAuth Client APIs.
 func TestOAuthClient(t *testing.T) {
-	client := testClient
+	client := test.client
 
-	rsp, err := client.FindOAuthClient(testOAuthClientName)
+	rsp, err := client.FindOAuthClient(test.oauthClient)
 	assert.Nil(t, err)
 	if rsp != nil {
 		_, err = client.DeleteOAuthClient(rsp.ID)
 		assert.Nil(t, err)
 	}
 
-	rsp, err = client.FindOAuthClient(testOAuthClientName)
+	rsp, err = client.FindOAuthClient(test.oauthClient)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 
-	rspExtra, err := client.CreateOAuthClient(testOAuthClientName, nil)
+	rspExtra, err := client.CreateOAuthClient(test.oauthClient, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, testOAuthClientName, rspExtra.Name)
+	assert.Equal(t, test.oauthClient, rspExtra.Name)
 
 	clientID := rspExtra.ID
 
-	rsp, err = client.FindOAuthClient(testOAuthClientName)
+	rsp, err = client.FindOAuthClient(test.oauthClient)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, clientID, rsp.ID)
-	assert.Equal(t, testOAuthClientName, rsp.Name)
+	assert.Equal(t, test.oauthClient, rsp.Name)
 
 	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, clientID, rspExtra.ID)
-	assert.Equal(t, testOAuthClientName, rspExtra.Name)
+	assert.Equal(t, test.oauthClient, rspExtra.Name)
 
 	clients, err := client.ListOAuthClients()
 	assert.Nil(t, err)
 	item := findOAuthClient(clients, clientID)
 	assert.NotNil(t, item)
 	assert.Equal(t, clientID, item.ID)
-	assert.Equal(t, testOAuthClientName, item.Name)
+	assert.Equal(t, test.oauthClient, item.Name)
 
 	deleteRsp, err := client.DeleteOAuthClient(clientID)
 	assert.Nil(t, err)
@@ -611,7 +611,7 @@ func TestOAuthClient(t *testing.T) {
 	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.True(t, isErrNotFound(err))
 
-	rsp, err = client.FindOAuthClient(testOAuthClientName)
+	rsp, err = client.FindOAuthClient(test.oauthClient)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 }
@@ -626,44 +626,44 @@ func findUser(users []User, id string) *User {
 }
 
 func TestUser(t *testing.T) {
-	client := testClient
+	client := test.client
 
-	rsp, err := client.FindUser(testUserEmail)
+	rsp, err := client.FindUser(test.userEmail)
 	assert.Nil(t, err)
 	if rsp != nil {
 		_, err = client.DeleteUser(rsp.ID)
 		assert.Nil(t, err)
 	}
 
-	rsp, err = client.FindUser(testUserEmail)
+	rsp, err = client.FindUser(test.userEmail)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 
-	rsp, err = client.CreateUser(testUserEmail, nil)
-	assert.Equal(t, testUserEmail, rsp.Email)
+	rsp, err = client.CreateUser(test.userEmail, nil)
+	assert.Equal(t, test.userEmail, rsp.Email)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 	assert.Equal(t, []string{"user"}, rsp.Roles)
 
 	var userID = rsp.ID
 
-	rsp, err = client.FindUser(testUserEmail)
+	rsp, err = client.FindUser(test.userEmail)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, userID, rsp.ID)
-	assert.Equal(t, testUserEmail, rsp.Email)
+	assert.Equal(t, test.userEmail, rsp.Email)
 
 	rsp, err = client.GetUser(userID)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	assert.Equal(t, userID, rsp.ID)
-	assert.Equal(t, testUserEmail, rsp.Email)
+	assert.Equal(t, test.userEmail, rsp.Email)
 
 	users, err := client.ListUsers()
 	assert.Nil(t, err)
 	user := findUser(users, userID)
 	assert.NotNil(t, user)
 	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, testUserEmail, user.Email)
+	assert.Equal(t, test.userEmail, user.Email)
 
 	rsp, err = client.DisableUser(userID)
 	assert.Nil(t, err)
@@ -705,7 +705,7 @@ func TestUser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, userID, deleteRsp.ID)
 
-	rsp, err = client.FindUser(testUserEmail)
+	rsp, err = client.FindUser(test.userEmail)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 }

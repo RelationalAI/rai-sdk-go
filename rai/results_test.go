@@ -3,6 +3,7 @@
 package rai
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -18,7 +19,7 @@ type tdata struct {
 	cols [][]any
 }
 
-type test struct {
+type execTest struct {
 	query string
 	mdata map[string]Signature // expected metadata
 	pdata map[string]tdata     // expected partition data
@@ -115,104 +116,104 @@ func xdata(args ...any) map[string]tdata {
 	return result
 }
 
-var primitiveTypeTests = []test{
+var primitiveTypeTests = []execTest{
 	{
 		query: `def output = "test"`,
 		mdata: mdata("0.arrow", sig("output", StringType)),
 		pdata: xdata("0.arrow", sig(StringType), row("test")),
-		rdata: xdata("0.arrow", sig(StringType, StringType), row("output", "test")),
+		rdata: xdata("0.arrow", sig("output", StringType), row("output", "test")),
 	},
 	{
 		query: `def output = boolean_true`,
 		mdata: mdata("0.arrow", sig("output", BoolType)),
 		pdata: xdata("0.arrow", sig(BoolType), row(true)),
-		rdata: xdata("0.arrow", sig(StringType, BoolType), row("output", true)),
+		rdata: xdata("0.arrow", sig("output", BoolType), row("output", true)),
 	},
 	{
 		query: `def output = boolean_false`,
 		mdata: mdata("0.arrow", sig("output", BoolType)),
 		pdata: xdata("0.arrow", sig(BoolType), row(false)),
-		rdata: xdata("0.arrow", sig(StringType, BoolType), row("output", false)),
+		rdata: xdata("0.arrow", sig("output", BoolType), row("output", false)),
 	},
 	{
 		query: `def output = 'a', '👍'`,
 		mdata: mdata("0.arrow", sig("output", CharType, CharType)),
 		pdata: xdata("0.arrow", sig(Uint32Type, Uint32Type), row(uint32(97), uint32(128077))),
-		rdata: xdata("0.arrow", sig(StringType, RuneType, RuneType), row("output", 'a', '👍')),
+		rdata: xdata("0.arrow", sig("output", RuneType, RuneType), row("output", 'a', '👍')),
 	},
 	{
 		query: `def output = 2021-10-12T01:22:31+10:00`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:DateTime", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(63769648951000))),
-		rdata: xdata("0.arrow", sig(StringType, TimeType),
+		rdata: xdata("0.arrow", sig("output", TimeType),
 			row("output", DateFromRataMillis(63769648951000))),
 	},
 	{
 		query: `def output = 2021-10-12`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Date", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(738075))),
-		rdata: xdata("0.arrow", sig(StringType, TimeType),
+		rdata: xdata("0.arrow", sig("output", TimeType),
 			row("output", DateFromRataDie(738075))),
 	},
 	{
 		query: `def output = Year[2022]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Year", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(2022))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(2022))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(2022))),
 	},
 	{
 		query: `def output = Month[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Month", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Week[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Week", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Day[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Day", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Hour[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Hour", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Minute[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Minute", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Second[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Second", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Millisecond[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Millisecond", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Microsecond[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Microsecond", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `def output = Nanosecond[1]`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Nanosecond", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
 		query: `
@@ -221,14 +222,14 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Hash", Int128Type))),
 		pdata: xdata("0.arrow", sig(Uint64ListType),
 			row([]uint64{uint64(10589367010498591262), uint64(15771123988529185405)})),
-		rdata: xdata("0.arrow", sig(StringType, BigIntType),
+		rdata: xdata("0.arrow", sig("output", BigIntType),
 			row("output", NewBigUint128(10589367010498591262, 15771123988529185405))),
 	},
 	{
 		query: `def output = missing`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Missing"))),
 		pdata: xdata("0.arrow", sig(StructType), [][]any{{}}),
-		rdata: xdata("0.arrow", sig(StringType, MissingType), row("output", "missing")),
+		rdata: xdata("0.arrow", sig("output", MissingType), row("output", "missing")),
 	},
 	{
 		query: `
@@ -240,7 +241,7 @@ var primitiveTypeTests = []test{
 			def output(p) = csv(_, p, _)`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:FilePos", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), [][]any{{int64(2), int64(3)}}),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type),
+		rdata: xdata("0.arrow", sig("output", Int64Type),
 			[][]any{{"output", "output"}, {int64(2), int64(3)}}),
 	},
 	{
@@ -248,13 +249,13 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Int64Type,
 			vtype("rel:base:AutoNumber", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type, Uint64Type), nil), // value changes on each call
-		rdata: xdata("0.arrow", sig(StringType, Int64Type, Int64Type), nil),
+		rdata: xdata("0.arrow", sig("output", Int64Type, Int64Type), nil),
 	},
 	{
 		query: `def output = int[8, 12], int[8, -12]`,
 		mdata: mdata("0.arrow", sig("output", Int8Type, Int8Type)),
 		pdata: xdata("0.arrow", sig(Int8Type, Int8Type), row(int8(12), int8(-12))),
-		rdata: xdata("0.arrow", sig(StringType, Int8Type, Int8Type),
+		rdata: xdata("0.arrow", sig("output", Int8Type, Int8Type),
 			row("output", int8(12), int8(-12))),
 	},
 	{
@@ -262,7 +263,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Int16Type, Int16Type)),
 		pdata: xdata("0.arrow", sig(Int16Type, Int16Type),
 			row(int16(123), int16(-123))),
-		rdata: xdata("0.arrow", sig(StringType, Int16Type, Int16Type),
+		rdata: xdata("0.arrow", sig("output", Int16Type, Int16Type),
 			row("output", int16(123), int16(-123))),
 	},
 	{
@@ -270,7 +271,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Int32Type, Int32Type)),
 		pdata: xdata("0.arrow", sig(Int32Type, Int32Type),
 			row(int32(1234), int32(-1234))),
-		rdata: xdata("0.arrow", sig(StringType, Int32Type, Int32Type),
+		rdata: xdata("0.arrow", sig("output", Int32Type, Int32Type),
 			row("output", int32(1234), int32(-1234))),
 	},
 	{
@@ -278,7 +279,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Int64Type, Int64Type)),
 		pdata: xdata("0.arrow", sig(Int64Type, Int64Type),
 			row(int64(12345), int64(-12345))),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type, Int64Type),
+		rdata: xdata("0.arrow", sig("output", Int64Type, Int64Type),
 			row("output", int64(12345), int64(-12345))),
 	},
 	{
@@ -288,7 +289,7 @@ var primitiveTypeTests = []test{
 			row([]uint64{uint64(12776324658854821719), uint64(6)},
 				[]uint64{uint64(0), uint64(0)},
 				[]uint64{uint64(18446744063709551616), uint64(18446744073709551615)})),
-		rdata: xdata("0.arrow", sig(StringType, BigIntType, BigIntType, BigIntType),
+		rdata: xdata("0.arrow", sig("output", BigIntType, BigIntType, BigIntType),
 			row("output",
 				NewBigInt128(12776324658854821719, 6), NewBigInt128(0, 0),
 				NewBigInt128(18446744063709551616, 18446744073709551615))),
@@ -297,25 +298,25 @@ var primitiveTypeTests = []test{
 		query: `def output = uint[8, 12]`,
 		mdata: mdata("0.arrow", sig("output", Uint8Type)),
 		pdata: xdata("0.arrow", sig(Uint8Type), row(uint8(12))),
-		rdata: xdata("0.arrow", sig(StringType, Uint8Type), row("output", uint8(12))),
+		rdata: xdata("0.arrow", sig("output", Uint8Type), row("output", uint8(12))),
 	},
 	{
 		query: `def output = uint[16, 123]`,
 		mdata: mdata("0.arrow", sig("output", Uint16Type)),
 		pdata: xdata("0.arrow", sig(Uint16Type), row(uint16(123))),
-		rdata: xdata("0.arrow", sig(StringType, Uint16Type), row("output", uint16(123))),
+		rdata: xdata("0.arrow", sig("output", Uint16Type), row("output", uint16(123))),
 	},
 	{
 		query: `def output = uint[32, 1234]`,
 		mdata: mdata("0.arrow", sig("output", Uint32Type)),
 		pdata: xdata("0.arrow", sig(Uint32Type), row(uint32(1234))),
-		rdata: xdata("0.arrow", sig(StringType, Uint32Type), row("output", uint32(1234))),
+		rdata: xdata("0.arrow", sig("output", Uint32Type), row("output", uint32(1234))),
 	},
 	{
 		query: `def output = uint[64, 12345]`,
 		mdata: mdata("0.arrow", sig("output", Uint64Type)),
 		pdata: xdata("0.arrow", sig(Uint64Type), row(uint64(12345))),
-		rdata: xdata("0.arrow", sig(StringType, Uint64Type), row("output", uint64(12345))),
+		rdata: xdata("0.arrow", sig("output", Uint64Type), row("output", uint64(12345))),
 	},
 	{
 		query: `def output = uint[128, 123456789101112131415], uint[128, 0], 0xdade49b564ec827d92f4fd30f1023a1e`,
@@ -324,7 +325,7 @@ var primitiveTypeTests = []test{
 			row([]uint64{12776324658854821719, 6}, []uint64{0, 0},
 				[]uint64{10589367010498591262, 15771123988529185405})),
 		rdata: xdata("0.arrow",
-			sig(StringType, BigIntType, BigIntType, BigIntType),
+			sig("output", BigIntType, BigIntType, BigIntType),
 			row("output", NewBigUint128(12776324658854821719, 6), NewBigUint128(0, 0),
 				NewBigUint128(10589367010498591262, 15771123988529185405))),
 	},
@@ -333,7 +334,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Float16Type, Float16Type)),
 		pdata: xdata("0.arrow", sig(Float16Type, Float16Type),
 			row(float16.New(12), float16.New(42.5))),
-		rdata: xdata("0.arrow", sig(StringType, Float16Type, Float16Type),
+		rdata: xdata("0.arrow", sig("output", Float16Type, Float16Type),
 			row("output", float16.New(12), float16.New(42.5))),
 	},
 	{
@@ -341,7 +342,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Float32Type, Float32Type)),
 		pdata: xdata("0.arrow", sig(Float32Type, Float32Type),
 			row(float32(12), float32(42.5))),
-		rdata: xdata("0.arrow", sig(StringType, Float32Type, Float32Type),
+		rdata: xdata("0.arrow", sig("output", Float32Type, Float32Type),
 			row("output", float32(12), float32(42.5))),
 	},
 	{
@@ -349,7 +350,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", Float64Type, Float64Type)),
 		pdata: xdata("0.arrow", sig(Float64Type, Float64Type),
 			row(float64(12), float64(42.5))),
-		rdata: xdata("0.arrow", sig(StringType, Float64Type, Float64Type),
+		rdata: xdata("0.arrow", sig("output", Float64Type, Float64Type),
 			row("output", float64(12), float64(42.5))),
 	},
 	{
@@ -358,7 +359,7 @@ var primitiveTypeTests = []test{
 			sig("output", vtype("rel:base:FixedDecimal",
 				int64(16), int64(2), Int16Type))),
 		pdata: xdata("0.arrow", sig(Int16Type), row(int16(1234))),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType),
+		rdata: xdata("0.arrow", sig("output", DecimalType),
 			row("output", decimal.New(1234, -2))),
 	},
 	{
@@ -366,7 +367,7 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:FixedDecimal",
 			int64(32), int64(2), Int32Type))),
 		pdata: xdata("0.arrow", sig(Int32Type), row(int32(1234))),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType),
+		rdata: xdata("0.arrow", sig("output", DecimalType),
 			row("output", decimal.New(1234, -2))),
 	},
 	{
@@ -375,7 +376,7 @@ var primitiveTypeTests = []test{
 			sig("output", vtype("rel:base:FixedDecimal",
 				int64(64), int64(2), Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1234))),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType),
+		rdata: xdata("0.arrow", sig("output", DecimalType),
 			row("output", decimal.New(1234, -2))),
 	},
 	{
@@ -384,7 +385,7 @@ var primitiveTypeTests = []test{
 			int64(128), int64(2), Int128Type))),
 		pdata: xdata("0.arrow",
 			sig(Uint64ListType), row([]uint64{17082781236281724778, 66})),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType),
+		rdata: xdata("0.arrow", sig("output", DecimalType),
 			row("output", NewDecimal128(17082781236281724778, 66, -2))),
 	},
 	{
@@ -392,28 +393,28 @@ var primitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			vtype("rel:base:Rational", int64(8), Int8Type, Int8Type))),
 		pdata: xdata("0.arrow", sig(Int8ListType), row([]int8{int8(1), int8(2)})),
-		rdata: xdata("0.arrow", sig(StringType, RationalType), row("output", big.NewRat(1, 2))),
+		rdata: xdata("0.arrow", sig("output", RationalType), row("output", big.NewRat(1, 2))),
 	},
 	{
 		query: `def output = rational[16, 1, 2]`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("rel:base:Rational", int64(16), Int16Type, Int16Type))),
 		pdata: xdata("0.arrow", sig(Int16ListType), row([]int16{int16(1), int16(2)})),
-		rdata: xdata("0.arrow", sig(StringType, RationalType), row("output", big.NewRat(1, 2))),
+		rdata: xdata("0.arrow", sig("output", RationalType), row("output", big.NewRat(1, 2))),
 	},
 	{
 		query: `def output = rational[32, 1, 2]`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("rel:base:Rational", int64(32), Int32Type, Int32Type))),
 		pdata: xdata("0.arrow", sig(Int32ListType), row([]int32{int32(1), int32(2)})),
-		rdata: xdata("0.arrow", sig(StringType, RationalType), row("output", big.NewRat(1, 2))),
+		rdata: xdata("0.arrow", sig("output", RationalType), row("output", big.NewRat(1, 2))),
 	},
 	{
 		query: `def output = rational[64, 1, 2]`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("rel:base:Rational", int64(64), Int64Type, Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{int64(1), int64(2)})),
-		rdata: xdata("0.arrow", sig(StringType, RationalType), row("output", big.NewRat(1, 2))),
+		rdata: xdata("0.arrow", sig("output", RationalType), row("output", big.NewRat(1, 2))),
 	},
 	{
 		query: `def output = rational[128, 123456789101112313, 9123456789101112313]`,
@@ -421,56 +422,57 @@ var primitiveTypeTests = []test{
 			vtype("rel:base:Rational", int64(128), Int128Type, Int128Type))),
 		pdata: xdata("0.arrow", sig(Uint64ListType),
 			row([]uint64{123456789101112313, 0, 9123456789101112313, 0})),
-		rdata: xdata("0.arrow", sig(StringType, RationalType),
+		rdata: xdata("0.arrow", sig("output", RationalType),
 			row("output", NewRational128(
 				NewBigInt128(123456789101112313, 0),
 				NewBigInt128(9123456789101112313, 0)))),
 	},
 }
 
-var constPrimitiveTypeTests = []test{
+var constPrimitiveTypeTests = []execTest{
 	{
 		query: `def output = :foo`,
 		mdata: mdata("0.arrow", sig("output", "foo")),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, StringType), row("output", "foo")),
+		rdata: xdata("0.arrow", sig("output", "foo"), row("output", "foo")),
 	},
 	{
 		query: `def output = #("foo")`,
 		mdata: mdata("0.arrow", sig("output", "foo")),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, StringType), row("output", "foo")),
+		rdata: xdata("0.arrow", sig("output", "foo"), row("output", "foo")),
 	},
 	{
 		query: `def output = #("foo / bar")`,
 		mdata: mdata("0.arrow", sig("output", "foo / bar")),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, StringType), row("output", "foo / bar")),
+		rdata: xdata("0.arrow", sig("output", "foo / bar"), row("output", "foo / bar")),
 	},
 	{
 		query: `def output = #(boolean_true)`,
 		mdata: mdata("0.arrow", sig("output", true)),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, BoolType), row("output", true)),
+		rdata: xdata("0.arrow", sig("output", true), row("output", true)),
 	},
 	{
 		query: `def output = #(boolean_false)`,
 		mdata: mdata("0.arrow", sig("output", false)),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, BoolType), row("output", false)),
+		rdata: xdata("0.arrow", sig("output", false), row("output", false)),
 	},
 	{
 		query: `def output = #('👍')`,
 		mdata: mdata("0.arrow", sig("output", '👍')),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, RuneType), row("output", '👍')),
+		rdata: xdata("0.arrow", sig("output", '👍'), row("output", '👍')),
 	},
 	{
 		query: `def output = #(2021-10-12T01:22:31+10:00)`,
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:DateTime", int64(63801184951000)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, TimeType),
+		rdata: xdata("0.arrow",
+			sig("output", DateFromRataMillis(63801184951000)),
 			row("output", DateFromRataMillis(63801184951000))),
 	},
 	{
@@ -478,68 +480,69 @@ var constPrimitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:Date", int64(738075)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, TimeType),
+		rdata: xdata("0.arrow",
+			sig("output", DateFromRataDie(738075)),
 			row("output", DateFromRataDie(738075))),
 	},
 	{
 		query: `def output = #(Year[2022])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Year", int64(2022)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(2022))),
+		rdata: xdata("0.arrow", sig("output", int64(2022)), row("output", int64(2022))),
 	},
 	{
 		query: `def output = #(Month[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Month", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Week[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Week", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Day[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Day", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Hour[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Hour", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Minute[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Minute", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Second[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Second", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Millisecond[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Millisecond", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Microsecond[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Microsecond", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `def output = #(Nanosecond[1])`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Nanosecond", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(1))),
+		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
 		query: `
@@ -549,7 +552,8 @@ var constPrimitiveTypeTests = []test{
 			sig("output", ctype("rel:base:Hash",
 				NewBigUint128(10589367010498591262, 15771123988529185405)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, BigIntType),
+		rdata: xdata("0.arrow",
+			sig("output", NewBigUint128(10589367010498591262, 15771123988529185405)),
 			row("output", NewBigUint128(10589367010498591262, 15771123988529185405))),
 	},
 	// {query: `def output = #(missing)`},
@@ -563,96 +567,100 @@ var constPrimitiveTypeTests = []test{
 			def output = #(v)`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:FilePos", int64(2)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(2))),
+		rdata: xdata("0.arrow", sig("output", int64(2)), row("output", int64(2))),
 	},
 	{
 		query: `def output = #(int[8, -12])`,
 		mdata: mdata("0.arrow", sig("output", int8(-12))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int8Type), row("output", int8(-12))),
+		rdata: xdata("0.arrow", sig("output", int8(-12)), row("output", int8(-12))),
 	},
 	{
 		query: `def output = #(int[16, -123]) `,
 		mdata: mdata("0.arrow", sig("output", int16(-123))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int16Type), row("output", int16(-123))),
+		rdata: xdata("0.arrow", sig("output", int16(-123)), row("output", int16(-123))),
 	},
 	{
 		query: `def output = #(int[32, -1234])`,
 		mdata: mdata("0.arrow", sig("output", int32(-1234))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int32Type), row("output", int32(-1234))),
+		rdata: xdata("0.arrow", sig("output", int32(-1234)), row("output", int32(-1234))),
 	},
 	{
 		query: `def output = #(int[64, -12345])`,
 		mdata: mdata("0.arrow", sig("output", int64(-12345))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Int64Type), row("output", int64(-12345))),
+		rdata: xdata("0.arrow", sig("output", int64(-12345)), row("output", int64(-12345))),
 	},
 	{
 		query: `def output = #(int[128, 123456789101112131415])`,
 		mdata: mdata("0.arrow", sig("output", NewBigInt128(12776324658854821719, 6))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, BigIntType),
+		rdata: xdata("0.arrow",
+			sig("output", NewBigInt128(12776324658854821719, 6)),
 			row("output", NewBigInt128(12776324658854821719, 6))),
 	},
 	{
 		query: `def output = #(uint[8, 12])`,
 		mdata: mdata("0.arrow", sig("output", uint8(12))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Uint8Type), row("output", uint8(12))),
+		rdata: xdata("0.arrow", sig("output", uint8(12)), row("output", uint8(12))),
 	},
 	{
 		query: `def output = #(uint[16, 123])`,
 		mdata: mdata("0.arrow", sig("output", uint16(123))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Uint16Type), row("output", uint16(123))),
+		rdata: xdata("0.arrow", sig("output", uint16(123)), row("output", uint16(123))),
 	},
 	{
 		query: `def output = #(uint[32, 1234])`,
 		mdata: mdata("0.arrow", sig("output", uint32(1234))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Uint32Type), row("output", uint32(1234))),
+		rdata: xdata("0.arrow", sig("output", uint32(1234)), row("output", uint32(1234))),
 	},
 	{
 		query: `def output = #(uint[64, 12345])`,
 		mdata: mdata("0.arrow", sig("output", uint64(12345))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Uint64Type), row("output", uint64(12345))),
+		rdata: xdata("0.arrow", sig("output", uint64(12345)), row("output", uint64(12345))),
 	},
 	{
 		query: `def output = #(uint[128, 123456789101112131415])`,
 		mdata: mdata("0.arrow", sig("output", NewBigUint128(12776324658854821719, 6))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, BigIntType),
+		rdata: xdata("0.arrow",
+			sig("output", NewBigUint128(12776324658854821719, 6)),
 			row("output", NewBigUint128(12776324658854821719, 6))),
 	},
 	{
 		query: `def output = #(float[16, 42.5])`,
 		mdata: mdata("0.arrow", sig("output", float16.New(42.5))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Float16Type),
+		rdata: xdata("0.arrow", sig("output", float16.New(42.5)),
 			row("output", float16.New(42.5))),
 	},
 	{
 		query: `def output = #(float[32, 42.5])`,
 		mdata: mdata("0.arrow", sig("output", float32(42.5))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Float32Type),
+		rdata: xdata("0.arrow", sig("output", float32(42.5)),
 			row("output", float32(42.5))),
 	},
 	{
 		query: `def output = #(float[64, 42.5])`,
 		mdata: mdata("0.arrow", sig("output", float64(42.5))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, Float64Type), row("output", float64(42.5))),
+		rdata: xdata("0.arrow", sig("output", float64(42.5)),
+			row("output", float64(42.5))),
 	},
 	{
 		query: `def output = #(parse_decimal[16, 2, "12.34"])`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("rel:base:FixedDecimal", int64(16), int64(2), int16(1234)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType),
+		rdata: xdata("0.arrow",
+			sig("output", decimal.New(1234, -2)),
 			row("output", decimal.New(1234, -2))),
 	},
 	{
@@ -660,14 +668,16 @@ var constPrimitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:FixedDecimal", int64(32), int64(2), int32(1234)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType), row("output", decimal.New(1234, -2))),
+		rdata: xdata("0.arrow", sig("output", decimal.New(1234, -2)),
+			row("output", decimal.New(1234, -2))),
 	},
 	{
 		query: `def output = #(parse_decimal[64, 2, "12.34"])`,
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:FixedDecimal", int64(64), int64(2), int64(1234)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType), row("output", decimal.New(1234, -2))),
+		rdata: xdata("0.arrow", sig("output", decimal.New(1234, -2)),
+			row("output", decimal.New(1234, -2))),
 	},
 	{
 		query: `def output = #(parse_decimal[128, 2, "12345678901011121314.34"])`,
@@ -675,7 +685,8 @@ var constPrimitiveTypeTests = []test{
 			ctype("rel:base:FixedDecimal", int64(128), int64(2),
 				NewBigInt128(17082781236281724778, 66)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, DecimalType),
+		rdata: xdata("0.arrow",
+			sig("output", NewDecimal128(17082781236281724778, 66, -2)),
 			row("output", NewDecimal128(17082781236281724778, 66, -2))),
 	},
 	{
@@ -683,7 +694,7 @@ var constPrimitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:Rational", int64(8), int8(1), int8(2)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, RationalType),
+		rdata: xdata("0.arrow", sig("output", big.NewRat(1, 2)),
 			row("output", big.NewRat(1, 2))),
 	},
 	{
@@ -691,7 +702,7 @@ var constPrimitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:Rational", int64(16), int16(1), int16(2)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, RationalType),
+		rdata: xdata("0.arrow", sig("output", big.NewRat(1, 2)),
 			row("output", big.NewRat(1, 2))),
 	},
 	{
@@ -699,7 +710,7 @@ var constPrimitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:Rational", int64(32), int32(1), int32(2)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, RationalType),
+		rdata: xdata("0.arrow", sig("output", big.NewRat(1, 2)),
 			row("output", big.NewRat(1, 2))),
 	},
 	{
@@ -707,7 +718,7 @@ var constPrimitiveTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:Rational", int64(64), int64(1), int64(2)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, RationalType),
+		rdata: xdata("0.arrow", sig("output", big.NewRat(1, 2)),
 			row("output", big.NewRat(1, 2))),
 	},
 	{
@@ -717,14 +728,17 @@ var constPrimitiveTypeTests = []test{
 				NewBigInt128(123456789101112313, 0),
 				NewBigInt128(9123456789101112313, 0)))),
 		pdata: xdata("0.arrow", sig(), row()),
-		rdata: xdata("0.arrow", sig(StringType, RationalType),
+		rdata: xdata("0.arrow",
+			sig("output", NewRational128(
+				NewBigInt128(123456789101112313, 0),
+				NewBigInt128(9123456789101112313, 0))),
 			row("output", NewRational128(
 				NewBigInt128(123456789101112313, 0),
 				NewBigInt128(9123456789101112313, 0)))),
 	},
 }
 
-var valueTypeTests = []test{
+var valueTypeTests = []execTest{
 	{
 		query: `
 			value type MyType = :foo; :bar; :baz
@@ -732,7 +746,7 @@ var valueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", vtype("MyType", "foo"))),
 		pdata: xdata("0.arrow", sig(StructType), [][]any{{}}),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, StringType)),
+			sig("output", vtype("MyType", "foo")),
 			row("output", value("MyType", "foo"))),
 	},
 	{
@@ -743,7 +757,7 @@ var valueTypeTests = []test{
 			sig("output", vtype("MyType", Int64Type, StringType))),
 		pdata: xdata("0.arrow", sig(StructType), row([]any{int64(1), "abc"})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, StringType)),
+			sig("output", vtype("MyType", Int64Type, StringType)),
 			row("output", value("MyType", int64(1), "abc"))),
 	},
 	{
@@ -754,7 +768,7 @@ var valueTypeTests = []test{
 			sig("output", vtype("MyType", Int64Type, BoolType))),
 		pdata: xdata("0.arrow", sig(StructType), row([]any{int64(1), true})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, BoolType)),
+			sig("output", vtype("MyType", Int64Type, BoolType)),
 			row("output", value("MyType", int64(1), true))),
 	},
 	{
@@ -765,7 +779,7 @@ var valueTypeTests = []test{
 			sig("output", vtype("MyType", Int64Type, BoolType))),
 		pdata: xdata("0.arrow", sig(StructType), row([]any{int64(1), false})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, BoolType)),
+			sig("output", vtype("MyType", Int64Type, BoolType)),
 			row("output", value("MyType", int64(1), false))),
 	},
 	{
@@ -777,7 +791,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), uint32('👍')})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, RuneType)),
+			sig("output", vtype("MyType", Int64Type, RuneType)),
 			row("output", value("MyType", int64(1), '👍'))),
 	},
 	{
@@ -789,7 +803,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(Int64ListType),
 			row([]int64{1, 63769648951000})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, TimeType)),
+			sig("output", vtype("MyType", Int64Type, TimeType)),
 			row("output", value("MyType", int64(1),
 				DateFromRataMillis(63769648951000)))),
 	},
@@ -801,7 +815,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Date", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 738075})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, TimeType)),
+			sig("output", vtype("MyType", Int64Type, TimeType)),
 			row("output", value("MyType", int64(1), DateFromRataDie(738075)))),
 	},
 	{
@@ -812,7 +826,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Year", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2022})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2022)))),
 	},
 	{
@@ -823,7 +837,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Month", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -834,7 +848,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Week", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -845,7 +859,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Day", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -856,7 +870,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Hour", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -867,7 +881,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Minute", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -878,7 +892,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Second", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -889,7 +903,7 @@ var valueTypeTests = []test{
 			vtype("rel:base:Millisecond", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -900,7 +914,7 @@ var valueTypeTests = []test{
 			vtype("rel:base:Microsecond", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -911,7 +925,7 @@ var valueTypeTests = []test{
 			vtype("rel:base:Nanosecond", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -925,7 +939,7 @@ var valueTypeTests = []test{
 			row([]any{int64(1),
 				[]uint64{3877405323480549948, 3198683864092244389}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, BigIntType)),
+			sig("output", vtype("MyType", Int64Type, BigIntType)),
 			row("output", value("MyType", int64(1),
 				NewBigUint128(3877405323480549948, 3198683864092244389)))),
 	},
@@ -937,7 +951,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:Missing")))),
 		pdata: xdata("0.arrow", sig(StructType), row([]any{int64(1), []any{}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, MissingType)),
+			sig("output", vtype("MyType", Int64Type, MissingType)),
 			row("output", value("MyType", int64(1), "missing"))),
 	},
 	{
@@ -953,7 +967,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, vtype("rel:base:FilePos", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(2)))),
 	},
 	{
@@ -965,7 +979,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), int8(-12)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int8Type)),
+			sig("output", vtype("MyType", Int64Type, Int8Type)),
 			row("output", value("MyType", int64(1), int8(-12)))),
 	},
 	{
@@ -977,7 +991,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), int16(-123)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int16Type)),
+			sig("output", vtype("MyType", Int64Type, Int16Type)),
 			row("output", value("MyType", int64(1), int16(-123)))),
 	},
 	{
@@ -989,7 +1003,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), int32(-1234)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int32Type)),
+			sig("output", vtype("MyType", Int64Type, Int32Type)),
 			row("output", value("MyType", int64(1), int32(-1234)))),
 	},
 	{
@@ -1000,7 +1014,7 @@ var valueTypeTests = []test{
 			vtype("MyType", Int64Type, Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, -12345})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Int64Type)),
+			sig("output", vtype("MyType", Int64Type, Int64Type)),
 			row("output", value("MyType", int64(1), int64(-12345)))),
 	},
 	{
@@ -1012,7 +1026,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []uint64{12776324658854821719, 6}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, BigIntType)),
+			sig("output", vtype("MyType", Int64Type, BigIntType)),
 			row("output", value("MyType", int64(1), NewBigInt128(12776324658854821719, 6)))),
 	},
 	{
@@ -1024,7 +1038,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), uint8(12)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Uint8Type)),
+			sig("output", vtype("MyType", Int64Type, Uint8Type)),
 			row("output", value("MyType", int64(1), uint8(12)))),
 	},
 	{
@@ -1036,7 +1050,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), uint16(123)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Uint16Type)),
+			sig("output", vtype("MyType", Int64Type, Uint16Type)),
 			row("output", value("MyType", int64(1), uint16(123)))),
 	},
 	{
@@ -1048,7 +1062,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), uint32(1234)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Uint32Type)),
+			sig("output", vtype("MyType", Int64Type, Uint32Type)),
 			row("output", value("MyType", int64(1), uint32(1234)))),
 	},
 	{
@@ -1060,7 +1074,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), uint64(12345)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Uint64Type)),
+			sig("output", vtype("MyType", Int64Type, Uint64Type)),
 			row("output", value("MyType", int64(1), uint64(12345)))),
 	},
 	{
@@ -1072,7 +1086,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []uint64{12776324658854821719, 6}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, BigIntType)),
+			sig("output", vtype("MyType", Int64Type, BigIntType)),
 			row("output", value("MyType", int64(1), NewBigUint128(12776324658854821719, 6)))),
 	},
 	{
@@ -1084,7 +1098,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), float16.New(42.5)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Float16Type)),
+			sig("output", vtype("MyType", Int64Type, Float16Type)),
 			row("output", value("MyType", int64(1), float16.New(42.5)))),
 	},
 	{
@@ -1096,7 +1110,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), float32(42.5)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Float32Type)),
+			sig("output", vtype("MyType", Int64Type, Float32Type)),
 			row("output", value("MyType", int64(1), float32(42.5)))),
 	},
 	{
@@ -1108,7 +1122,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), float64(42.5)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, Float64Type)),
+			sig("output", vtype("MyType", Int64Type, Float64Type)),
 			row("output", value("MyType", int64(1), float64(42.5)))),
 	},
 	{
@@ -1120,7 +1134,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), int16(1234)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, DecimalType)),
+			sig("output", vtype("MyType", Int64Type, DecimalType)),
 			row("output", value("MyType", int64(1), decimal.New(1234, -2)))),
 	},
 	{
@@ -1132,7 +1146,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), int32(1234)})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, DecimalType)),
+			sig("output", vtype("MyType", Int64Type, DecimalType)),
 			row("output", value("MyType", int64(1), decimal.New(1234, -2)))),
 	},
 	{
@@ -1143,7 +1157,7 @@ var valueTypeTests = []test{
 			vtype("rel:base:FixedDecimal", int64(64), int64(2), Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 1234})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, DecimalType)),
+			sig("output", vtype("MyType", Int64Type, DecimalType)),
 			row("output", value("MyType", int64(1), decimal.New(1234, -2)))),
 	},
 	{
@@ -1155,7 +1169,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []uint64{17082781236281724778, 66}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, DecimalType)),
+			sig("output", vtype("MyType", Int64Type, DecimalType)),
 			row("output", value("MyType", int64(1),
 				NewDecimal128(17082781236281724778, 66, -2)))),
 	},
@@ -1168,7 +1182,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []int8{1, 2}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, RationalType)),
+			sig("output", vtype("MyType", Int64Type, RationalType)),
 			row("output", value("MyType", int64(1), big.NewRat(1, 2)))),
 	},
 	{
@@ -1180,7 +1194,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []int16{1, 2}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, RationalType)),
+			sig("output", vtype("MyType", Int64Type, RationalType)),
 			row("output", value("MyType", int64(1), big.NewRat(1, 2)))),
 	},
 	{
@@ -1192,7 +1206,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []int32{1, 2}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, RationalType)),
+			sig("output", vtype("MyType", Int64Type, RationalType)),
 			row("output", value("MyType", int64(1), big.NewRat(1, 2)))),
 	},
 	{
@@ -1204,7 +1218,7 @@ var valueTypeTests = []test{
 		pdata: xdata("0.arrow", sig(StructType),
 			row([]any{int64(1), []int64{1, 2}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, RationalType)),
+			sig("output", vtype("MyType", Int64Type, RationalType)),
 			row("output", value("MyType", int64(1), big.NewRat(1, 2)))),
 	},
 	{
@@ -1217,14 +1231,14 @@ var valueTypeTests = []test{
 			row([]any{int64(1),
 				[]uint64{123456789101112313, 0, 9123456789101112313, 0}})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, Int64Type, RationalType)),
+			sig("output", vtype("MyType", Int64Type, RationalType)),
 			row("output", value("MyType", int64(1), NewRational128(
 				NewBigInt128(123456789101112313, 0),
 				NewBigInt128(9123456789101112313, 0))))),
 	},
 }
 
-var extraValueTypeTests = []test{
+var extraValueTypeTests = []execTest{
 	{
 		query: `
 			module Foo
@@ -1237,12 +1251,12 @@ var extraValueTypeTests = []test{
 			sig("output", vtype("Foo", "Bar", "MyType", Int64Type, Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{12, 34})),
 		rdata: xdata("0.arrow",
-			sig(StringType, vtype(StringType, StringType, StringType, Int64Type, Int64Type)),
+			sig("output", vtype("Foo", "Bar", "MyType", Int64Type, Int64Type)),
 			row("output", value("Foo", "Bar", "MyType", int64(12), int64(34)))),
 	},
 }
 
-var constValueTypeTests = []test{
+var constValueTypeTests = []execTest{
 	/* https://github.com/RelationalAI/raicode/issues/10386
 	{
 		query: `
@@ -1269,7 +1283,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), true))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, BoolType)),
+			sig("output", ctype(int64(1), true)),
 			row("output", value(int64(1), true))),
 	},
 	{
@@ -1280,7 +1294,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), false))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, BoolType)),
+			sig("output", ctype(int64(1), false)),
 			row("output", value(int64(1), false))),
 	},
 	{
@@ -1291,7 +1305,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), '👍'))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, RuneType)),
+			sig("output", ctype(int64(1), '👍')),
 			row("output", value(int64(1), '👍'))),
 	},
 	/* https://github.com/RelationalAI/raicode/issues/10396
@@ -1317,7 +1331,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Year", int64(2022))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2022))),
 			row("output", value(int64(1), int64(2022)))),
 	},
 	{
@@ -1329,7 +1343,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Month", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1341,7 +1355,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Week", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1353,7 +1367,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Day", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1365,7 +1379,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Hour", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1377,7 +1391,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Minute", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1389,7 +1403,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Second", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1401,7 +1415,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Millisecond", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1413,7 +1427,7 @@ var constValueTypeTests = []test{
 			ctype("rel:base:Microsecond", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1425,7 +1439,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:Nanosecond", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1439,7 +1453,8 @@ var constValueTypeTests = []test{
 				NewBigUint128(3877405323480549948, 3198683864092244389))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, BigIntType)),
+			sig("output", ctype(int64(1),
+				NewBigUint128(3877405323480549948, 3198683864092244389))),
 			row("output", value(int64(1),
 				NewBigUint128(3877405323480549948, 3198683864092244389)))),
 	},
@@ -1465,7 +1480,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), ctype("rel:base:FilePos", int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(2))),
 			row("output", value(int64(1), int64(2)))),
 	},
 	{
@@ -1476,7 +1491,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), int8(-12)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int8Type)),
+			sig("output", ctype(int64(1), int8(-12))),
 			row("output", value(int64(1), int8(-12)))),
 	},
 	{
@@ -1487,7 +1502,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), int16(-123)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int16Type)),
+			sig("output", ctype(int64(1), int16(-123))),
 			row("output", value(int64(1), int16(-123)))),
 	},
 	{
@@ -1498,7 +1513,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), int32(-1234)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int32Type)),
+			sig("output", ctype(int64(1), int32(-1234))),
 			row("output", value(int64(1), int32(-1234)))),
 	},
 	{
@@ -1509,7 +1524,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), int64(-12345)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Int64Type)),
+			sig("output", ctype(int64(1), int64(-12345))),
 			row("output", value(int64(1), int64(-12345)))),
 	},
 	{
@@ -1521,7 +1536,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), NewBigInt128(12776324658854821719, 6)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, BigIntType)),
+			sig("output", ctype(int64(1), NewBigInt128(12776324658854821719, 6))),
 			row("output", value(int64(1), NewBigInt128(12776324658854821719, 6)))),
 	},
 	{
@@ -1532,7 +1547,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), uint8(12)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Uint8Type)),
+			sig("output", ctype(int64(1), uint8(12))),
 			row("output", value(int64(1), uint8(12)))),
 	},
 	{
@@ -1543,7 +1558,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), uint16(123)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Uint16Type)),
+			sig("output", ctype(int64(1), uint16(123))),
 			row("output", value(int64(1), uint16(123)))),
 	},
 	{
@@ -1554,7 +1569,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), uint32(1234)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Uint32Type)),
+			sig("output", ctype(int64(1), uint32(1234))),
 			row("output", value(int64(1), uint32(1234)))),
 	},
 	{
@@ -1565,7 +1580,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), uint64(12345)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Uint64Type)),
+			sig("output", ctype(int64(1), uint64(12345))),
 			row("output", value(int64(1), uint64(12345)))),
 	},
 	{
@@ -1577,7 +1592,7 @@ var constValueTypeTests = []test{
 			sig("output", ctype(int64(1), NewBigUint128(12776324658854821719, 6)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, BigIntType)),
+			sig("output", ctype(int64(1), NewBigUint128(12776324658854821719, 6))),
 			row("output", value(int64(1), NewBigUint128(12776324658854821719, 6)))),
 	},
 	{
@@ -1588,7 +1603,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), float16.New(42.5)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Float16Type)),
+			sig("output", ctype(int64(1), float16.New(42.5))),
 			row("output", value(int64(1), float16.New(42.5)))),
 	},
 	{
@@ -1599,7 +1614,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), float32(42.5)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Float32Type)),
+			sig("output", ctype(int64(1), float32(42.5))),
 			row("output", value(int64(1), float32(42.5)))),
 	},
 	{
@@ -1610,7 +1625,7 @@ var constValueTypeTests = []test{
 		mdata: mdata("0.arrow", sig("output", ctype(int64(1), float64(42.5)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, Float64Type)),
+			sig("output", ctype(int64(1), float64(42.5))),
 			row("output", value(int64(1), float64(42.5)))),
 	},
 	{
@@ -1623,7 +1638,7 @@ var constValueTypeTests = []test{
 				ctype("rel:base:FixedDecimal", int64(16), int64(2), int16(1234))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, DecimalType)),
+			sig("output", ctype(int64(1), decimal.New(1234, -2))),
 			row("output", value(int64(1), decimal.New(1234, -2)))),
 	},
 	{
@@ -1636,7 +1651,7 @@ var constValueTypeTests = []test{
 				ctype("rel:base:FixedDecimal", int64(32), int64(2), int32(1234))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, DecimalType)),
+			sig("output", ctype(int64(1), decimal.New(1234, -2))),
 			row("output", value(int64(1), decimal.New(1234, -2)))),
 	},
 
@@ -1650,10 +1665,9 @@ var constValueTypeTests = []test{
 				ctype("rel:base:FixedDecimal", int64(64), int64(2), int64(1234))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, DecimalType)),
+			sig("output", ctype(int64(1), decimal.New(1234, -2))),
 			row("output", value(int64(1), decimal.New(1234, -2)))),
 	},
-
 	{
 		query: `
 			value type MyType = Int, FixedDecimal[128, 2]
@@ -1665,7 +1679,7 @@ var constValueTypeTests = []test{
 					NewBigInt128(17082781236281724778, 66))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, DecimalType)),
+			sig("output", ctype(int64(1), NewDecimal128(17082781236281724778, 66, -2))),
 			row("output", value(int64(1), NewDecimal128(17082781236281724778, 66, -2)))),
 	},
 	{
@@ -1678,10 +1692,9 @@ var constValueTypeTests = []test{
 				ctype("rel:base:Rational", int64(8), int8(1), int8(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, RationalType)),
+			sig("output", ctype(int64(1), big.NewRat(int64(1), int64(2)))),
 			row("output", value(int64(1), big.NewRat(int64(1), int64(2))))),
 	},
-
 	{
 		query: `
 			value type MyType = Int, Rational[16]
@@ -1692,7 +1705,7 @@ var constValueTypeTests = []test{
 				ctype("rel:base:Rational", int64(16), int16(1), int16(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, RationalType)),
+			sig("output", ctype(int64(1), big.NewRat(int64(1), int64(2)))),
 			row("output", value(int64(1), big.NewRat(int64(1), int64(2))))),
 	},
 	{
@@ -1705,7 +1718,7 @@ var constValueTypeTests = []test{
 				ctype("rel:base:Rational", int64(32), int32(1), int32(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, RationalType)),
+			sig("output", ctype(int64(1), big.NewRat(int64(1), int64(2)))),
 			row("output", value(int64(1), big.NewRat(int64(1), int64(2))))),
 	},
 	{
@@ -1718,7 +1731,7 @@ var constValueTypeTests = []test{
 				ctype("rel:base:Rational", int64(64), int64(1), int64(2))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, RationalType)),
+			sig("output", ctype(int64(1), big.NewRat(int64(1), int64(2)))),
 			row("output", value(int64(1), big.NewRat(int64(1), int64(2))))),
 	},
 	{
@@ -1733,7 +1746,9 @@ var constValueTypeTests = []test{
 					NewBigInt128(9123456789101112313, 0))))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow",
-			sig(StringType, ctype(Int64Type, RationalType)),
+			sig("output", ctype(int64(1), NewRational128(
+				NewBigInt128(123456789101112313, 0),
+				NewBigInt128(9123456789101112313, 0)))),
 			row("output", value(int64(1), NewRational128(
 				NewBigInt128(123456789101112313, 0),
 				NewBigInt128(9123456789101112313, 0))))),
@@ -1779,7 +1794,7 @@ func checkColumns(t *testing.T, x [][]any, cols []Column) {
 }
 
 // Check that the response matches what is expected by the given test.
-func checkResponse(t *testing.T, test test, rsp *TransactionResponse) {
+func checkResponse(t *testing.T, test execTest, rsp *TransactionResponse) {
 	if test.mdata != nil {
 		assert.Equal(t, test.mdata, rsp.Metadata.Signatures())
 	}
@@ -1800,11 +1815,13 @@ func checkResponse(t *testing.T, test test, rsp *TransactionResponse) {
 	}
 }
 
-func runTests(t *testing.T, tests []test) {
+func runTests(t *testing.T, tests []execTest) {
 	for _, tst := range tests {
 		q := dindent(tst.query)
-		// fmt.Println(q)
-		rsp, err := testClient.Execute(testDatabaseName, testEngineName, q, nil, true)
+		if test.showQuery {
+			fmt.Println(q) // useful for debugging tests
+		}
+		rsp, err := test.client.Execute(test.databaseName, test.engineName, q, nil, true)
 		assert.Nil(t, err)
 		checkResponse(t, tst, rsp)
 	}
@@ -1961,10 +1978,11 @@ func TestInterfaceTypes(t *testing.T) {
 func TestPrefixMatch(t *testing.T) {
 	query := `def output = 1, :foo, "a"; 42, :bar, "c"`
 
-	rsp, err := testClient.Execute(testDatabaseName, testEngineName, dindent(query), nil, true)
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rsp.Relations()))
 
+	// select relations by ID
 	rel := rsp.Relation("0.arrow")
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
@@ -1972,34 +1990,38 @@ func TestPrefixMatch(t *testing.T) {
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
 
-	rs := rsp.Relations(StringType)
+	// select relations by signature prefix
+	rs := rsp.Relations("output")
 	assert.Equal(t, 2, len(rs))
-	rel = rsp.Relation("0.arrow")
+	rel = rs.Union()
+	assert.Equal(t, 4, rel.NumCols())
+	assert.Equal(t, 2, rel.NumRows())
+
+	rs = rsp.Relations("output", Int64Type)
+	assert.Equal(t, 2, len(rs))
+	rel = rs.Union()
+	assert.Equal(t, 4, rel.NumCols())
+	assert.Equal(t, 2, rel.NumRows())
+
+	rs = rsp.Relations("output", Int64Type, "foo")
+	assert.Equal(t, 1, len(rs))
+	rel = rs.Union()
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	rel = rsp.Relation("1.arrow")
+
+	rs = rsp.Relations("output", Int64Type, "bar")
+	assert.Equal(t, 1, len(rs))
+	rel = rs.Union()
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
 
-	rs = rsp.Relations(StringType, Int64Type)
+	rs = rsp.Relations("output", Int64Type, "_", StringType)
 	assert.Equal(t, 2, len(rs))
 	rel = rs.Union()
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 2, rel.NumRows())
 
-	rs = rsp.Relations(StringType, Int64Type, StringType)
-	assert.Equal(t, 2, len(rs))
-	rel = rs.Union()
-	assert.Equal(t, 4, rel.NumCols())
-	assert.Equal(t, 2, rel.NumRows())
-
-	rs = rsp.Relations(StringType, Int64Type, "_", StringType)
-	assert.Equal(t, 2, len(rs))
-	rel = rs.Union()
-	assert.Equal(t, 4, rel.NumCols())
-	assert.Equal(t, 2, rel.NumRows())
-
-	rs = rsp.Relations(Int64Type)
+	rs = rsp.Relations("nonsense")
 	assert.Equal(t, 0, len(rs))
 }
 
@@ -2024,32 +2046,32 @@ func TestRelationSlice(t *testing.T) {
 			5, :bip, 3.14, "pi!";
 			6, :zip, missing, "pip"`
 
-	rsp, err := testClient.Execute(testDatabaseName, testEngineName, dindent(query), nil, true)
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(rsp.Relations()))
 
 	rel := rsp.Relation("0.arrow")
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, Int64Type), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "cat", int64(42)), rel.Signature())
 	assert.Equal(t, []any{"output", int64(4), "cat", int64(42)}, rel.Row(0))
 
 	rel = rel.Slice(1)
 	assert.Equal(t, 3, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(Int64Type, StringType, Int64Type), rel.Signature())
+	assert.Equal(t, sig(Int64Type, "cat", int64(42)), rel.Signature())
 	assert.Equal(t, []any{int64(4), "cat", int64(42)}, rel.Row(0))
 
 	rel = rel.Slice(0, rel.NumCols()-1)
 	assert.Equal(t, 2, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(Int64Type, StringType), rel.Signature())
+	assert.Equal(t, sig(Int64Type, "cat"), rel.Signature())
 	assert.Equal(t, []any{int64(4), "cat"}, rel.Row(0))
 
 	rel = rsp.Relations().Union().Slice(1)
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 6, rel.NumRows())
-	assert.Equal(t, sig(Int64Type, StringType, MixedType, MixedType), rel.Signature())
+	assert.Equal(t, sig(Int64Type, MixedType, MixedType, MixedType), rel.Signature())
 	r := pick(rel, 0, int64(1))
 	assert.Equal(t, 4, len(r))
 	assert.Equal(t, []any{int64(1), "foo", "a", nil}, r)
@@ -2072,7 +2094,7 @@ func TestRelationSlice(t *testing.T) {
 	rel = rel.Slice(0, rel.NumCols()-1)
 	assert.Equal(t, 3, rel.NumCols())
 	assert.Equal(t, 6, rel.NumRows())
-	assert.Equal(t, sig(Int64Type, StringType, MixedType), rel.Signature())
+	assert.Equal(t, sig(Int64Type, MixedType, MixedType), rel.Signature())
 	r = pick(rel, 0, int64(1))
 	assert.Equal(t, 3, len(r))
 	assert.Equal(t, []any{int64(1), "foo", "a"}, r)
@@ -2103,49 +2125,49 @@ func TestRelationUnion(t *testing.T) {
 			5, :bip, 3.14, "pi!";
 			6, :zip, missing, "pip"`
 
-	rsp, err := testClient.Execute(testDatabaseName, testEngineName, dindent(query), nil, true)
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(rsp.Relations()))
 
 	rel := rsp.Relation("0.arrow")
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, Int64Type), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "cat", int64(42)), rel.Signature())
 	assert.Equal(t, []any{"output", int64(4), "cat", int64(42)}, rel.Row(0))
 
 	rel = rsp.Relation("1.arrow")
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, StringType), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "bar", StringType), rel.Signature())
 	assert.Equal(t, []any{"output", int64(2), "bar", "c"}, rel.Row(0))
 
 	rel = rsp.Relation("2.arrow")
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, Int64Type), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "baz", Int64Type), rel.Signature())
 	assert.Equal(t, []any{"output", int64(3), "baz", int64(42)}, rel.Row(0))
 
 	rel = rsp.Relation("3.arrow")
 	assert.Equal(t, 5, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, Float64Type, StringType), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "bip", Float64Type, StringType), rel.Signature())
 	assert.Equal(t, []any{"output", int64(5), "bip", 3.14, "pi!"}, rel.Row(0))
 
 	rel = rsp.Relation("4.arrow")
 	assert.Equal(t, 4, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, StringType), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "foo", StringType), rel.Signature())
 	assert.Equal(t, []any{"output", int64(1), "foo", "a"}, rel.Row(0))
 
 	rel = rsp.Relation("5.arrow")
 	assert.Equal(t, 5, rel.NumCols())
 	assert.Equal(t, 1, rel.NumRows())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, MissingType, StringType), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, "zip", MissingType, StringType), rel.Signature())
 	assert.Equal(t, []any{"output", int64(6), "zip", "missing", "pip"}, rel.Row(0))
 
 	rel = rsp.Relations().Union()
 	assert.Equal(t, 5, rel.NumCols())
-	assert.Equal(t, sig(StringType, Int64Type, StringType, MixedType, MixedType), rel.Signature())
+	assert.Equal(t, sig("output", Int64Type, MixedType, MixedType, MixedType), rel.Signature())
 	assert.Equal(t, 6, rel.NumRows())
 	r := pick(rel, 1, int64(1))
 	assert.Equal(t, 5, len(r))

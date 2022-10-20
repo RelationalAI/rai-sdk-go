@@ -863,11 +863,11 @@ func newDecimal8Column(col DataColumn[int8], digits int32) SimpleColumn[decimal.
 }
 
 func (c decimal8Column) GetItem(rnum int, out *decimal.Decimal) {
-	*out = decimal.New(int64(c.col.Item(rnum)), -c.digits)
+	*out = decimal.New(int64(c.col.Item(rnum)), c.digits)
 }
 
 func (c decimal8Column) Item(rnum int) decimal.Decimal {
-	return decimal.New(int64(c.col.Item(rnum)), -c.digits)
+	return decimal.New(int64(c.col.Item(rnum)), c.digits)
 }
 
 func (c decimal8Column) String(rnum int) string {
@@ -892,7 +892,7 @@ func (c decimal16Column) GetItem(rnum int, out *decimal.Decimal) {
 
 func (c decimal16Column) Item(rnum int) decimal.Decimal {
 	v := c.col.Item(rnum)
-	return decimal.New(int64(v), -c.digits)
+	return decimal.New(int64(v), c.digits)
 }
 
 func (c decimal16Column) String(rnum int) string {
@@ -917,7 +917,7 @@ func (c decimal32Column) GetItem(rnum int, out *decimal.Decimal) {
 
 func (c decimal32Column) Item(rnum int) decimal.Decimal {
 	v := c.col.Item(rnum)
-	return decimal.New(int64(v), -c.digits)
+	return decimal.New(int64(v), c.digits)
 }
 
 func (c decimal32Column) String(rnum int) string {
@@ -942,7 +942,7 @@ func (c decimal64Column) GetItem(rnum int, out *decimal.Decimal) {
 
 func (c decimal64Column) Item(rnum int) decimal.Decimal {
 	v := c.col.Item(rnum)
-	return decimal.New(int64(v), -c.digits)
+	return decimal.New(int64(v), c.digits)
 }
 
 func (c decimal64Column) String(rnum int) string {
@@ -969,7 +969,7 @@ func (c decimal128Column) GetItem(rnum int, out *decimal.Decimal) {
 func (c decimal128Column) Item(rnum int) decimal.Decimal {
 	var v [2]uint64
 	c.col.GetItem(rnum, v[:])
-	return NewDecimal128(v[0], v[1], -c.digits)
+	return NewDecimal128(v[0], v[1], c.digits)
 }
 
 func (c decimal128Column) NumRows() int {
@@ -988,9 +988,8 @@ func (c decimal128Column) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
-// ["rel", "base", "FixedDecimal", <bits>, <digits>]
 func newDecimalColumn(vt ValueType, c Column) Column {
-	digits := int32(vt[4].(int64))
+	digits := -int32(vt[4].(int64))
 	switch vt[3].(int64) {
 	case 8:
 		return newDecimal8Column(c.(DataColumn[int8]), digits)
@@ -1105,7 +1104,7 @@ func (c literalColumn[T]) String(_ int) string {
 }
 
 func (c literalColumn[T]) Type() any {
-	return reflect.TypeOf(c.value)
+	return c.value
 }
 
 func (c literalColumn[T]) Value(_ int) any {
@@ -1310,7 +1309,7 @@ func (c symbolColumn) String(_ int) string {
 }
 
 func (c symbolColumn) Type() any {
-	return StringType
+	return c.value
 }
 
 func (c symbolColumn) Value(_ int) any {
@@ -1352,49 +1351,63 @@ func (c missingColumn) Value(_ int) any {
 }
 
 // ["rel", "base", "Decimal", <bits>, <digits>, <value>]
-func newConstDecimalColumn(t ConstType, nrows int) Column {
-	var d decimal.Decimal
-	digits := int32(t[4].(int64))
-	switch t[3].(int64) {
+func newConstDecimalValue(ct ConstType) decimal.Decimal {
+	digits := -int32(ct[4].(int64))
+	switch ct[3].(int64) {
 	case 8:
-		d = decimal.New(int64(t[5].(int8)), -digits)
+		return decimal.New(int64(ct[5].(int8)), digits)
 	case 16:
-		d = decimal.New(int64(t[5].(int16)), -digits)
+		return decimal.New(int64(ct[5].(int16)), digits)
 	case 32:
-		d = decimal.New(int64(t[5].(int32)), -digits)
+		return decimal.New(int64(ct[5].(int32)), digits)
 	case 64:
-		d = decimal.New(t[5].(int64), -digits)
+		return decimal.New(ct[5].(int64), digits)
 	case 128:
-		d = decimal.NewFromBigInt(t[5].(*big.Int), -digits)
-	default:
-		return newUnknownColumn(nrows)
+		return decimal.NewFromBigInt(ct[5].(*big.Int), digits)
 	}
-	return newLiteralColumn(d, nrows)
+	return decimal.Zero // unreached
 }
 
-// ["rel", "base", "Rational", <bits>, <num>, <denom>]
-func newConstRationalColumn(t ConstType, nrows int) Column {
-	var r *big.Rat
-	switch t[3].(int64) {
-	case 8:
-		n, d := t[4].(int8), t[5].(int8)
-		r = big.NewRat(int64(n), int64(d))
-	case 16:
-		n, d := t[4].(int16), t[5].(int16)
-		r = big.NewRat(int64(n), int64(d))
-	case 32:
-		n, d := t[4].(int32), t[5].(int32)
-		r = big.NewRat(int64(n), int64(d))
-	case 64:
-		n, d := t[4].(int64), t[5].(int64)
-		r = big.NewRat(int64(n), int64(d))
-	case 128:
-		n, d := t[4].(*big.Int), t[5].(*big.Int)
-		r = NewRational128(n, d)
+func newConstDecimalColumn(ct ConstType, nrows int) Column {
+	switch ct[3].(int64) {
+	case 8, 16, 32, 64, 128:
+		break
 	default:
 		return newUnknownColumn(nrows)
 	}
-	return newLiteralColumn(r, nrows)
+	return newLiteralColumn(newConstDecimalValue(ct), nrows)
+}
+
+// ["rel", "base", "Decimal", <bits>, <num>, <denom>]
+func newConstRationalValue(ct ConstType) *big.Rat {
+	switch ct[3].(int64) {
+	case 8:
+		n, d := ct[4].(int8), ct[5].(int8)
+		return big.NewRat(int64(n), int64(d))
+	case 16:
+		n, d := ct[4].(int16), ct[5].(int16)
+		return big.NewRat(int64(n), int64(d))
+	case 32:
+		n, d := ct[4].(int32), ct[5].(int32)
+		return big.NewRat(int64(n), int64(d))
+	case 64:
+		n, d := ct[4].(int64), ct[5].(int64)
+		return big.NewRat(int64(n), int64(d))
+	case 128:
+		n, d := ct[4].(*big.Int), ct[5].(*big.Int)
+		return NewRational128(n, d)
+	}
+	return big.NewRat(1, 1)
+}
+
+func newConstRationalColumn(ct ConstType, nrows int) Column {
+	switch ct[3].(int64) {
+	case 8, 16, 32, 64, 128:
+		break
+	default:
+		return newUnknownColumn(nrows)
+	}
+	return newLiteralColumn(newConstRationalValue(ct), nrows)
 }
 
 type constColumn struct {
@@ -1815,9 +1828,10 @@ func isRelationPrimitive(t reflect.Type) bool {
 	return false
 }
 
-func builtinType(t []any) reflect.Type {
-	if matchPrefix(t, "rel", "base", "_") {
-		switch t[2].(string) {
+// Returns the type of the given builtin, nil if its not a builtin.
+func builtinType(vt ValueType) reflect.Type {
+	if matchPrefix(vt, "rel", "base", "_") {
+		switch vt[2].(string) {
 		case "AutoNumber":
 			return Int64Type
 		case "Date":
@@ -1842,6 +1856,33 @@ func builtinType(t []any) reflect.Type {
 	return nil
 }
 
+func builtinValue(ct ConstType) any {
+	if matchPrefix(ct, "rel", "base", "_") {
+		switch ct[2].(string) {
+		case "AutoNumber":
+			return ct[3].(int64)
+		case "Date":
+			return DateFromRataDie(ct[3].(int64))
+		case "DateTime":
+			return DateFromRataMillis(ct[3].(int64))
+		case "FixedDecimal":
+			return newConstDecimalValue(ct)
+		case "FilePos":
+			return ct[3].(int64)
+		case "Hash":
+			return ct[3].(*big.Int)
+		case "Missing":
+			return "missing"
+		case "Rational":
+			return newConstRationalValue(ct)
+		case "Year", "Month", "Week", "Day", "Hour", "Minute",
+			"Second", "Millisecond", "Microsecond", "Nanosecond":
+			return ct[3].(int64)
+		}
+	}
+	return nil
+}
+
 // Maps the given metadata element to the corresponding relation type.
 func relationType(t any) any {
 	switch tt := t.(type) {
@@ -1855,8 +1896,8 @@ func relationType(t any) any {
 			return tt
 		}
 	case ConstType:
-		if bt := builtinType(tt); bt != nil {
-			return bt
+		if bv := builtinValue(tt); bv != nil {
+			return bv
 		}
 		result := make(ConstType, len(tt))
 		for i, t := range tt {
@@ -1872,10 +1913,8 @@ func relationType(t any) any {
 			result[i] = relationType(t)
 		}
 		return result
-	case string: // constant string, aka symbol
-		return StringType
-	default: // constant value other than string
-		return reflect.TypeOf(tt)
+	default: // constant value
+		return tt
 	}
 }
 
@@ -1909,12 +1948,16 @@ func newRelationColumn(t any, col Column, nrows int) Column {
 
 func (r baseRelation) Slice(lo int, hi ...int) Relation {
 	var c []Column
+	var s Signature
+	sig := r.Signature()
 	if len(hi) > 0 {
 		c = r.cols[lo:hi[0]]
+		s = sig[lo:hi[0]]
 	} else {
 		c = r.cols[lo:]
+		s = sig[lo:]
 	}
-	return newDerivedRelation(c)
+	return newDerivedRelation(s, c)
 }
 
 // Represents a column of nil values, only appears when relations of different
@@ -2039,11 +2082,14 @@ func newUnionRelation(rs []Relation) Relation {
 		return rs[0]
 	}
 	ncols := maxNumCols(rs)
+	sig := make(Signature, ncols)
 	cols := make([]Column, ncols)
 	for cnum := 0; cnum < ncols; cnum++ {
-		cols[cnum] = makeUnionColumn(rs, cnum)
+		c := makeUnionColumn(rs, cnum)
+		sig[cnum] = c.Type()
+		cols[cnum] = c
 	}
-	return newDerivedRelation(cols)
+	return newDerivedRelation(sig, cols)
 }
 
 //
@@ -2051,11 +2097,12 @@ func newUnionRelation(rs []Relation) Relation {
 //
 
 type derivedRelation struct {
+	sig  Signature
 	cols []Column
 }
 
-func newDerivedRelation(cols []Column) Relation {
-	return derivedRelation{cols}
+func newDerivedRelation(sig Signature, cols []Column) Relation {
+	return derivedRelation{sig, cols}
 }
 
 func (r derivedRelation) GetItem(rnum int, out []any) {
@@ -2107,22 +2154,20 @@ func (r derivedRelation) Row(rnum int) []any {
 }
 
 func (r derivedRelation) Signature() Signature {
-	ncols := len(r.cols)
-	result := make([]any, ncols)
-	for i := 0; i < ncols; i++ {
-		result[i] = r.cols[i].Type()
-	}
-	return result
+	return r.sig
 }
 
 func (r derivedRelation) Slice(lo int, hi ...int) Relation {
 	var c []Column
+	var s Signature
 	if len(hi) > 0 {
+		s = r.sig[lo:hi[0]]
 		c = r.cols[lo:hi[0]]
 	} else {
+		s = r.sig[lo:]
 		c = r.cols[lo:]
 	}
-	return newDerivedRelation(c)
+	return newDerivedRelation(s, c)
 }
 
 func (r derivedRelation) Strings(rnum int) []string {

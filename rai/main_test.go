@@ -6,21 +6,23 @@ package rai
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"testing"
 )
 
-var testClient *Client
-
-const (
-	testDatabaseName    = "rai-sdk-go"
-	testEngineName      = "rai-sdk-go"
-	testEngineSize      = "S"
-	testOAuthClientName = "rai-sdk-go"
-	testUserEmail       = "rai-sdk-go@example.com"
-)
+var test struct {
+	client       *Client
+	databaseName string
+	engineName   string
+	engineSize   string
+	oauthClient  string
+	userEmail    string
+	noTeardown   bool
+	showQuery    bool
+}
 
 func fatal(format string, args ...any) {
 	var msg string
@@ -43,12 +45,12 @@ func isErrNotFound(err error) bool {
 }
 
 // Ensure that the test engine exists.
-func ensureEngine(client *Client, engine string) error {
+func ensureEngine(client *Client, engine, size string) error {
 	if _, err := client.GetEngine(engine); err != nil {
 		if !isErrNotFound(err) {
 			return err
 		}
-		_, err = client.CreateEngine(engine, "S")
+		_, err = client.CreateEngine(engine, size)
 		if err != nil {
 			return err
 		}
@@ -101,15 +103,15 @@ func newTestClient() (*Client, error) {
 }
 
 func tearDown(client *Client) {
-	client.DeleteDatabase(testDatabaseName)
-	client.DeleteEngine(testEngineName)
+	client.DeleteDatabase(test.databaseName)
+	client.DeleteEngine(test.engineName)
 
-	user, _ := client.FindUser(testUserEmail)
+	user, _ := client.FindUser(test.userEmail)
 	if user != nil {
 		client.DeleteUser(user.ID)
 	}
 
-	c, _ := client.FindOAuthClient(testOAuthClientName)
+	c, _ := client.FindOAuthClient(test.oauthClient)
 	if c != nil {
 		client.DeleteOAuthClient(c.ID)
 	}
@@ -118,19 +120,31 @@ func tearDown(client *Client) {
 // Global setup & teardown for golang SDK tests.
 func TestMain(m *testing.M) {
 	var err error
-	testClient, err = newTestClient()
+
+	flag.StringVar(&test.databaseName, "d", "rai-sdk-go", "test database name")
+	flag.StringVar(&test.engineName, "e", "rai-sdk-go", "test engine name")
+	flag.StringVar(&test.engineSize, "s", "S", "test engine size")
+	flag.StringVar(&test.oauthClient, "c", "rai-sdk-go", "test OAuth client name")
+	flag.StringVar(&test.userEmail, "u", "rai-sdk-go@relational.ai", "test user name")
+	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
+	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
+	flag.Parse()
+
+	test.client, err = newTestClient()
 	if err != nil {
 		fatalError(err)
 	}
-	err = ensureEngine(testClient, testEngineName)
+	err = ensureEngine(test.client, test.engineName, test.engineSize)
 	if err != nil {
 		fatalError(err)
 	}
-	err = ensureDatabase(testClient, testDatabaseName)
+	err = ensureDatabase(test.client, test.databaseName)
 	if err != nil {
 		fatalError(err)
 	}
 	code := m.Run()
-	tearDown(testClient)
+	if !test.noTeardown {
+		tearDown(test.client)
+	}
 	os.Exit(code)
 }
