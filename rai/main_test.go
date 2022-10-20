@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 var test struct {
@@ -121,13 +122,15 @@ func tearDown(client *Client) {
 func TestMain(m *testing.M) {
 	var err error
 
-	flag.StringVar(&test.databaseName, "d", "rai-sdk-go", "test database name")
-	flag.StringVar(&test.engineName, "e", "rai-sdk-go", "test engine name")
+	defaultName := fmt.Sprintf("rai-sdk-go-%d", time.Now().UnixNano())
+	defaultUser := fmt.Sprintf("%s@relational.ai", defaultName)
+	flag.StringVar(&test.databaseName, "d", defaultName, "test database name")
+	flag.StringVar(&test.engineName, "e", defaultName, "test engine name")
 	flag.StringVar(&test.engineSize, "s", "S", "test engine size")
-	flag.StringVar(&test.oauthClient, "c", "rai-sdk-go", "test OAuth client name")
-	flag.StringVar(&test.userEmail, "u", "rai-sdk-go@relational.ai", "test user name")
+	flag.StringVar(&test.oauthClient, "c", defaultName, "test OAuth client name")
+	flag.StringVar(&test.userEmail, "u", defaultUser, "test user name")
 	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
-	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
+	flag.BoolVar(&test.showQuery, "show-query", false, "display query string on transaction result tests")
 	flag.Parse()
 
 	test.client, err = newTestClient()
