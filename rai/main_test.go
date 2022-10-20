@@ -122,7 +122,7 @@ func tearDown(client *Client) {
 func TestMain(m *testing.M) {
 	var err error
 
-	defaultName := fmt.Sprintf("rai-sdk-go-%d", time.Now().UnixNano())
+	defaultName := fmt.Sprintf("rai-sdk-go-%d", time.Now().UnixMilli())
 	defaultUser := fmt.Sprintf("%s@relational.ai", defaultName)
 	flag.StringVar(&test.databaseName, "d", defaultName, "test database name")
 	flag.StringVar(&test.engineName, "e", defaultName, "test engine name")
