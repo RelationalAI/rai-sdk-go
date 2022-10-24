@@ -6,6 +6,7 @@ package rai
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -72,6 +73,20 @@ func ensureDatabase(client *Client, database string) error {
 	return nil
 }
 
+// http client headers roundTrip
+// override the http client default roundTrip
+type headerRoundTrip struct {
+	defaultRoundTrip http.RoundTripper
+	extraHeaders     map[string]string
+}
+
+func (h headerRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
+	for k, v := range h.extraHeaders {
+		r.Header.Add(k, v)
+	}
+	return h.defaultRoundTrip.RoundTrip(r)
+}
+
 // todo: fix client init logic, load from config only if env vars are not
 // available.
 func newTestClient() (*Client, error) {
@@ -99,7 +114,25 @@ func newTestClient() (*Client, error) {
 	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
 	LoadConfigString(configSrc, "default", &cfg)
 	opts := ClientOptions{Config: cfg}
-	return NewClient(context.Background(), &opts), nil
+	testClient := NewClient(context.Background(), &opts)
+
+	// get custom headers
+	var customHeaders map[string]string
+	json.Unmarshal([]byte(os.Getenv("CUSTOM_HEADERSs")), &customHeaders)
+
+	// override default http client roundTrip
+	var defaultTransport http.RoundTripper
+	if testClient.HttpClient.Transport == nil {
+		defaultTransport = http.DefaultTransport
+	} else {
+		defaultTransport = testClient.HttpClient.Transport
+	}
+	testClient.HttpClient.Transport = headerRoundTrip{
+		defaultTransport,
+		customHeaders,
+	}
+
+	return testClient, nil
 }
 
 func tearDown(client *Client) {

@@ -54,7 +54,7 @@ type Client struct {
 	Scheme             string
 	Host               string
 	Port               string
-	http               *http.Client
+	HttpClient         *http.Client
 	accessToken        string
 	accessTokenHandler AccessTokenHandler
 }
@@ -88,12 +88,12 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 		opts.HTTPClient = &http.Client{}
 	}
 	client := &Client{
-		ctx:    ctx,
-		Region: region,
-		Scheme: scheme,
-		Host:   host,
-		Port:   port,
-		http:   opts.HTTPClient}
+		ctx:        ctx,
+		Region:     region,
+		Scheme:     scheme,
+		Host:       host,
+		Port:       port,
+		HttpClient: opts.HTTPClient}
 	if opts.AccessTokenHandler != nil {
 		client.accessTokenHandler = opts.AccessTokenHandler
 	} else if opts.Credentials == nil {
@@ -169,7 +169,7 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 	}
 	req = req.WithContext(c.ctx)
 	c.ensureHeaders(req, nil)
-	rsp, err := c.http.Do(req)
+	rsp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func isErrorStatus(rsp *http.Response) bool {
 // Execute the given request and return the response or error.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	req = req.WithContext(c.ctx)
-	rsp, err := c.http.Do(req)
+	rsp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
