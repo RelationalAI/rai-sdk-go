@@ -26,7 +26,7 @@ The RelationalAI Software Development Kit for Go enables developers to access th
 Note, the test are run against the account configured in your SDK config file.
 
 The tests take several optional arguments, which can sometimes make
-itereating and debugging tests easier.
+itereating and debugging easier.
 
     ./run-tests -args <arguments>
 
@@ -41,10 +41,10 @@ itereating and debugging tests easier.
 | -show-query     | Show query string for all results tests |
 
 The `-no-teardown` option can be helpful when iterating on tests, because
-when combined with a given database name, it avoid recreating the engine on
-every tests run.
+when combined with a given database name, it avoids recreating the engine on
+every test run.
 
-The `-show-query` option is useful when narrowing down failuers in the results
+The `-show-query` option is useful when narrowing down failures in the results
 tests.
 
 And these can also be passed directly to `go test`.
