@@ -41,7 +41,7 @@ itereating and debugging easier.
 | -show-query     | Show query string for all results tests |
 
 The `-no-teardown` option can be helpful when iterating on tests, because
-when combined with a given database name, it avoids recreating the engine on
+when combined with a given engine name, it avoids recreating the engine on
 every test run.
 
 The `-show-query` option is useful when narrowing down failures in the results
