@@ -14,18 +14,40 @@ The RelationalAI Software Development Kit for Go enables developers to access th
 
 * Go 1.18+
 
-### Building the SDK
-
-**Compile the SDK**
+### Compile the SDK
 
     cd ./rai
     go build
 
-**Run the tests**
+### Run the tests
 
     ./run-tests
 
 Note, the test are run against the account configured in your SDK config file.
+
+The tests take several optional arguments, which can sometimes make
+itereating and debugging tests easier.
+
+    ./run-tests -args <arguments>
+
+| Argument        | Description |
+|-----------------|-------------|
+| -d \<database\> | Test database name |
+| -e \<engine\>   | Test engine name   |
+| -s \<size\>     | Test engine size   |
+| -c \<client\>   | Test OAuth client name |
+| -u \<user\>     | Test user email address |
+| -no-teardown    | Don't teardown test resouces |
+| -show-query     | Show query string for all results tests |
+
+The `-no-teardown` option can be helpful when iterating on tests, because
+when combined with a given database name, it avoid recreating the engine on
+every tests run.
+
+The `-show-query` option is useful when narrowing down failuers in the results
+tests.
+
+And these can also be passed directly to `go test`.
 
 ### Create a configuration file
 
@@ -45,7 +67,7 @@ Sample configuration using OAuth client credentials:
     # default: https://login.relationalai.com/oauth/token
 
 Client credentials can be created using the RAI console at
-https://console.relationalai.com/login
+<https://console.relationalai.com/login>
 
 You can copy `config.spec` from the root of this repo and modify as needed.
 
@@ -84,4 +106,4 @@ to submit an issue or a PR here.
 
 The RelationalAI Software Development Kit for Go is licensed under the
 Apache License 2.0. See:
-https://github.com/RelationalAI/rai-sdk-go/blob/master/LICENSE
+<https://github.com/RelationalAI/rai-sdk-go/blob/master/LICENSE>
