@@ -1004,7 +1004,7 @@ func (c *Client) Execute(
 // Returns the results of a fast path response, which will contain data for
 // the transaction resource, problems, metadata and results in various parts
 // of the multipart response.
-func readTransactionResponse(rsp *http.Response) (*TransactionResponse, error) {
+func ReadTransactionResponse(rsp *http.Response) (*TransactionResponse, error) {
 	var result TransactionResponse
 
 	h := rsp.Header.Get("content-type")
@@ -1087,7 +1087,7 @@ func (c *Client) ExecuteAsync(
 	}
 	defer rsp.Body.Close()
 	if rsp.StatusCode == 200 {
-		return readTransactionResponse(rsp) // fast path
+		return ReadTransactionResponse(rsp) // fast path
 	}
 	if rsp.StatusCode != 201 {
 		return nil, fmt.Errorf("unexpected status code '%d'", rsp.StatusCode)
