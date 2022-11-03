@@ -118,7 +118,7 @@ func newTestClient() (*Client, error) {
 
 	// get custom headers
 	var customHeaders map[string]string
-	json.Unmarshal([]byte(os.Getenv("CUSTOM_HEADERSs")), &customHeaders)
+	json.Unmarshal([]byte(os.Getenv("CUSTOM_HEADERS")), &customHeaders)
 
 	// override default http client roundTrip
 	var defaultTransport http.RoundTripper
