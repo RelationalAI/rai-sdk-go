@@ -125,19 +125,21 @@ func newTestClient() (*Client, error) {
 
 	// get custom headers
 	var customHeaders map[string]string
-	json.Unmarshal([]byte(os.Getenv("CUSTOM_HEADERS")), &customHeaders)
-	fmt.Printf("custom headers: %s\n", customHeaders)
+	if err := json.Unmarshal([]byte(os.Getenv("CUSTOM_HEADERS")), &customHeaders); err == nil {
+		fmt.Printf("custom headers: %s\n", customHeaders)
 
-	// override default http client roundTrip
-	var defaultTransport http.RoundTripper
-	if testClient.HttpClient.Transport == nil {
-		defaultTransport = http.DefaultTransport
-	} else {
-		defaultTransport = testClient.HttpClient.Transport
-	}
-	testClient.HttpClient.Transport = headerRoundTrip{
-		defaultTransport,
-		customHeaders,
+		// override default http client roundTrip
+		var defaultTransport http.RoundTripper
+		if testClient.HttpClient.Transport == nil {
+			defaultTransport = http.DefaultTransport
+		} else {
+			defaultTransport = testClient.HttpClient.Transport
+		}
+
+		testClient.HttpClient.Transport = headerRoundTrip{
+			defaultTransport,
+			customHeaders,
+		}
 	}
 
 	return testClient, nil
