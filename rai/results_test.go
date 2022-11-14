@@ -219,7 +219,7 @@ var primitiveTypeTests = []execTest{
 		query: `
 			entity type Foo = Int
 			def output = ^Foo[12]`,
-		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Hash", Int128Type))),
+		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Hash", Uint128Type))),
 		pdata: xdata("0.arrow", sig(Uint64ListType),
 			row([]uint64{uint64(10589367010498591262), uint64(15771123988529185405)})),
 		rdata: xdata("0.arrow", sig("output", BigIntType),
