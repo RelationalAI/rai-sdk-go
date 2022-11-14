@@ -38,6 +38,7 @@ runs:
 
     - name: Build
       run: go build -v ./rai
+      shell: bash
 
     - name: Test
       env:
