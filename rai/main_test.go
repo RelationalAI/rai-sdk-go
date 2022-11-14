@@ -47,6 +47,7 @@ func isErrNotFound(err error) bool {
 
 // Ensure that the test engine exists.
 func ensureEngine(client *Client, engine, size string) error {
+	fmt.Printf("using engine: %s\n", engine)
 	if _, err := client.GetEngine(engine); err != nil {
 		if !isErrNotFound(err) {
 			return err
@@ -61,6 +62,7 @@ func ensureEngine(client *Client, engine, size string) error {
 
 // Ensure the test database exists.
 func ensureDatabase(client *Client, database string) error {
+	fmt.Printf("using database: %s\n", database)
 	if _, err := client.GetDatabase(database); err != nil {
 		if !isErrNotFound(err) {
 			return err
@@ -91,17 +93,21 @@ func (h headerRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 // available.
 func newTestClient() (*Client, error) {
 	configPath, _ := expandUser(DefaultConfigFile)
+	var testClient *Client
 	if _, err := os.Stat(configPath); err == nil {
-		return NewDefaultClient()
-	}
+		testClient, err = NewDefaultClient()
+		if err != nil {
+			panic(err)
+		}
 
-	var cfg Config
+	} else {
+		var cfg Config
 
-	clientId := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
+		clientId := os.Getenv("CLIENT_ID")
+		clientSecret := os.Getenv("CLIENT_SECRET")
+		clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
 
-	placeHolderConfig := `
+		placeHolderConfig := `
 		[default]
 		host=azure.relationalai.com
 		region=us-east
@@ -110,15 +116,17 @@ func newTestClient() (*Client, error) {
 		client_id=%s
 		client_secret=%s
 		client_credentials_url=%s
-	`
-	configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
-	LoadConfigString(configSrc, "default", &cfg)
-	opts := ClientOptions{Config: cfg}
-	testClient := NewClient(context.Background(), &opts)
+		`
+		configSrc := fmt.Sprintf(placeHolderConfig, clientId, clientSecret, clientCredentialsUrl)
+		LoadConfigString(configSrc, "default", &cfg)
+		opts := ClientOptions{Config: cfg}
+		testClient = NewClient(context.Background(), &opts)
+	}
 
 	// get custom headers
 	var customHeaders map[string]string
 	json.Unmarshal([]byte(os.Getenv("CUSTOM_HEADERS")), &customHeaders)
+	fmt.Printf("custom headers: %s\n", customHeaders)
 
 	// override default http client roundTrip
 	var defaultTransport http.RoundTripper
