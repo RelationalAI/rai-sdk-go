@@ -47,5 +47,5 @@ runs:
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
         HOST: ${{ inputs.rai_host }}
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
-      run: go test -v -timeout 30m ./rai
+      run: go test -v -timeout 30m ./rai -e "rai-sdk-go-${{ github.event.inputs.sha || github.sha }}" -d "rai-sdk-go-${{ github.event.inputs.sha || github.sha }}"
       shell: bash
