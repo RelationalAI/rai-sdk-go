@@ -564,9 +564,8 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 	return nil
 }
 
-// TODO: keep it disabled until we fix the Auth0 API rate limiting issue
 // Test OAuth Client APIs.
-/*func TestOAuthClient(t *testing.T) {
+func TestOAuthClient(t *testing.T) {
 	client := test.client
 
 	rsp, err := client.FindOAuthClient(test.oauthClient)
@@ -615,7 +614,7 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 	rsp, err = client.FindOAuthClient(test.oauthClient)
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
-}*/
+}
 
 func findUser(users []User, id string) *User {
 	for _, user := range users {
@@ -626,8 +625,6 @@ func findUser(users []User, id string) *User {
 	return nil
 }
 
-/*
-TODO: keep it disabled until we fix the Auth0 API rate limiting issue
 func TestUser(t *testing.T) {
 	client := test.client
 
@@ -712,5 +709,3 @@ func TestUser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, rsp)
 }
-
-*/
