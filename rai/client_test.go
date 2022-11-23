@@ -555,18 +555,8 @@ func TestModels(t *testing.T) {
 	assert.Nil(t, model)
 }
 
-func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
-	for _, client := range clients {
-		if client.ID == id {
-			return &client
-		}
-	}
-	return nil
-}
-
-// TODO: keep it disabled until we fix the Auth0 API rate limiting issue
 // Test OAuth Client APIs.
-/*func TestOAuthClient(t *testing.T) {
+func TestOAuthClient(t *testing.T) {
 	client := test.client
 
 	rsp, err := client.FindOAuthClient(test.oauthClient)
@@ -576,58 +566,28 @@ func findOAuthClient(clients []OAuthClient, id string) *OAuthClient {
 		assert.Nil(t, err)
 	}
 
-	rsp, err = client.FindOAuthClient(test.oauthClient)
-	assert.Nil(t, err)
-	assert.Nil(t, rsp)
-
 	rspExtra, err := client.CreateOAuthClient(test.oauthClient, nil)
 	assert.Nil(t, err)
 	assert.Equal(t, test.oauthClient, rspExtra.Name)
 
 	clientID := rspExtra.ID
 
-	rsp, err = client.FindOAuthClient(test.oauthClient)
-	assert.Nil(t, err)
-	assert.NotNil(t, rsp)
-	assert.Equal(t, clientID, rsp.ID)
-	assert.Equal(t, test.oauthClient, rsp.Name)
-
 	rspExtra, err = client.GetOAuthClient(clientID)
 	assert.Nil(t, err)
-	assert.NotNil(t, rsp)
+	assert.NotNil(t, rspExtra)
 	assert.Equal(t, clientID, rspExtra.ID)
 	assert.Equal(t, test.oauthClient, rspExtra.Name)
-
-	clients, err := client.ListOAuthClients()
-	assert.Nil(t, err)
-	item := findOAuthClient(clients, clientID)
-	assert.NotNil(t, item)
-	assert.Equal(t, clientID, item.ID)
-	assert.Equal(t, test.oauthClient, item.Name)
 
 	deleteRsp, err := client.DeleteOAuthClient(clientID)
 	assert.Nil(t, err)
 	assert.Equal(t, clientID, deleteRsp.ID)
 
 	rspExtra, err = client.GetOAuthClient(clientID)
+	assert.Nil(t, rspExtra)
 	assert.True(t, isErrNotFound(err))
-
-	rsp, err = client.FindOAuthClient(test.oauthClient)
-	assert.Nil(t, err)
-	assert.Nil(t, rsp)
-}*/
-
-func findUser(users []User, id string) *User {
-	for _, user := range users {
-		if user.ID == id {
-			return &user
-		}
-	}
-	return nil
 }
 
-/*
-TODO: keep it disabled until we fix the Auth0 API rate limiting issue
+// Test User APIs.
 func TestUser(t *testing.T) {
 	client := test.client
 
@@ -638,32 +598,16 @@ func TestUser(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	rsp, err = client.FindUser(test.userEmail)
-	assert.Nil(t, err)
-	assert.Nil(t, rsp)
-
 	rsp, err = client.CreateUser(test.userEmail, nil)
+	assert.Nil(t, err)
 	assert.Equal(t, test.userEmail, rsp.Email)
 	assert.Equal(t, "ACTIVE", rsp.Status)
 	assert.Equal(t, []string{"user"}, rsp.Roles)
 
 	var userID = rsp.ID
 
-	rsp, err = client.FindUser(test.userEmail)
+	user, err := client.GetUser(userID)
 	assert.Nil(t, err)
-	assert.NotNil(t, rsp)
-	assert.Equal(t, userID, rsp.ID)
-	assert.Equal(t, test.userEmail, rsp.Email)
-
-	rsp, err = client.GetUser(userID)
-	assert.Nil(t, err)
-	assert.NotNil(t, rsp)
-	assert.Equal(t, userID, rsp.ID)
-	assert.Equal(t, test.userEmail, rsp.Email)
-
-	users, err := client.ListUsers()
-	assert.Nil(t, err)
-	user := findUser(users, userID)
 	assert.NotNil(t, user)
 	assert.Equal(t, userID, user.ID)
 	assert.Equal(t, test.userEmail, user.Email)
@@ -708,9 +652,7 @@ func TestUser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, userID, deleteRsp.ID)
 
-	rsp, err = client.FindUser(test.userEmail)
-	assert.Nil(t, err)
+	rsp, err = client.GetUser(userID)
 	assert.Nil(t, rsp)
+	assert.True(t, isErrNotFound(err))
 }
-
-*/
