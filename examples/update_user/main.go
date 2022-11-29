@@ -42,7 +42,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rai.Print(rsp, 4)
+	rai.ShowJSON(rsp, 4)
 	return nil
 }
 

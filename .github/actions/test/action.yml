@@ -1,0 +1,51 @@
+name: 'rai-sdk-go test'
+description: 'rai-sdk-go test action'
+
+inputs:
+  client_id:
+    required: true
+    description: 'Client ID for oAuth'
+
+  client_secret:
+    required: true
+    description: 'Client secret for oAuth'
+
+  client_credentials_url:
+    required: true
+    description: 'Client credentials url for fetching the oAuth token'
+
+  rai_host:
+    required: false
+    description: 'RAI host'
+    default: 'azure.relationalai.com'
+
+  custom_headers:
+    required: false
+    description: 'Optional http headers'
+    default: '{}'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v3
+      with:
+        repository: RelationalAI/rai-sdk-go
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: go build -v ./rai
+      shell: bash
+
+    - name: Test
+      env:
+        CLIENT_ID: ${{ inputs.client_id }}
+        CLIENT_SECRET: ${{ inputs.client_secret }}
+        CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
+        HOST: ${{ inputs.rai_host }}
+        CUSTOM_HEADERS: ${{ inputs.custom_headers }}
+      run: go test -v -timeout 30m ./rai -e "rai-sdk-go-${{ github.event.inputs.sha || github.sha }}" -d "rai-sdk-go-${{ github.event.inputs.sha || github.sha }}"
+      shell: bash

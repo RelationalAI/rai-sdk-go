@@ -14,7 +14,7 @@
 
 package rai
 
-// Implementation of the nop and client credentials token handlers.
+// Implementation of the nop and client credential token handlers.
 
 import (
 	"encoding/json"

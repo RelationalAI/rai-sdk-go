@@ -13,4 +13,4 @@
 #
 
 echo $* >&2
-go run $1/main.go ${@:2}
+go run $1/main.go "${@:2}"
