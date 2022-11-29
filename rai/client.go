@@ -745,6 +745,7 @@ func (c *Client) GetModel(database, engine, model string) (*Model, error) {
 	outName := fmt.Sprintf("model_%d", rand.Uint32())
 	query := fmt.Sprintf(`def output:%s = rel:catalog:model["%s"]`, outName, model)
 	resp, err := c.Execute(database, engine, query, nil, true)
+
 	if err != nil {
 		return nil, err
 	}

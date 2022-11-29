@@ -508,7 +508,7 @@ func TestModels(t *testing.T) {
 
 	rsp, err := client.LoadModels(test.databaseName, test.engineName, testModel)
 	assert.Nil(t, err)
-	assert.Equal(t, "COMPLETED", rsp.Transaction.State)
+	assert.Equal(t, TransactionState("COMPLETED"), rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	model, err := client.GetModel(test.databaseName, test.engineName, "test_model")
@@ -522,7 +522,7 @@ func TestModels(t *testing.T) {
 
 	deleteResp, err := client.DeleteModels(test.databaseName, test.engineName, []string{"test_model"})
 	assert.Nil(t, err)
-	assert.Equal(t, "COMPLETED", deleteResp.Transaction.State)
+	assert.Equal(t, TransactionState("COMPLETED"), deleteResp.Transaction.State)
 	assert.Equal(t, 0, len(deleteResp.Problems))
 
 	_, err = client.GetModel(test.databaseName, test.engineName, "test_model")
