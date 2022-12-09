@@ -547,7 +547,8 @@ var constPrimitiveTypeTests = []execTest{
 	{
 		query: `
 			entity type Foo = Int
-			def output = #(^Foo[12])`,
+			def foo = ^Foo[12]
+			def output = #(foo)`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("rel:base:Hash",
 				NewBigUint128(10589367010498591262, 15771123988529185405)))),
@@ -2038,7 +2039,7 @@ func pick(r Relation, ncol int, v any) []any {
 func TestRelationSlice(t *testing.T) {
 	query := `
 		def output =
-			1, :foo, "a"; 
+			1, :foo, "a";
 			2, :bar, "c";
 			3, :baz, 42;
 			4, :cat, #(42);
@@ -2117,7 +2118,7 @@ func TestRelationSlice(t *testing.T) {
 func TestRelationUnion(t *testing.T) {
 	query := `
 		def output =
-			1, :foo, "a"; 
+			1, :foo, "a";
 			2, :bar, "c";
 			3, :baz, 42;
 			4, :cat, #(42);
