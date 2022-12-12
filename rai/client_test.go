@@ -556,6 +556,8 @@ func TestModels(t *testing.T) {
 }
 
 // Test OAuth Client APIs.
+// TODO: add list oauth client test
+// when the api is more consistent
 func TestOAuthClient(t *testing.T) {
 	client := test.client
 
