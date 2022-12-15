@@ -9,10 +9,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/pkg/errors"
 )
 
 var test struct {
@@ -27,8 +28,7 @@ var test struct {
 }
 
 func fatal(format string, args ...any) {
-	var msg string
-	msg = fmt.Sprintf(format, args...)
+	msg := fmt.Sprintf(format, args...)
 	os.Stderr.WriteString(msg)
 	os.Stderr.WriteString("\n")
 	os.Exit(1)
@@ -123,7 +123,9 @@ func newTestClient() (*Client, error) {
 		client_credentials_url=%s
 		`
 		configSrc := fmt.Sprintf(configFormat, raiHost, clientId, clientSecret, clientCredentialsUrl)
-		LoadConfigString(configSrc, "default", &cfg)
+		if err := LoadConfigString(configSrc, "default", &cfg); err != nil {
+			return nil, err
+		}
 		opts := ClientOptions{Config: cfg}
 		testClient = NewClient(context.Background(), &opts)
 	}
@@ -162,12 +164,18 @@ func tearDown(client *Client) {
 
 	user, _ := client.FindUser(test.userEmail)
 	if user != nil {
-		client.DeleteUser(user.ID)
+		_, err := client.DeleteUser(user.ID)
+		if err != nil {
+			fmt.Println(errors.Wrapf(err, "error deleting user: %s", test.userEmail))
+		}
 	}
 
 	c, _ := client.FindOAuthClient(test.oauthClient)
 	if c != nil {
-		client.DeleteOAuthClient(c.ID)
+		_, err := client.DeleteOAuthClient(c.ID)
+		if err != nil {
+			fmt.Println(errors.Wrapf(err, "error deleting oauth client: %s", test.oauthClient))
+		}
 	}
 }
 

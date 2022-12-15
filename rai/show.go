@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/apache/arrow/go/v7/arrow/float16"
+	"github.com/pkg/errors"
 	"github.com/relationalai/rai-sdk-go/rai/pb"
 )
 
@@ -282,7 +283,10 @@ func (rc RelationCollection) Show() {
 }
 
 func (rsp *TransactionResponse) Show() {
-	ShowJSON(&rsp.Transaction, 4)
+	if err := ShowJSON(&rsp.Transaction, 4); err != nil {
+		fmt.Println(errors.Wrapf(err, "failed to show transaction"))
+		return
+	}
 	if rsp.Metadata == nil {
 		return
 	}

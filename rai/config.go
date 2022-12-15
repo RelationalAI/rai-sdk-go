@@ -113,7 +113,9 @@ func LoadConfigString(source, profile string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	parseConfigStanza(stanza, cfg)
+	if err := parseConfigStanza(stanza, cfg); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -127,6 +129,8 @@ func LoadConfigFile(fname, profile string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	parseConfigStanza(stanza, cfg)
+	if err := parseConfigStanza(stanza, cfg); err != nil {
+		return err
+	}
 	return nil
 }

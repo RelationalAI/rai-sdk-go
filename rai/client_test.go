@@ -96,7 +96,7 @@ func TestDatabase(t *testing.T) {
 	assert.Nil(t, database)
 
 	// missing filter value
-	databases, err = client.ListDatabases("state")
+	_, err = client.ListDatabases("state")
 	assert.Equal(t, ErrMissingFilterValue, err)
 
 	edbs, err := client.ListEDBs(test.databaseName, test.engineName)
@@ -260,6 +260,7 @@ func TestLoadCSV(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_csv", nil, true)
+	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -316,6 +317,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_no_header", nil, true)
+	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -374,6 +376,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 
 	rsp, err = client.ExecuteV1(
 		test.databaseName, test.engineName, "def output = sample_alt_syntax", nil, true)
+	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -429,6 +432,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_with_schema", nil, true)
+	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 4, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
@@ -538,6 +542,7 @@ func TestModels(t *testing.T) {
 	assert.NotNil(t, model)
 
 	rsp, err = client.DeleteModel(test.databaseName, test.engineName, "test_model")
+	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	assert.Equal(t, 0, len(rsp.Output))
 	assert.Equal(t, 0, len(rsp.Problems))
