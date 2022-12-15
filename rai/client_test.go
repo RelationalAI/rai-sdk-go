@@ -49,15 +49,6 @@ func findEDB(edbs []EDB, name string) *EDB {
 	return nil
 }
 
-func findModel(models []Model, name string) *Model {
-	for _, model := range models {
-		if model.Name == name {
-			return &model
-		}
-	}
-	return nil
-}
-
 // Test database management APIs.
 func TestDatabase(t *testing.T) {
 	client := test.client
@@ -104,19 +95,17 @@ func TestDatabase(t *testing.T) {
 	edb := findEDB(edbs, "rel")
 	assert.NotNil(t, edb)
 
-	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
+	modelNames, err := client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
 	assert.True(t, contains(modelNames, "rel/stdlib"))
 
-	models, err := client.ListModels(test.databaseName, test.engineName)
+	modelNames, err = client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
-	assert.True(t, len(models) > 0)
-	model := findModel(models, "rel/stdlib")
-	assert.NotNil(t, model)
-	assert.True(t, len(model.Value) > 0)
+	assert.True(t, len(modelNames) > 0)
+	assert.True(t, contains(modelNames, "rel/stdlib"))
 
-	model, err = client.GetModel(test.databaseName, test.engineName, "rel/stdlib")
+	model, err := client.GetModel(test.databaseName, test.engineName, "rel/stdlib")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	assert.True(t, len(model.Value) > 0)
@@ -515,44 +504,33 @@ func TestLoadJSON(t *testing.T) {
 func TestModels(t *testing.T) {
 	client := test.client
 
-	const testModel = "def R = \"hello\", \"world\""
+	testModel := map[string]string{"test_model": "def R = \"hello\", \"world\""}
 
-	r := strings.NewReader(testModel)
-	rsp, err := client.LoadModel(test.databaseName, test.engineName, "test_model", r)
+	rsp, err := client.LoadModels(test.databaseName, test.engineName, testModel)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
+	assert.Equal(t, TransactionState("COMPLETED"), rsp.Transaction.State)
 	assert.Equal(t, 0, len(rsp.Problems))
 
 	model, err := client.GetModel(test.databaseName, test.engineName, "test_model")
 	assert.Nil(t, err)
+	assert.Equal(t, testModel["test_model"], model.Value)
 	assert.Equal(t, "test_model", model.Name)
 
-	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
+	modelNames, err := client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, contains(modelNames, "test_model"))
 
-	models, err := client.ListModels(test.databaseName, test.engineName)
+	deleteResp, err := client.DeleteModels(test.databaseName, test.engineName, []string{"test_model"})
 	assert.Nil(t, err)
-	model = findModel(models, "test_model")
-	assert.NotNil(t, model)
-
-	rsp, err = client.DeleteModel(test.databaseName, test.engineName, "test_model")
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.Equal(t, TransactionState("COMPLETED"), deleteResp.Transaction.State)
+	assert.Equal(t, 0, len(deleteResp.Problems))
 
 	_, err = client.GetModel(test.databaseName, test.engineName, "test_model")
 	assert.True(t, isErrNotFound(err))
 
-	modelNames, err = client.ListModelNames(test.databaseName, test.engineName)
+	modelNames, err = client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.False(t, contains(modelNames, "test_model"))
-
-	models, err = client.ListModels(test.databaseName, test.engineName)
-	assert.Nil(t, err)
-	model = findModel(models, "test_model")
-	assert.Nil(t, model)
 }
 
 // Test OAuth Client APIs.

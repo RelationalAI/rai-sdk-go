@@ -15,8 +15,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/relationalai/rai-sdk-go/rai"
@@ -25,8 +28,13 @@ import (
 type Options struct {
 	Database string `short:"d" long:"database" required:"true" description:"database name"`
 	Engine   string `short:"e" long:"engine" required:"true" description:"engine name"`
-	Model    string `short:"m" long:"model" required:"true" description:"model name"`
+	File     string `short:"f" long:"file" required:"true" description:"rel source file"`
 	Profile  string `long:"profile" default:"default" description:"config profile"`
+}
+
+// Returns the filename without path and extension.
+func sansext(fname string) string {
+	return strings.TrimSuffix(filepath.Base(fname), filepath.Ext(fname))
 }
 
 func run(opts *Options) error {
@@ -34,11 +42,22 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.DeleteModel(opts.Database, opts.Engine, opts.Model)
+
+	value, err := os.ReadFile(opts.File)
 	if err != nil {
 		return err
 	}
-	rai.ShowJSON(rsp, 4)
+
+	model := map[string]string{
+		sansext(opts.File): string(value),
+	}
+
+	rsp, err := client.LoadModels("hnr-db", "hnr-engine", model)
+	if err != nil {
+		return nil
+	}
+
+	fmt.Println(rsp)
 	return nil
 }
 

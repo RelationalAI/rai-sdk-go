@@ -25,6 +25,7 @@ import (
 type Options struct {
 	Database string `short:"d" long:"database" required:"true" description:"database name"`
 	Engine   string `short:"e" long:"engine" required:"true" description:"engine name"`
+	Model    string `short:"m" long:"model" required:"true" description:"model name"`
 	Profile  string `long:"profile" default:"default" description:"config profile"`
 }
 
@@ -33,7 +34,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.ListModelNames(opts.Database, opts.Engine)
+	rsp, err := client.DeleteModels(opts.Database, opts.Engine, []string{opts.Model})
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -669,110 +670,115 @@ func (c *Client) ListOAuthClients() ([]OAuthClient, error) {
 // Models
 //
 
-func (c *Client) DeleteModel(
-	database, engine, name string,
-) (*TransactionResult, error) {
-	return c.DeleteModels(database, engine, []string{name})
+func (c *Client) LoadModels(
+	database, engine string, models map[string]string,
+) (*TransactionResponse, error) {
+	randUint := rand.Uint32()
+	queries := make([]string, 0)
+	queryInputs := make(map[string]string)
+
+	index := 0
+	for name, value := range models {
+		index++
+		inputName := fmt.Sprintf("input_%d_%d", randUint, index)
+		queries = append(queries,
+			fmt.Sprintf(`
+				def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]
+				def insert:rel:catalog:model["%s"] = %s
+			`, name, name, name, inputName,
+			),
+		)
+		queryInputs[inputName] = value
+	}
+
+	return c.Execute(database, engine, strings.Join(queries, "\n"), queryInputs, false)
+}
+
+func (c *Client) LoadModelsAsync(
+	database, engine string, models map[string]string,
+) (*TransactionResponse, error) {
+	randUint := rand.Uint32()
+	queries := make([]string, 0)
+	queryInputs := make(map[string]string)
+
+	index := 0
+	for name, value := range models {
+		inputName := fmt.Sprintf("input_%d_%d", randUint, index)
+		queries = append(queries,
+			fmt.Sprintf(`
+				def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]
+				def insert:rel:catallog:model["%s"] = %s
+			`, name, name, name, inputName,
+			),
+		)
+		queryInputs[inputName] = value
+		index++
+	}
+
+	return c.ExecuteAsync(database, engine, strings.Join(queries, "\n"), queryInputs, false)
+}
+
+// Returns a list of model names for the given database.
+func (c *Client) ListModels(database, engine string) ([]string, error) {
+	outName := fmt.Sprintf("models_%d", rand.Uint32())
+	query := fmt.Sprintf("def output:%s[name] = rel:catalog:model(name, _)", outName)
+	resp, err := c.Execute(database, engine, query, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	models := make([]string, 0)
+
+	rc := resp.Relations("output", outName)
+	if len(rc) > 0 {
+		c := rc.Union().Column(2)
+		for i := 0; i < c.NumRows(); i++ {
+			models = append(models, c.String(i))
+		}
+		return models, nil
+	}
+
+	return nil, errors.Errorf("output:%s relation is empty", outName)
+}
+
+func (c *Client) GetModel(database, engine, model string) (*Model, error) {
+	outName := fmt.Sprintf("model_%d", rand.Uint32())
+	query := fmt.Sprintf(`def output:%s = rel:catalog:model["%s"]`, outName, model)
+	resp, err := c.Execute(database, engine, query, nil, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rc := resp.Relations("output", outName)
+	if len(rc) > 0 {
+		value := rc.Union().Column(2).String(0)
+		return &Model{model, value}, nil
+	}
+
+	return nil, ErrNotFound
 }
 
 func (c *Client) DeleteModels(
 	database, engine string, models []string,
-) (*TransactionResult, error) {
-	var result TransactionResult
-	tx := TransactionV1{
-		Region:   c.Region,
-		Database: database,
-		Engine:   engine,
-		Mode:     "OPEN",
-		Readonly: false}
-	data := tx.Payload(makeDeleteModelsAction(models))
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
-	if err != nil {
-		return nil, err
+) (*TransactionResponse, error) {
+	queries := make([]string, 0)
+	for _, model := range models {
+		queries = append(queries, fmt.Sprintf(`def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]`, model, model))
 	}
-	return &result, err
+
+	return c.Execute(database, engine, strings.Join(queries, "\n"), nil, false)
 }
 
-func (c *Client) GetModel(database, engine, model string) (*Model, error) {
-	var result listModelsResponse
-	tx := NewTransaction(c.Region, database, engine, "OPEN")
-	data := tx.Payload(makeListModelsAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
-	if err != nil {
-		return nil, err
+func (c *Client) DeleteModelsAsync(
+	database, engine string, models []string,
+) (*TransactionResponse, error) {
+	queries := make([]string, 0)
+	for _, model := range models {
+		queries = append(queries, fmt.Sprintf(`def delete:rel:catalog:model["%s"] = rel:catalog:model["%s"]`, model, model))
 	}
-	// assert len(result.Actions) == 1
-	for _, item := range result.Actions[0].Result.Models {
-		if item.Name == model {
-			return &item, nil
-		}
-	}
-	return nil, ErrNotFound
-}
 
-func (c *Client) LoadModel(
-	database, engine, name string, r io.Reader,
-) (*TransactionResult, error) {
-	return c.LoadModels(database, engine, map[string]io.Reader{name: r})
-}
-
-func (c *Client) LoadModels(
-	database, engine string, models map[string]io.Reader,
-) (*TransactionResult, error) {
-	var result TransactionResult
-	tx := TransactionV1{
-		Region:   c.Region,
-		Database: database,
-		Engine:   engine,
-		Mode:     "OPEN",
-		Readonly: false}
-	actions := []DbAction{}
-	for name, r := range models {
-		model, err := ioutil.ReadAll(r)
-		if err != nil {
-			return nil, err
-		}
-		action := makeLoadModelAction(name, string(model))
-		actions = append(actions, action)
-	}
-	data := tx.Payload(actions...)
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-// Returns a list of model names for the given database.
-func (c *Client) ListModelNames(database, engine string) ([]string, error) {
-	var models listModelsResponse
-	tx := NewTransaction(c.Region, database, engine, "OPEN")
-	data := tx.Payload(makeListModelsAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &models)
-	if err != nil {
-		return nil, err
-	}
-	actions := models.Actions
-	// assert len(actions) == 1
-	result := []string{}
-	for _, model := range actions[0].Result.Models {
-		result = append(result, model.Name)
-	}
-	return result, nil
-}
-
-// Returns the names of models installed in the given database.
-func (c *Client) ListModels(database, engine string) ([]Model, error) {
-	var models listModelsResponse
-	tx := NewTransaction(c.Region, database, engine, "OPEN")
-	data := tx.Payload(makeListModelsAction())
-	err := c.Post(PathTransaction, tx.QueryArgs(), data, &models)
-	if err != nil {
-		return nil, err
-	}
-	actions := models.Actions
-	// assert len(actions) == 1
-	return actions[0].Result.Models, nil
+	return c.ExecuteAsync(database, engine, strings.Join(queries, "\n"), nil, false)
 }
 
 //
