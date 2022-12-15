@@ -150,8 +150,16 @@ func newTestClient() (*Client, error) {
 }
 
 func tearDown(client *Client) {
-	client.DeleteDatabase(test.databaseName)
-	client.DeleteEngine(test.engineName)
+	err := client.DeleteDatabase(test.databaseName)
+	if err != nil {
+		fmt.Printf("error deleting database: %s\n", test.databaseName)
+		fmt.Printf("error: %w\n", err)
+	}
+	err = client.DeleteEngine(test.engineName)
+	if err != nil {
+		fmt.Printf("error deleting engine: %s\n", test.engineName)
+		fmt.Printf("error: %w\n", err)
+	}
 
 	user, _ := client.FindUser(test.userEmail)
 	if user != nil {
