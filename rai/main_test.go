@@ -199,6 +199,7 @@ func TestMain(m *testing.M) {
 	}
 	code := m.Run()
 	if !test.noTeardown {
+		fmt.Println("Tearing down resources ....")
 		tearDown(test.client)
 	}
 	os.Exit(code)
