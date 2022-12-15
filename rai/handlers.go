@@ -91,7 +91,7 @@ func readTokenCache() (map[string]*AccessToken, error) {
 	var cache map[string]*AccessToken
 	err = json.NewDecoder(f).Decode(&cache)
 	if err != nil {
-		//return nil, err
+		return nil, err
 	}
 	return cache, nil
 }
