@@ -17,4 +17,4 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.50.1
-          args: "--out-${NO_FUTURE}format colored-line-number"
+          args: "--out-${NO_FUTURE}format colored-line-number --timeout 5m --enable gosec"
