@@ -145,6 +145,7 @@ func (c *Client) Url(path string) string {
 	return fmt.Sprintf("%s://%s:%s%s", c.Scheme, c.Host, c.Port, path)
 }
 
+/* #nosec */
 const getAccessTokenBody = `{
 	"client_id": "%s",
 	"client_secret": "%s",

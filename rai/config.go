@@ -27,6 +27,7 @@ import (
 const DefaultConfigFile = "~/.rai/config"
 const DefaultConfigProfile = "default"
 
+/* #nosec */
 const defaultClientCredentialsUrl = "https://login.relationalai.com/oauth/token"
 
 type Config struct {
