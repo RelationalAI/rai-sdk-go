@@ -24,7 +24,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -55,7 +54,6 @@ type Client struct {
 	Host               string
 	Port               string
 	HttpClient         *http.Client
-	accessToken        string
 	accessTokenHandler AccessTokenHandler
 }
 
@@ -147,6 +145,7 @@ func (c *Client) Url(path string) string {
 	return fmt.Sprintf("%s://%s:%s%s", c.Scheme, c.Host, c.Port, path)
 }
 
+/* #nosec */
 const getAccessTokenBody = `{
 	"client_id": "%s",
 	"client_secret": "%s",
@@ -238,23 +237,6 @@ func (c *Client) Post(path string, args url.Values, data, result interface{}) er
 
 func (c *Client) Put(path string, args url.Values, data, result interface{}) error {
 	return c.request(http.MethodPut, path, nil, args, data, result)
-}
-
-// Show the given value as JSON data.
-func showJSON(v interface{}) {
-	e := json.NewEncoder(os.Stdout)
-	e.SetIndent("", "  ")
-	e.Encode(v)
-}
-
-func showRequest(req *http.Request, data interface{}) {
-	fmt.Printf("%s %s\n", req.Method, req.URL.String())
-	for k := range req.Header {
-		fmt.Printf("%s: %s\n", k, req.Header.Get(k))
-	}
-	if data != nil {
-		showJSON(data)
-	}
 }
 
 // Marshal the given item as a JSON string and return an io.Reader.
@@ -836,25 +818,6 @@ func makeActions(actions ...DbAction) []DbAction {
 	return result
 }
 
-// Returns the database open_mode based on the given source and overwrite args.
-func createMode(source string, overwrite bool) string {
-	var mode string
-	if source != "" {
-		if overwrite {
-			mode = "CLONE_OVERWRITE"
-		} else {
-			mode = "CLONE"
-		}
-	} else {
-		if overwrite {
-			mode = "CREATE_OVERWRITE"
-		} else {
-			mode = "CREATE"
-		}
-	}
-	return mode
-}
-
 func makeRelKey(name, key string) map[string]interface{} {
 	return map[string]interface{}{
 		"type":   "RelKey",
@@ -992,7 +955,7 @@ func (c *Client) Execute(
 		if isTransactionComplete(&rsp.Transaction) {
 			return rsp, nil
 		}
-		delta := time.Now().Sub(t0)              // total run time
+		delta := time.Since(t0)                  // total run time
 		pause := time.Duration(int64(delta) / 5) // 20% of total run time
 		if pause > twoMinutes {
 			pause = twoMinutes
@@ -1461,7 +1424,7 @@ func genSchemaConfig(b *strings.Builder, opts *CSVOptions) {
 		return
 	}
 	schema := opts.Schema
-	if schema == nil || len(schema) == 0 {
+	if len(schema) == 0 {
 		return
 	}
 	count := 0

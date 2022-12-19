@@ -147,9 +147,9 @@ type TransactionState string
 
 const (
 	Created   TransactionState = "CREATED" // Created, queued for execution
-	Running                    = "RUNNING"
-	Completed                  = "COMPLETED"
-	Aborted                    = "ABORTED"
+	Running   TransactionState = "RUNNING"
+	Completed TransactionState = "COMPLETED"
+	Aborted   TransactionState = "ABORTED"
 )
 
 type Transaction struct {
@@ -192,7 +192,6 @@ type TransactionMetadata struct {
 
 type Partition struct {
 	record arrow.Record
-	sig    Signature
 	cols   []Column
 }
 
