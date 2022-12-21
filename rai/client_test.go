@@ -68,27 +68,37 @@ func TestDatabase(t *testing.T) {
 
 	database, err := client.CreateDatabase(test.databaseName)
 	assert.Nil(t, err)
-	assert.Equal(t, test.databaseName, database.Name)
-	assert.Equal(t, "CREATED", database.State)
+	assert.NotNil(t, database)
+	if database != nil {
+		assert.Equal(t, test.databaseName, database.Name)
+		assert.Equal(t, "CREATED", database.State)
+	}
 
 	database, err = client.GetDatabase(test.databaseName)
 	assert.Nil(t, err)
-	assert.Equal(t, test.databaseName, database.Name)
-	assert.Equal(t, "CREATED", database.State)
+	assert.NotNil(t, database)
+	if database != nil {
+		assert.Equal(t, test.databaseName, database.Name)
+		assert.Equal(t, "CREATED", database.State)
+	}
 
 	databases, err := client.ListDatabases()
 	assert.Nil(t, err)
 	database = findDatabase(databases, test.databaseName)
 	assert.NotNil(t, database)
-	assert.Equal(t, test.databaseName, database.Name)
-	assert.Equal(t, "CREATED", database.State)
+	if database != nil {
+		assert.Equal(t, test.databaseName, database.Name)
+		assert.Equal(t, "CREATED", database.State)
+	}
 
 	databases, err = client.ListDatabases("state", "CREATED")
 	assert.Nil(t, err)
 	database = findDatabase(databases, test.databaseName)
 	assert.NotNil(t, database)
-	assert.Equal(t, test.databaseName, database.Name)
-	assert.Equal(t, "CREATED", database.State)
+	if database != nil {
+		assert.Equal(t, test.databaseName, database.Name)
+		assert.Equal(t, "CREATED", database.State)
+	}
 
 	databases, err = client.ListDatabases("state", "NONSENSE")
 	assert.Nil(t, err)
@@ -114,12 +124,16 @@ func TestDatabase(t *testing.T) {
 	assert.True(t, len(models) > 0)
 	model := findModel(models, "rel/stdlib")
 	assert.NotNil(t, model)
-	assert.True(t, len(model.Value) > 0)
+	if model != nil {
+		assert.True(t, len(model.Value) > 0)
+	}
 
 	model, err = client.GetModel(test.databaseName, test.engineName, "rel/stdlib")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
-	assert.True(t, len(model.Value) > 0)
+	if model != nil {
+		assert.True(t, len(model.Value) > 0)
+	}
 }
 
 func findEngine(engines []Engine, name string) *Engine {
@@ -137,25 +151,32 @@ func TestEngine(t *testing.T) {
 
 	engine, err := client.GetEngine(test.engineName)
 	assert.Nil(t, err)
-	assert.Equal(t, test.engineName, engine.Name)
-	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, test.engineSize, engine.Size)
+	assert.NotNil(t, engine)
+	if engine != nil {
+		assert.Equal(t, test.engineName, engine.Name)
+		assert.Equal(t, "PROVISIONED", engine.State)
+		assert.Equal(t, test.engineSize, engine.Size)
+	}
 
 	engines, err := client.ListEngines()
 	assert.Nil(t, err)
 	engine = findEngine(engines, test.engineName)
 	assert.NotNil(t, engine)
-	assert.Equal(t, test.engineName, engine.Name)
-	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, test.engineSize, engine.Size)
+	if engine != nil {
+		assert.Equal(t, test.engineName, engine.Name)
+		assert.Equal(t, "PROVISIONED", engine.State)
+		assert.Equal(t, test.engineSize, engine.Size)
+	}
 
 	engines, err = client.ListEngines("state", "PROVISIONED")
 	assert.Nil(t, err)
 	engine = findEngine(engines, test.engineName)
 	assert.NotNil(t, engine)
-	assert.Equal(t, test.engineName, engine.Name)
-	assert.Equal(t, "PROVISIONED", engine.State)
-	assert.Equal(t, test.engineSize, engine.Size)
+	if engine != nil {
+		assert.Equal(t, test.engineName, engine.Name)
+		assert.Equal(t, "PROVISIONED", engine.State)
+		assert.Equal(t, test.engineSize, engine.Size)
+	}
 
 	engines, err = client.ListEngines("state", "NONSENSE")
 	assert.Nil(t, err)
@@ -255,47 +276,64 @@ func TestLoadCSV(t *testing.T) {
 	r := strings.NewReader(sampleCSV)
 	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_csv", r, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_csv", nil, true)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 4, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
-	rel := findRelation(rsp.Output, ":date")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
+	if rsp != nil {
+		rel := findRelation(rsp.Output, ":date")
+		assert.NotNil(t, rel)
+		if rel != nil {
+			assert.Equal(t, 2, len(rel.Columns))
+			assert.Equal(t, [][]interface{}{
+				{2., 3., 4., 5.},
+				{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+			}, rel.Columns)
+		}
 
-	rel = findRelation(rsp.Output, ":price")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"12.50", "14.25", "11.00", "12.25"},
-	}, rel.Columns)
+		rel = findRelation(rsp.Output, ":price")
+		assert.NotNil(t, rel)
+		if rel != nil {
+			assert.Equal(t, 2, len(rel.Columns))
+			assert.Equal(t, [][]interface{}{
+				{2., 3., 4., 5.},
+				{"12.50", "14.25", "11.00", "12.25"},
+			}, rel.Columns)
+		}
 
-	rel = findRelation(rsp.Output, ":quantity")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2", "4", "4", "3"},
-	}, rel.Columns)
+		rel = findRelation(rsp.Output, ":quantity")
+		assert.NotNil(t, rel)
+		if rel != nil {
+			assert.Equal(t, 2, len(rel.Columns))
+			assert.Equal(t, [][]interface{}{
+				{2., 3., 4., 5.},
+				{"2", "4", "4", "3"},
+			}, rel.Columns)
 
-	rel = findRelation(rsp.Output, ":cocktail")
-	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+		}
+
+		rel = findRelation(rsp.Output, ":cocktail")
+		assert.NotNil(t, rel)
+		if rel != nil {
+			assert.Equal(t, 2, len(rel.Columns))
+			assert.Equal(t, [][]interface{}{
+				{2., 3., 4., 5.},
+				{"martini", "sazerac", "cosmopolitan", "bellini"},
+			}, rel.Columns)
+		}
+	}
 }
 
 // Test loading CSV data with no header.
@@ -312,47 +350,61 @@ func TestLoadCSVNoHeader(t *testing.T) {
 	opts := NewCSVOptions().WithHeaderRow(0)
 	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_no_header", r, opts)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_no_header", nil, true)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 4, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rel := findRelation(rsp.Output, ":COL1")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{1., 2., 3., 4.},
+			{"martini", "sazerac", "cosmopolitan", "bellini"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":COL2")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"2", "4", "4", "3"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{1., 2., 3., 4.},
+			{"2", "4", "4", "3"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":COL3")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"12.50", "14.25", "11.00", "12.25"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{1., 2., 3., 4.},
+			{"12.50", "14.25", "11.00", "12.25"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":COL4")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{1., 2., 3., 4.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{1., 2., 3., 4.},
+			{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+		}, rel.Columns)
+	}
 }
 
 // Test loading CSV data with alternate syntax options.
@@ -370,48 +422,62 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	opts := NewCSVOptions().WithDelim('|').WithQuoteChar('\'')
 	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_alt_syntax", r, opts)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rsp, err = client.ExecuteV1(
 		test.databaseName, test.engineName, "def output = sample_alt_syntax", nil, true)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 4, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rel := findRelation(rsp.Output, ":date")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":price")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"12.50", "14.25", "11.00", "12.25"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{"12.50", "14.25", "11.00", "12.25"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":quantity")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2", "4", "4", "3"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{"2", "4", "4", "3"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":cocktail")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{"martini", "sazerac", "cosmopolitan", "bellini"},
+		}, rel.Columns)
+	}
 }
 
 // Test loading CSV data with a schema definition.
@@ -427,47 +493,61 @@ func TestLoadCSVWithSchema(t *testing.T) {
 	opts := NewCSVOptions().WithSchema(schema)
 	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_with_schema", r, opts)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_with_schema", nil, true)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 4, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rel := findRelation(rsp.Output, ":date")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":price")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{12.50, 14.25, 11.00, 12.25},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{12.50, 14.25, 11.00, 12.25},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":quantity")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{2., 4., 4., 3.},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{2., 4., 4., 3.},
+		}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":cocktail")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{
-		{2., 3., 4., 5.},
-		{"martini", "sazerac", "cosmopolitan", "bellini"},
-	}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{
+			{2., 3., 4., 5.},
+			{"martini", "sazerac", "cosmopolitan", "bellini"},
+		}, rel.Columns)
+	}
 }
 
 // Test loading JSON data.
@@ -483,36 +563,50 @@ func TestLoadJSON(t *testing.T) {
 	r := strings.NewReader(sampleJSON)
 	rsp, err := client.LoadJSON(test.databaseName, test.engineName, "sample_json", r)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rsp, err = client.ExecuteV1(
 		test.databaseName, test.engineName, "def output = sample_json", nil, true)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 4, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 4, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	rel := findRelation(rsp.Output, ":name")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 1, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{"Amira"}}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 1, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{{"Amira"}}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":age")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 1, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{32.}}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 1, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{{32.}}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":height")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 1, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{nil}}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 1, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{{nil}}, rel.Columns)
+	}
 
 	rel = findRelation(rsp.Output, ":pets")
 	assert.NotNil(t, rel)
-	assert.Equal(t, 2, len(rel.Columns))
-	assert.Equal(t, [][]interface{}{{1., 2.}, {"dog", "rabbit"}}, rel.Columns)
+	if rel != nil {
+		assert.Equal(t, 2, len(rel.Columns))
+		assert.Equal(t, [][]interface{}{{1., 2.}, {"dog", "rabbit"}}, rel.Columns)
+	}
 }
 
 // Test model APIs.
@@ -524,13 +618,19 @@ func TestModels(t *testing.T) {
 	r := strings.NewReader(testModel)
 	rsp, err := client.LoadModel(test.databaseName, test.engineName, "test_model", r)
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	model, err := client.GetModel(test.databaseName, test.engineName, "test_model")
 	assert.Nil(t, err)
-	assert.Equal(t, "test_model", model.Name)
+	assert.NotNil(t, model)
+	if model != nil {
+		assert.Equal(t, "test_model", model.Name)
+	}
 
 	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
 	assert.Nil(t, err)
@@ -543,9 +643,12 @@ func TestModels(t *testing.T) {
 
 	rsp, err = client.DeleteModel(test.databaseName, test.engineName, "test_model")
 	assert.Nil(t, err)
-	assert.Equal(t, false, rsp.Aborted)
-	assert.Equal(t, 0, len(rsp.Output))
-	assert.Equal(t, 0, len(rsp.Problems))
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, false, rsp.Aborted)
+		assert.Equal(t, 0, len(rsp.Output))
+		assert.Equal(t, 0, len(rsp.Problems))
+	}
 
 	_, err = client.GetModel(test.databaseName, test.engineName, "test_model")
 	assert.True(t, isErrNotFound(err))
@@ -575,23 +678,34 @@ func TestOAuthClient(t *testing.T) {
 
 	rspExtra, err := client.CreateOAuthClient(test.oauthClient, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, test.oauthClient, rspExtra.Name)
-
-	clientID := rspExtra.ID
-
-	rspExtra, err = client.GetOAuthClient(clientID)
-	assert.Nil(t, err)
 	assert.NotNil(t, rspExtra)
-	assert.Equal(t, clientID, rspExtra.ID)
-	assert.Equal(t, test.oauthClient, rspExtra.Name)
+	if rspExtra != nil {
+		assert.Equal(t, test.oauthClient, rspExtra.Name)
+	}
 
-	deleteRsp, err := client.DeleteOAuthClient(clientID)
-	assert.Nil(t, err)
-	assert.Equal(t, clientID, deleteRsp.ID)
+	if rspExtra != nil {
+		clientID := rspExtra.ID
 
-	rspExtra, err = client.GetOAuthClient(clientID)
-	assert.Nil(t, rspExtra)
-	assert.True(t, isErrNotFound(err))
+		rspExtra, err = client.GetOAuthClient(clientID)
+		assert.Nil(t, err)
+		assert.NotNil(t, rspExtra)
+		if rspExtra != nil {
+			assert.NotNil(t, rspExtra)
+			assert.Equal(t, clientID, rspExtra.ID)
+			assert.Equal(t, test.oauthClient, rspExtra.Name)
+		}
+
+		deleteRsp, err := client.DeleteOAuthClient(clientID)
+		assert.Nil(t, err)
+		assert.NotNil(t, deleteRsp)
+		if deleteRsp != nil {
+			assert.Equal(t, clientID, deleteRsp.ID)
+		}
+
+		rspExtra, err = client.GetOAuthClient(clientID)
+		assert.Nil(t, rspExtra)
+		assert.True(t, isErrNotFound(err))
+	}
 }
 
 // Test User APIs.
@@ -607,59 +721,87 @@ func TestUser(t *testing.T) {
 
 	rsp, err = client.CreateUser(test.userEmail, nil)
 	assert.Nil(t, err)
-	assert.Equal(t, test.userEmail, rsp.Email)
-	assert.Equal(t, "ACTIVE", rsp.Status)
-	assert.Equal(t, []string{"user"}, rsp.Roles)
+	assert.NotNil(t, rsp)
+	if rsp != nil {
+		assert.Equal(t, test.userEmail, rsp.Email)
+		assert.Equal(t, "ACTIVE", rsp.Status)
+		assert.Equal(t, []string{"user"}, rsp.Roles)
+	}
 
-	var userID = rsp.ID
+	if rsp != nil {
+		var userID = rsp.ID
 
-	user, err := client.GetUser(userID)
-	assert.Nil(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, test.userEmail, user.Email)
+		user, err := client.GetUser(userID)
+		assert.Nil(t, err)
+		assert.NotNil(t, user)
+		if user != nil {
+			assert.Equal(t, userID, user.ID)
+			assert.Equal(t, test.userEmail, user.Email)
+		}
 
-	rsp, err = client.DisableUser(userID)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, "INACTIVE", rsp.Status)
+		rsp, err = client.DisableUser(userID)
+		assert.Nil(t, err)
+		assert.NotNil(t, rsp)
+		if rsp != nil {
+			assert.Equal(t, userID, rsp.ID)
+			assert.Equal(t, "INACTIVE", rsp.Status)
+		}
 
-	rsp, err = client.EnableUser(userID)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, "ACTIVE", rsp.Status)
+		rsp, err = client.EnableUser(userID)
+		assert.Nil(t, err)
+		assert.NotNil(t, rsp)
+		if rsp != nil {
+			assert.Equal(t, userID, rsp.ID)
+			assert.Equal(t, "ACTIVE", rsp.Status)
+		}
 
-	req := UpdateUserRequest{Status: "INACTIVE"}
-	rsp, err = client.UpdateUser(userID, req)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, "INACTIVE", rsp.Status)
+		req := UpdateUserRequest{Status: "INACTIVE"}
+		rsp, err = client.UpdateUser(userID, req)
+		assert.Nil(t, err)
+		assert.NotNil(t, rsp)
+		if rsp != nil {
+			assert.Equal(t, userID, rsp.ID)
+			assert.Equal(t, "INACTIVE", rsp.Status)
+		}
 
-	req = UpdateUserRequest{Status: "ACTIVE"}
-	rsp, err = client.UpdateUser(userID, req)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, "ACTIVE", rsp.Status)
+		req = UpdateUserRequest{Status: "ACTIVE"}
+		rsp, err = client.UpdateUser(userID, req)
+		assert.Nil(t, err)
+		assert.NotNil(t, rsp)
+		if rsp != nil {
+			assert.Equal(t, userID, rsp.ID)
+			assert.Equal(t, "ACTIVE", rsp.Status)
+		}
 
-	req = UpdateUserRequest{Roles: []string{"admin", "user"}}
-	rsp, err = client.UpdateUser(userID, req)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, "ACTIVE", rsp.Status)
-	assert.Equal(t, []string{"admin", "user"}, rsp.Roles)
+		req = UpdateUserRequest{Roles: []string{"admin", "user"}}
+		rsp, err = client.UpdateUser(userID, req)
+		assert.Nil(t, err)
+		assert.NotNil(t, rsp)
+		if rsp != nil {
+			assert.Equal(t, userID, rsp.ID)
+			assert.Equal(t, "ACTIVE", rsp.Status)
+			assert.Equal(t, []string{"admin", "user"}, rsp.Roles)
+		}
 
-	req = UpdateUserRequest{Status: "INACTIVE", Roles: []string{"user"}}
-	rsp, err = client.UpdateUser(userID, req)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, user.ID)
-	assert.Equal(t, "INACTIVE", rsp.Status)
-	assert.Equal(t, []string{"user"}, rsp.Roles)
+		req = UpdateUserRequest{Status: "INACTIVE", Roles: []string{"user"}}
+		rsp, err = client.UpdateUser(userID, req)
+		assert.Nil(t, err)
+		assert.NotNil(t, rsp)
+		if rsp != nil {
+			assert.Equal(t, userID, rsp.ID)
+			assert.Equal(t, "INACTIVE", rsp.Status)
+			assert.Equal(t, []string{"user"}, rsp.Roles)
+		}
 
-	deleteRsp, err := client.DeleteUser(userID)
-	assert.Nil(t, err)
-	assert.Equal(t, userID, deleteRsp.ID)
+		deleteRsp, err := client.DeleteUser(userID)
+		assert.Nil(t, err)
+		assert.NotNil(t, deleteRsp)
+		if deleteRsp != nil {
+			assert.Equal(t, userID, deleteRsp.ID)
+		}
 
-	rsp, err = client.GetUser(userID)
-	assert.Nil(t, rsp)
-	assert.True(t, isErrNotFound(err))
+		rsp, err = client.GetUser(userID)
+		assert.Nil(t, rsp)
+		assert.True(t, isErrNotFound(err))
+	}
 }
