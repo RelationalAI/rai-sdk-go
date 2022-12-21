@@ -292,17 +292,17 @@ func TestLoadCSV(t *testing.T) {
 		assert.Equal(t, 0, len(rsp.Problems))
 	}
 
-	rel := findRelation(rsp.Output, ":date")
-	assert.NotNil(t, rel)
-	if rel != nil {
-		assert.Equal(t, 2, len(rel.Columns))
-		assert.Equal(t, [][]interface{}{
-			{2., 3., 4., 5.},
-			{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
-		}, rel.Columns)
-	}
-
 	if rsp != nil {
+		rel := findRelation(rsp.Output, ":date")
+		assert.NotNil(t, rel)
+		if rel != nil {
+			assert.Equal(t, 2, len(rel.Columns))
+			assert.Equal(t, [][]interface{}{
+				{2., 3., 4., 5.},
+				{"2020-01-01", "2020-02-02", "2020-03-03", "2020-04-04"},
+			}, rel.Columns)
+		}
+
 		rel = findRelation(rsp.Output, ":price")
 		assert.NotNil(t, rel)
 		if rel != nil {
