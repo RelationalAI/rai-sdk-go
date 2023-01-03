@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 	"os"
 	"testing"
@@ -151,14 +150,8 @@ func newTestClient() (*Client, error) {
 }
 
 func tearDown(client *Client) {
-	err := client.DeleteDatabase(test.databaseName)
-	if err != nil {
-		fmt.Println(errors.Wrapf(err, "error deleting database: %s", test.databaseName))
-	}
-	err = client.DeleteEngine(test.engineName)
-	if err != nil {
-		fmt.Println(errors.Wrapf(err, "error deleting engine: %s", test.engineName))
-	}
+	client.DeleteDatabase(test.databaseName)
+	client.DeleteEngine(test.engineName)
 
 	user, _ := client.FindUser(test.userEmail)
 	if user != nil {
@@ -198,7 +191,6 @@ func TestMain(m *testing.M) {
 	}
 	code := m.Run()
 	if !test.noTeardown {
-		fmt.Println("Tearing down resources ....")
 		tearDown(test.client)
 	}
 	os.Exit(code)
