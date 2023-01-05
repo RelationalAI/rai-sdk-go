@@ -40,6 +40,10 @@ runs:
       run: go build -v ./rai
       shell: bash
 
+    - name: Init cache folder
+      run: mkdir -p ~/.rai
+      shell: bash
+
     - name: Test
       env:
         CLIENT_ID: ${{ inputs.client_id }}
