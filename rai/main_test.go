@@ -17,14 +17,15 @@ import (
 )
 
 var test struct {
-	client       *Client
-	databaseName string
-	engineName   string
-	engineSize   string
-	oauthClient  string
-	userEmail    string
-	noTeardown   bool
-	showQuery    bool
+	client          *Client
+	databaseName    string
+	engineName      string
+	engineSize      string
+	oauthClient     string
+	userEmail       string
+	noTeardown      bool
+	showQuery       bool
+	showQueryResult bool
 }
 
 func fatal(format string, args ...any) {
@@ -190,6 +191,7 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&test.userEmail, "u", "rai-sdk-go@relational.ai", "test user name")
 	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
 	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
+	flag.BoolVar(&test.showQueryResult, "show-query-result", false, "display the query result")
 	flag.Parse()
 
 	test.client, err = newTestClient()

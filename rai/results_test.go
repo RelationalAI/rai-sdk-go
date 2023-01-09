@@ -1822,6 +1822,9 @@ func runTests(t *testing.T, tests []execTest) {
 			fmt.Println(q) // useful for debugging tests
 		}
 		rsp, err := test.client.Execute(test.databaseName, test.engineName, q, nil, true)
+		if test.showQueryResult {
+			rsp.Show()
+		}
 		assert.Nil(t, err)
 		checkResponse(t, tst, rsp)
 	}
