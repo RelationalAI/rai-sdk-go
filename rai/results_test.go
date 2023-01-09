@@ -1819,11 +1819,15 @@ func runTests(t *testing.T, tests []execTest) {
 	for _, tst := range tests {
 		q := dindent(tst.query)
 		if test.showQuery {
+			fmt.Println("==> query")
 			fmt.Println(q) // useful for debugging tests
+			fmt.Println()
 		}
 		rsp, err := test.client.Execute(test.databaseName, test.engineName, q, nil, true)
 		if test.showQueryResult {
+			fmt.Println("==> query result")
 			rsp.Show()
+			fmt.Println()
 		}
 		assert.Nil(t, err)
 		checkResponse(t, tst, rsp)
