@@ -62,6 +62,8 @@ func findModel(models []Model, name string) *Model {
 func TestDatabase(t *testing.T) {
 	client := test.client
 
+	t.Logf("database: %s", test.databaseName)
+
 	if err := client.DeleteDatabase(test.databaseName); err != nil {
 		assert.True(t, isErrNotFound(err))
 	}
@@ -149,6 +151,7 @@ func findEngine(engines []Engine, name string) *Engine {
 func TestEngine(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s", test.engineName)
 	engine, err := client.GetEngine(test.engineName)
 	assert.Nil(t, err)
 	assert.NotNil(t, engine)
@@ -188,6 +191,7 @@ func TestEngine(t *testing.T) {
 func TestExecuteV1(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
 	rsp, err := client.ExecuteV1(test.databaseName, test.engineName, query, nil, true)
@@ -273,6 +277,7 @@ const sampleCSV = "" +
 func TestLoadCSV(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	r := strings.NewReader(sampleCSV)
 	rsp, err := client.LoadCSV(test.databaseName, test.engineName, "sample_csv", r, nil)
 	assert.Nil(t, err)
@@ -340,6 +345,7 @@ func TestLoadCSV(t *testing.T) {
 func TestLoadCSVNoHeader(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	const sampleNoHeader = "" +
 		"\"martini\",2,12.50,\"2020-01-01\"\n" +
 		"\"sazerac\",4,14.25,\"2020-02-02\"\n" +
@@ -411,6 +417,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 func TestLoadCSVAltSyntax(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	const sampleAltSyntax = "" +
 		"cocktail|quantity|price|date\n" +
 		"'martini'|2|12.50|'2020-01-01'\n" +
@@ -484,6 +491,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 func TestLoadCSVWithSchema(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	schema := map[string]string{
 		"cocktail": "string",
 		"quantity": "int",
@@ -554,6 +562,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 func TestLoadJSON(t *testing.T) {
 	client := test.client
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	const sampleJSON = "{" +
 		"\"name\":\"Amira\",\n" +
 		"\"age\":32,\n" +
@@ -615,6 +624,7 @@ func TestModels(t *testing.T) {
 
 	const testModel = "def R = \"hello\", \"world\""
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	r := strings.NewReader(testModel)
 	rsp, err := client.LoadModel(test.databaseName, test.engineName, "test_model", r)
 	assert.Nil(t, err)
@@ -669,6 +679,7 @@ func TestModels(t *testing.T) {
 func TestOAuthClient(t *testing.T) {
 	client := test.client
 
+	t.Logf("oauth client: %s", test.oauthClient)
 	rsp, err := client.FindOAuthClient(test.oauthClient)
 	assert.Nil(t, err)
 	if rsp != nil {
@@ -712,6 +723,7 @@ func TestOAuthClient(t *testing.T) {
 func TestUser(t *testing.T) {
 	client := test.client
 
+	t.Logf("user email: %s", test.userEmail)
 	rsp, err := client.FindUser(test.userEmail)
 	assert.Nil(t, err)
 	if rsp != nil {

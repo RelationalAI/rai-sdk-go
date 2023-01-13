@@ -17,15 +17,14 @@ import (
 )
 
 var test struct {
-	client          *Client
-	databaseName    string
-	engineName      string
-	engineSize      string
-	oauthClient     string
-	userEmail       string
-	noTeardown      bool
-	showQuery       bool
-	showQueryResult bool
+	client       *Client
+	databaseName string
+	engineName   string
+	engineSize   string
+	oauthClient  string
+	userEmail    string
+	noTeardown   bool
+	showQuery    bool
 }
 
 func fatal(format string, args ...any) {
@@ -49,7 +48,7 @@ func isErrNotFound(err error) bool {
 
 // Ensure that the test engine exists.
 func ensureEngine(client *Client, engine, size string) error {
-	fmt.Printf("using engine: %s\n", engine)
+	fmt.Printf("engine: %s\n", engine)
 	if _, err := client.GetEngine(engine); err != nil {
 		if !isErrNotFound(err) {
 			return err
@@ -64,7 +63,7 @@ func ensureEngine(client *Client, engine, size string) error {
 
 // Ensure the test database exists.
 func ensureDatabase(client *Client, database string) error {
-	fmt.Printf("using database: %s\n", database)
+	fmt.Printf("database: %s\n", database)
 	if _, err := client.GetDatabase(database); err != nil {
 		if !isErrNotFound(err) {
 			return err
@@ -191,7 +190,6 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&test.userEmail, "u", "rai-sdk-go@relational.ai", "test user name")
 	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
 	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
-	flag.BoolVar(&test.showQueryResult, "show-query-result", false, "display the query result")
 	flag.Parse()
 
 	test.client, err = newTestClient()

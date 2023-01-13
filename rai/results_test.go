@@ -3,7 +3,6 @@
 package rai
 
 import (
-	"fmt"
 	"math/big"
 	"strings"
 	"testing"
@@ -1818,17 +1817,14 @@ func checkResponse(t *testing.T, test execTest, rsp *TransactionResponse) {
 func runTests(t *testing.T, tests []execTest) {
 	for _, tst := range tests {
 		q := dindent(tst.query)
+
+		t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 		if test.showQuery {
-			fmt.Println("==> query")
-			fmt.Println(q) // useful for debugging tests
-			fmt.Println()
+			t.Logf("query: %s", q)
 		}
 		rsp, err := test.client.Execute(test.databaseName, test.engineName, q, nil, true)
-		if test.showQueryResult {
-			fmt.Println("==> query result")
-			rsp.Show()
-			fmt.Println()
-		}
+		t.Logf("transaction id: %s", rsp.Transaction.ID)
+
 		assert.Nil(t, err)
 		checkResponse(t, tst, rsp)
 	}
@@ -1985,7 +1981,9 @@ func TestInterfaceTypes(t *testing.T) {
 func TestPrefixMatch(t *testing.T) {
 	query := `def output = 1, :foo, "a"; 42, :bar, "c"`
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
+	t.Logf("transaction id: %s", rsp.Transaction.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rsp.Relations()))
 
@@ -2053,7 +2051,9 @@ func TestRelationSlice(t *testing.T) {
 			5, :bip, 3.14, "pi!";
 			6, :zip, missing, "pip"`
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
+	t.Logf("transaction id: %s", rsp.Transaction.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(rsp.Relations()))
 
@@ -2132,7 +2132,9 @@ func TestRelationUnion(t *testing.T) {
 			5, :bip, 3.14, "pi!";
 			6, :zip, missing, "pip"`
 
+	t.Logf("engine: %s, database: %s", test.engineName, test.databaseName)
 	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
+	t.Logf("transaction id: %s", rsp.Transaction.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(rsp.Relations()))
 
