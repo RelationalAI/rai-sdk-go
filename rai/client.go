@@ -289,6 +289,10 @@ func (c *Client) request(
 		return err
 	}
 
+	if rsp.StatusCode >= 400 {
+		fmt.Printf("x-request-id: %s\n", rsp.Header.Get("X-Request-ID"))
+	}
+
 	switch out := result.(type) {
 	case **http.Response:
 		*out = rsp // caller will handle response
