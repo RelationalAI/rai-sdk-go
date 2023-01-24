@@ -24,6 +24,16 @@ inputs:
     description: 'Optional http headers'
     default: '{}'
 
+  engine:
+    required: false
+    description: 'Custom test engine name'
+    default: 'rai-sdk-go-${{ github.event.inputs.sha || github.sha }}'
+
+  database:
+    required: false
+    description: 'Custom test database name'
+    default: 'rai-sdk-go-${{ github.event.inputs.sha || github.sha }}'
+
 runs:
   using: 'composite'
   steps:
@@ -51,5 +61,7 @@ runs:
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
         HOST: ${{ inputs.rai_host }}
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
-      run: go test -v -timeout 30m ./rai -e "rai-sdk-go-${{ github.event.inputs.sha || github.sha }}" -d "rai-sdk-go-${{ github.event.inputs.sha || github.sha }}"
+      run: |
+        trap 'go test -force-teardown -e ${{ inputs.engine }} -d ${{ inputs.database }}' EXIT
+        go test -v -timeout 30m ./rai -e ${{ inputs.engine }} -d ${{ inputs.database }}
       shell: bash
