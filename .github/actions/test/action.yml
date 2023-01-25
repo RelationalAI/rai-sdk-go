@@ -62,6 +62,6 @@ runs:
         HOST: ${{ inputs.rai_host }}
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
       run: |
-        trap 'go test -v ./rai -force-teardown -e ${{ inputs.engine }} -d ${{ inputs.database }}' EXIT
+        trap 'go test -v ./rai -force-teardown -e ${{ inputs.engine }} -d ${{ inputs.database }}' ERR
         go test -v -timeout 30m ./rai -e ${{ inputs.engine }} -d ${{ inputs.database }}
       shell: bash
