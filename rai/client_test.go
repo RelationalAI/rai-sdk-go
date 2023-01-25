@@ -191,7 +191,6 @@ func TestExecuteV1(t *testing.T) {
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
 
 	rsp, err := client.ExecuteV1(test.databaseName, test.engineName, query, nil, true)
-	rsp = nil
 	assert.Nil(t, err)
 	assert.Equal(t, false, rsp.Aborted)
 	output := rsp.Output
