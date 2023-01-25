@@ -17,15 +17,15 @@ import (
 )
 
 var test struct {
-	client        *Client
-	databaseName  string
-	engineName    string
-	engineSize    string
-	oauthClient   string
-	userEmail     string
-	noTeardown    bool
-	showQuery     bool
-	forceTearDown bool
+	client       *Client
+	databaseName string
+	engineName   string
+	engineSize   string
+	oauthClient  string
+	userEmail    string
+	noTeardown   bool
+	showQuery    bool
+	onlyTeardown bool
 }
 
 func fatal(format string, args ...any) {
@@ -191,7 +191,7 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&test.userEmail, "u", "rai-sdk-go@relational.ai", "test user name")
 	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
 	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
-	flag.BoolVar(&test.forceTearDown, "force-teardown", false, "force running teardown")
+	flag.BoolVar(&test.onlyTeardown, "force-teardown", false, "force running teardown")
 	flag.Parse()
 
 	test.client, err = newTestClient()
@@ -203,7 +203,7 @@ func TestMain(m *testing.M) {
 	// one of the tests panics.
 	// Check the issue below for more details:
 	// https://github.com/golang/go/issues/37206
-	if test.forceTearDown {
+	if test.onlyTeardown {
 		fmt.Println("Force tearing down resources ....")
 		tearDown(test.client)
 		os.Exit(0)
