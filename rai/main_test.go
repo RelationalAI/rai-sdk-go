@@ -188,7 +188,7 @@ func TestMain(m *testing.M) {
 	// Using a common email address can create user creation or deletion issues in edge cases -
 	// when tests run in parallel on multiple machines, for example, the CI/CD workflows.
 	// Context: https://relationalai.atlassian.net/browse/RAI-9265
-	userEmail := fmt.Sprintf("%s@relational.ai", uuid.New().String())
+	userEmail := fmt.Sprintf("rai-sdk-go-%s@relational.ai", uuid.New().String())
 	flag.StringVar(&test.databaseName, "d", "rai-sdk-go", "test database name")
 	flag.StringVar(&test.engineName, "e", "rai-sdk-go", "test engine name")
 	flag.StringVar(&test.engineSize, "s", "S", "test engine size")
