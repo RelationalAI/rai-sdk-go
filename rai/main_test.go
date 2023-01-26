@@ -13,6 +13,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -183,11 +184,16 @@ func tearDown(client *Client) {
 func TestMain(m *testing.M) {
 	var err error
 
+	// Generating a random email address.
+	// Using a common email address can create user creation or deletion issues in edge cases -
+	// when tests run in parallel on multiple machines, for example, the CI/CD workflows.
+	// Context: https://relationalai.atlassian.net/browse/RAI-9265
+	userEmail := fmt.Sprintf("%s@relational.ai", uuid.New().String())
 	flag.StringVar(&test.databaseName, "d", "rai-sdk-go", "test database name")
 	flag.StringVar(&test.engineName, "e", "rai-sdk-go", "test engine name")
 	flag.StringVar(&test.engineSize, "s", "S", "test engine size")
 	flag.StringVar(&test.oauthClient, "c", "rai-sdk-go", "test OAuth client name")
-	flag.StringVar(&test.userEmail, "u", "rai-sdk-go@relational.ai", "test user name")
+	flag.StringVar(&test.userEmail, "u", userEmail, "test user name")
 	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
 	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
 	flag.Parse()
