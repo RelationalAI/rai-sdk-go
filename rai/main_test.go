@@ -153,14 +153,29 @@ func newTestClient() (*Client, error) {
 	return testClient, nil
 }
 
-func tearDown(client *Client) {
-	err := client.DeleteDatabase(test.databaseName)
-	if err != nil {
-		fmt.Println(errors.Wrapf(err, "error deleting database: %s", test.databaseName))
+func tearDown(client *Client) int {
+	exitCode := 0
+
+	// Find and delete the database
+	// Finding is required because test could have already deleted the database.
+	db, _ := client.GetDatabase(test.databaseName)
+	if db != nil {
+		err := client.DeleteDatabase(test.databaseName)
+		if err != nil {
+			fmt.Println(errors.Wrapf(err, "error deleting database: %s", test.databaseName))
+			exitCode = 1
+		}
 	}
-	err = client.DeleteEngine(test.engineName)
-	if err != nil {
-		fmt.Println(errors.Wrapf(err, "error deleting engine: %s", test.engineName))
+
+	// Find and delete the engine
+	// Finding is required because test could have already deleted the engine.
+	engine, _ := client.GetEngine(test.engineName)
+	if engine != nil {
+		err := client.DeleteEngine(test.engineName)
+		if err != nil {
+			fmt.Println(errors.Wrapf(err, "error deleting engine: %s", test.engineName))
+			exitCode = 1
+		}
 	}
 
 	user, _ := client.FindUser(test.userEmail)
@@ -168,6 +183,7 @@ func tearDown(client *Client) {
 		_, err := client.DeleteUser(user.ID)
 		if err != nil {
 			fmt.Println(errors.Wrapf(err, "error deleting user: %s", test.userEmail))
+			exitCode = 1
 		}
 	}
 
@@ -176,8 +192,11 @@ func tearDown(client *Client) {
 		_, err := client.DeleteOAuthClient(c.ID)
 		if err != nil {
 			fmt.Println(errors.Wrapf(err, "error deleting oauth client: %s", test.oauthClient))
+			exitCode = 1
 		}
 	}
+
+	return exitCode
 }
 
 // Global setup & teardown for golang SDK tests.
@@ -189,10 +208,12 @@ func TestMain(m *testing.M) {
 	// when tests run in parallel on multiple machines, for example, the CI/CD workflows.
 	// Context: https://relationalai.atlassian.net/browse/RAI-9265
 	userEmail := fmt.Sprintf("rai-sdk-go-%s@relational.ai", uuid.New().String())
+	// Same is true for oAuthClient client name.
+	oAuthClient := fmt.Sprintf("rai-sdk-go-%s", uuid.New().String())
 	flag.StringVar(&test.databaseName, "d", "rai-sdk-go", "test database name")
 	flag.StringVar(&test.engineName, "e", "rai-sdk-go", "test engine name")
 	flag.StringVar(&test.engineSize, "s", "S", "test engine size")
-	flag.StringVar(&test.oauthClient, "c", "rai-sdk-go", "test OAuth client name")
+	flag.StringVar(&test.oauthClient, "c", oAuthClient, "test OAuth client name")
 	flag.StringVar(&test.userEmail, "u", userEmail, "test user name")
 	flag.BoolVar(&test.noTeardown, "no-teardown", false, "don't teardown test resources")
 	flag.BoolVar(&test.showQuery, "show-query", false, "display query string")
@@ -213,7 +234,9 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	if !test.noTeardown {
 		fmt.Println("Tearing down resources ....")
-		tearDown(test.client)
+		if exitCode := tearDown(test.client); exitCode > 0 {
+			os.Exit(exitCode)
+		}
 	}
 	os.Exit(code)
 }
