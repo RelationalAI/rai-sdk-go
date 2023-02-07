@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -49,22 +51,46 @@ func isErrNotFound(err error) bool {
 
 // Ensure that the test engine exists.
 func ensureEngine(client *Client, engine, size string) error {
-	fmt.Printf("using engine: %s\n", engine)
-	if _, err := client.GetEngine(engine); err != nil {
-		if !isErrNotFound(err) {
-			return err
+	fmt.Printf("Attempt to use engine: %s\n", engine)
+	rsp, err := client.GetEngine(engine)
+	if err != nil {
+		if isErrNotFound(err) {
+			fmt.Printf("Engine %s engine not found. Provisioning a new one\n", engine)
+			_, err = client.CreateEngine(engine, size)
+			if err != nil {
+				return err
+			}
+			return nil
 		}
-		_, err = client.CreateEngine(engine, size)
-		if err != nil {
-			return err
+		return err
+	}
+
+	if rsp.State == "PROVISIONING" {
+		fmt.Printf("Engine %s is in PROVISIONING state, waiting for a final state\n", engine)
+		attempts := 0
+		for !(rsp.State == "PROVISIONED" || strings.Contains(rsp.State, "FAILED")) {
+			if attempts > 360 {
+				return errors.Errorf("Engine %s provisioning timed out\n", engine)
+			}
+			time.Sleep(5 * time.Second)
+			if rsp, err = client.GetEngine(engine); err != nil {
+				return err
+			}
+			attempts += 1
 		}
 	}
-	return nil
+
+	if rsp.State == "PROVISIONED" {
+		fmt.Printf("Engine %s is PROVISIONED", engine)
+		return nil
+	}
+
+	return errors.Errorf("Engine %s reached unusable or unknown state %s\n", engine, rsp.State)
 }
 
 // Ensure the test database exists.
 func ensureDatabase(client *Client, database string) error {
-	fmt.Printf("using database: %s\n", database)
+	fmt.Printf("Attempt to use database: %s\n", database)
 	if _, err := client.GetDatabase(database); err != nil {
 		if !isErrNotFound(err) {
 			return err
