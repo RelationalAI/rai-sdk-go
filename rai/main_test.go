@@ -55,7 +55,7 @@ func ensureEngine(client *Client, engine, size string) error {
 	rsp, err := client.GetEngine(engine)
 	if err != nil {
 		if isErrNotFound(err) {
-			fmt.Printf("Engine %s engine not found. Provisioning a new one\n", engine)
+			fmt.Printf("Engine %s not found. Provisioning a new one\n", engine)
 			_, err = client.CreateEngine(engine, size)
 			if err != nil {
 				return err
