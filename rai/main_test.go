@@ -55,7 +55,7 @@ func ensureEngine(client *Client, engine, size string) error {
 		if !isErrNotFound(err) {
 			return err
 		}
-		fmt.Printf("Engine %s not found, creating a new engine ...", engine)
+		fmt.Printf("Engine %s not found, creating a new engine ...\n", engine)
 		rsp, err = client.CreateEngine(engine, size)
 		if err != nil {
 			return err
@@ -63,7 +63,7 @@ func ensureEngine(client *Client, engine, size string) error {
 	}
 
 	if rsp.State != "PROVISIONED" {
-		return errors.Errorf("Engine %s is not in a usable state %s", engine, rsp.State)
+		return errors.Errorf("Engine %s is not in a usable state %s\n", engine, rsp.State)
 	}
 
 	return nil
