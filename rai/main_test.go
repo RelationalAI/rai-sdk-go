@@ -49,22 +49,29 @@ func isErrNotFound(err error) bool {
 
 // Ensure that the test engine exists.
 func ensureEngine(client *Client, engine, size string) error {
-	fmt.Printf("using engine: %s\n", engine)
-	if _, err := client.GetEngine(engine); err != nil {
+	fmt.Printf("Attempt to use engine: %s\n", engine)
+	rsp, err := client.GetEngine(engine)
+	if err != nil {
 		if !isErrNotFound(err) {
 			return err
 		}
-		_, err = client.CreateEngine(engine, size)
+		fmt.Printf("Engine %s not found, creating a new engine ...\n", engine)
+		rsp, err = client.CreateEngine(engine, size)
 		if err != nil {
 			return err
 		}
 	}
+
+	if rsp.State != "PROVISIONED" {
+		return errors.Errorf("Engine %s is not in a usable state %s\n", engine, rsp.State)
+	}
+
 	return nil
 }
 
 // Ensure the test database exists.
 func ensureDatabase(client *Client, database string) error {
-	fmt.Printf("using database: %s\n", database)
+	fmt.Printf("Attempt to use database: %s\n", database)
 	if _, err := client.GetDatabase(database); err != nil {
 		if !isErrNotFound(err) {
 			return err
