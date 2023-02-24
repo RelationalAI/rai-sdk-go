@@ -37,10 +37,13 @@ import (
 
 const userAgent = "raictl/" + Version
 
+type PreRequestHook func(*http.Request) *http.Request
+
 type ClientOptions struct {
 	Config
 	HTTPClient         *http.Client
 	AccessTokenHandler AccessTokenHandler
+	PreRequestHook     PreRequestHook
 }
 
 func NewClientOptions(cfg *Config) *ClientOptions {
@@ -55,6 +58,7 @@ type Client struct {
 	Port               string
 	HttpClient         *http.Client
 	accessTokenHandler AccessTokenHandler
+	preRequestHook     PreRequestHook
 }
 
 const DefaultHost = "azure.relationalai.com"
@@ -86,12 +90,13 @@ func NewClient(ctx context.Context, opts *ClientOptions) *Client {
 		opts.HTTPClient = &http.Client{}
 	}
 	client := &Client{
-		ctx:        ctx,
-		Region:     region,
-		Scheme:     scheme,
-		Host:       host,
-		Port:       port,
-		HttpClient: opts.HTTPClient}
+		ctx:            ctx,
+		Region:         region,
+		Scheme:         scheme,
+		Host:           host,
+		Port:           port,
+		preRequestHook: opts.PreRequestHook,
+		HttpClient:     opts.HTTPClient}
 	if opts.AccessTokenHandler != nil {
 		client.accessTokenHandler = opts.AccessTokenHandler
 	} else if opts.Credentials == nil {
@@ -336,6 +341,9 @@ func isErrorStatus(rsp *http.Response) bool {
 // Execute the given request and return the response or error.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	req = req.WithContext(c.ctx)
+	if c.preRequestHook != nil {
+		req = c.preRequestHook(req)
+	}
 	rsp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
