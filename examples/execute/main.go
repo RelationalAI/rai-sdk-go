@@ -24,12 +24,13 @@ import (
 )
 
 type Options struct {
-	Database string `short:"d" long:"database" required:"true" description:"database name"`
-	Engine   string `short:"e" long:"engine" required:"true" descriptio:"engine name"`
-	Code     string `short:"c" long:"code" description:"rel source code"`
-	File     string `short:"f" long:"file" description:"rel source file"`
-	Readonly bool   `long:"readonly" description:"readonly query (default: false)"`
-	Profile  string `long:"profile" default:"default" description:"config profile"`
+	Database string   `short:"d" long:"database" required:"true" description:"database name"`
+	Engine   string   `short:"e" long:"engine" required:"true" descriptio:"engine name"`
+	Code     string   `short:"c" long:"code" description:"rel source code"`
+	File     string   `short:"f" long:"file" description:"rel source file"`
+	Readonly bool     `long:"readonly" description:"readonly query (default: false)"`
+	Profile  string   `long:"profile" default:"default" description:"config profile"`
+	Tags     []string `long:"tag" default:"" description:"tag applied to query --tag=tagA --tag=tagB"`
 }
 
 func getCode(opts *Options) (string, error) {
@@ -52,7 +53,7 @@ func run(opts *Options) error {
 	if err != nil {
 		return err
 	}
-	rsp, err := client.Execute(opts.Database, opts.Engine, source, nil, opts.Readonly)
+	rsp, err := client.Execute(opts.Database, opts.Engine, source, nil, opts.Readonly, opts.Tags...)
 	if err != nil {
 		return err
 	}

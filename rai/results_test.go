@@ -14,6 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// track test results in transactions db
+const o11yTag = "rai-sdk-go:test"
+
 type tdata struct {
 	sig  Signature
 	cols [][]any
@@ -1821,7 +1824,7 @@ func runTests(t *testing.T, tests []execTest) {
 		if test.showQuery {
 			fmt.Println(q) // useful for debugging tests
 		}
-		rsp, err := test.client.Execute(test.databaseName, test.engineName, q, nil, true)
+		rsp, err := test.client.Execute(test.databaseName, test.engineName, q, nil, true, o11yTag)
 		assert.Nil(t, err)
 		checkResponse(t, tst, rsp)
 	}
@@ -1978,7 +1981,7 @@ func TestInterfaceTypes(t *testing.T) {
 func TestPrefixMatch(t *testing.T) {
 	query := `def output = 1, :foo, "a"; 42, :bar, "c"`
 
-	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true, o11yTag)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(rsp.Relations()))
 
@@ -2046,7 +2049,7 @@ func TestRelationSlice(t *testing.T) {
 			5, :bip, 3.14, "pi!";
 			6, :zip, missing, "pip"`
 
-	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true, o11yTag)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(rsp.Relations()))
 
@@ -2125,7 +2128,7 @@ func TestRelationUnion(t *testing.T) {
 			5, :bip, 3.14, "pi!";
 			6, :zip, missing, "pip"`
 
-	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true)
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true, o11yTag)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(rsp.Relations()))
 
