@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.1-alpha
+
+* add support for transaction tagging
+
 ## v0.4.0-alpha
 
 * Complete overhaul of transaction response handling and results access API.

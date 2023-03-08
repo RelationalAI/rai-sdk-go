@@ -943,9 +943,10 @@ const twoMinutes = 2 * time.Minute
 func (c *Client) Execute(
 	database, engine, source string,
 	inputs map[string]string, readonly bool,
+	tags ...string,
 ) (*TransactionResponse, error) {
 	t0 := time.Now()
-	rsp, err := c.ExecuteAsync(database, engine, source, inputs, readonly)
+	rsp, err := c.ExecuteAsync(database, engine, source, inputs, readonly, tags...)
 	if err != nil {
 		return nil, err
 	}
@@ -1039,6 +1040,7 @@ func ReadTransactionResponse(rsp *http.Response) (*TransactionResponse, error) {
 func (c *Client) ExecuteAsync(
 	database, engine, query string,
 	inputs map[string]string, readonly bool,
+	tags ...string,
 ) (*TransactionResponse, error) {
 	var inputList = make([]interface{}, 0)
 	for k, v := range inputs {
@@ -1050,7 +1052,8 @@ func (c *Client) ExecuteAsync(
 		Engine:   engine,
 		Query:    query,
 		ReadOnly: readonly,
-		Inputs:   inputList}
+		Inputs:   inputList,
+		Tags:     tags}
 	var rsp *http.Response
 	err := c.request(http.MethodPost, PathTransactions, nil, nil, tx, &rsp)
 	if err != nil {
@@ -1260,9 +1263,14 @@ type listTransactionsResponse struct {
 	Transactions []Transaction `json:"transactions"`
 }
 
-func (c *Client) ListTransactions() ([]Transaction, error) {
+func (c *Client) ListTransactions(tags ...string) ([]Transaction, error) {
+	args, err := queryArgs("tags", tags)
+	if err != nil {
+		return nil, err
+	}
+
 	var result listTransactionsResponse
-	err := c.Get(makePath(PathTransactions), nil, nil, &result)
+	err = c.Get(makePath(PathTransactions), nil, args, &result)
 	return result.Transactions, err
 }
 

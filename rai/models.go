@@ -166,11 +166,12 @@ type Transaction struct {
 }
 
 type TransactionRequest struct {
-	Database string `json:"dbname"`
-	Engine   string `json:"engine_name"`
-	Query    string `json:"query"`
-	ReadOnly bool   `json:"readonly"`
-	Inputs   []any  `json:"v1_inputs"`
+	Database string   `json:"dbname"`
+	Engine   string   `json:"engine_name"`
+	Query    string   `json:"query"`
+	ReadOnly bool     `json:"readonly"`
+	Inputs   []any    `json:"v1_inputs"`
+	Tags     []string `json:"tags"`
 }
 
 type Problem struct {

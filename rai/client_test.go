@@ -15,8 +15,10 @@
 package rai
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -209,44 +211,47 @@ func TestExecuteV1(t *testing.T) {
 	assert.Equal(t, expected, columns)
 }
 
-/*
-// Test transaction asynchronous execution
-func TestExecuteAsync(t *testing.T) {
+func TestListTransactions(t *testing.T) {
 	client := test.client
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-	rsp, err := client.Execute(test.databaseName, test.engineName, query, nil, true)
+	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
 
-	expectedResults := []ArrowRelation{
-		ArrowRelation{"/:output/Int64/Int64/Int64/Int64", [][]interface{}{
-			{1., 2., 3., 4., 5.},
-			{1., 4., 9., 16., 25.},
-			{1., 8., 27., 64., 125.},
-			{1., 16., 81., 256., 625.},
-		}},
+	expectedProblems := []Problem{}
+	assert.Equal(t, expectedProblems, txn.Problems)
+
+	txns, err := client.ListTransactions()
+	assert.Nil(t, err)
+
+	found := false
+	for _, i := range txns {
+		if i.ID == txn.Transaction.ID {
+			found = true
+			break
+		}
 	}
-
-	assert.Equal(t, rsp.Results[0].Table, expectedResults[0].Table)
-
-	var expectedMetadata pb.MetadataInfo
-	data, _ := os.ReadFile("./metadata.pb")
-	proto.Unmarshal(data, &expectedMetadata)
-
-	assert.Equal(t, rsp.Metadata.String(), expectedMetadata.String())
-
-	expectedProblems := []interface{}{}
-
-	assert.Equal(t, rsp.Problems, expectedProblems)
-
-	// also testing Show v2 result format
-	var io bytes.Buffer
-	rsp.ShowIO(&io)
-	expectedOutput := "/:output/Int64/Int64/Int64/Int64\n1, 1, 1, 1\n2, 4, 8, 16\n3, 9, 27, 81\n4, 16, 64, 256\n5, 25, 125, 625\n\n"
-
-	assert.Equal(t, io.String(), expectedOutput)
+	assert.True(t, found, "transaction id not found in list")
 }
-*/
+
+// testing tag filters for transactions
+func TestListTransactionsByTag(t *testing.T) {
+	client := test.client
+
+	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+	tag := fmt.Sprintf("rai-sdk-go:%d", time.Now().Unix())
+	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true, tag)
+	assert.Nil(t, err)
+
+	expectedProblems := []Problem{}
+	assert.Equal(t, expectedProblems, txn.Problems)
+
+	txns, err := client.ListTransactions(tag)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(txns), "filter tag did not apply as expected")
+
+}
 
 func findRelation(relations []RelationV1, colName string) *RelationV1 {
 	for _, relation := range relations {
