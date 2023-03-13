@@ -669,13 +669,13 @@ func TestModels(t *testing.T) {
 }
 
 // Test OAuth Client APIs.
-// TODO: add list oauth client test
-// when the api is more consistent
 func TestOAuthClient(t *testing.T) {
 	client := test.client
 
 	rsp, err := client.FindOAuthClient(test.oauthClient)
-	assert.Nil(t, err)
+	if err != nil {
+		assert.Equal(t, ErrNotFound, err)
+	}
 	if rsp != nil {
 		_, err = client.DeleteOAuthClient(rsp.ID)
 		assert.Nil(t, err)

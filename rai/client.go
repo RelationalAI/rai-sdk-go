@@ -623,7 +623,7 @@ func (c *Client) DeleteOAuthClient(id string) (*DeleteOAuthClientResponse, error
 	return &result, nil
 }
 
-// Returns the OAuth client with the given name or nil if it does not exist.
+// Returns the OAuth client with the given name or ErrNotFound if it does not exist.
 func (c *Client) FindOAuthClient(name string) (*OAuthClient, error) {
 	clients, err := c.ListOAuthClients()
 	if err != nil {
@@ -634,7 +634,7 @@ func (c *Client) FindOAuthClient(name string) (*OAuthClient, error) {
 			return &client, nil
 		}
 	}
-	return nil, nil
+	return nil, ErrNotFound
 }
 
 func (c *Client) GetOAuthClient(id string) (*OAuthClientExtra, error) {
