@@ -1,4 +1,4 @@
-// Copyright 2022 RelationalAI, Inc.
+// Copyright 2022-2023 RelationalAI, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -333,4 +333,42 @@ type UpdateUserRequest struct {
 
 type updateUserResponse struct {
 	User User `json:"user"`
+}
+
+//
+// Integrations
+//
+
+type Integration struct {
+	ID         string `json:"id"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Account    string `json:"account"`
+	CreatedBy  string `json:"createdBy"`
+	CreatedOn  string `json:"createdOn"`
+	State      string `json:"state"`
+	ConsentURL string `json:"consentUrl"`
+	Snowflake  struct {
+		Account string `json:"account"`
+	} `json:"snowflake"`
+}
+
+type SnowflakeCredentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type createSnowflakeIntegrationRequest struct {
+	Name      string `json:"name"`
+	Snowflake struct {
+		Account string               `json:"account"` // snowflake account name
+		Admin   SnowflakeCredentials `json:"admin"`   // not-persisted
+		Proxy   SnowflakeCredentials `json:"proxy"`   // persisted
+	} `json:"snowflake"`
+}
+
+type deleteIntegrationRequest struct {
+	Snowflake struct {
+		Admin SnowflakeCredentials `json:"admin"` // not-persisted
+	} `json:"snowflake"`
 }

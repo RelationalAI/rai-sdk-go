@@ -258,6 +258,9 @@ func marshal(item interface{}) (io.Reader, error) {
 
 // Unmarshal the JSON object from the given response body.
 func unmarshal(rsp *http.Response, result interface{}) error {
+	if result == nil {
+		return nil
+	}
 	data, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return err
@@ -288,18 +291,15 @@ func (c *Client) request(
 	if err := c.authenticate(req); err != nil {
 		return err
 	}
-	//showRequest(req, data)
 	rsp, err := c.Do(req)
 	if err != nil {
 		return err
 	}
-
 	switch out := result.(type) {
 	case **http.Response:
 		*out = rsp // caller will handle response
 		return nil
 	}
-
 	defer rsp.Body.Close()
 	return unmarshal(rsp, result)
 }
@@ -362,6 +362,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 const (
 	PathDatabase     = "/database"
 	PathEngine       = "/compute"
+	PathIntegrations = "/integration/v1alpha1/integrations"
 	PathOAuthClients = "/oauth-clients"
 	PathTransaction  = "/transaction"
 	PathTransactions = "/transactions"
@@ -1614,4 +1615,44 @@ func (c *Client) UpdateUser(id string, req UpdateUserRequest) (*User, error) {
 		return nil, err
 	}
 	return &result.User, nil
+}
+
+//
+// Integrations
+//
+
+func (c *Client) CreateSnowflakeIntegration(
+	name, snowflakeAccount string, adminCreds, proxyCreds *SnowflakeCredentials,
+) (*Integration, error) {
+	var result Integration
+	req := createSnowflakeIntegrationRequest{Name: name}
+	req.Snowflake.Account = snowflakeAccount
+	req.Snowflake.Admin = *adminCreds
+	req.Snowflake.Proxy = *proxyCreds
+	if err := c.Post(PathIntegrations, nil, &req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *Client) DeleteSnowflakeIntegration(name string, adminCreds *SnowflakeCredentials) error {
+	req := deleteIntegrationRequest{}
+	req.Snowflake.Admin = *adminCreds
+	return c.Delete(makePath(PathIntegrations, name), nil, &req, nil)
+}
+
+func (c *Client) GetSnowflakeIntegration(name string) (*Integration, error) {
+	var result Integration
+	if err := c.Get(makePath(PathIntegrations, name), nil, nil, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *Client) ListSnowflakeIntegrations() ([]Integration, error) {
+	var result []Integration
+	if err := c.Get(PathIntegrations, nil, nil, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
