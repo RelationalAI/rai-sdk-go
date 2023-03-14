@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.3-alpha
+
+* Add support for Snowflake integrations
+
+## v0.4.2-alpha
+
 ## v0.4.1-alpha
 
 * add support for transaction tagging

@@ -25,8 +25,8 @@ The RelationalAI Software Development Kit for Go enables developers to access th
 
 Note, the test are run against the account configured in your SDK config file.
 
-The tests take several optional arguments, which can sometimes make
-itereating and debugging easier.
+The tests take several optional arguments, which can make iterating and 
+debugging easier.
 
     ./run-tests -args <arguments>
 
