@@ -306,32 +306,32 @@ func (c *Client) request(
 
 type HTTPError struct {
 	StatusCode int
+	Headers    http.Header
 	Body       string
 }
 
 func (e HTTPError) Error() string {
 	statusText := http.StatusText(e.StatusCode)
 	if e.Body != "" {
-		return fmt.Sprintf("%d %s\n%s", e.StatusCode, statusText, e.Body)
+		return fmt.Sprintf("%d %s %s\n%s", e.StatusCode, e.Headers, statusText, e.Body)
 	}
-	return fmt.Sprintf("%d %s", e.StatusCode, statusText)
+	return fmt.Sprintf("%d %s %s", e.StatusCode, e.Headers, statusText)
 }
 
-func newHTTPError(status int, body string) error {
-	return HTTPError{StatusCode: status, Body: body}
+func newHTTPError(status int, headers http.Header, body string) error {
+	return HTTPError{StatusCode: status, Headers: headers, Body: body}
 }
 
-var ErrNotFound = newHTTPError(http.StatusNotFound, "")
+var ErrNotFound = newHTTPError(http.StatusNotFound, nil, "")
 
 // Returns an HTTPError corresponding to the given response.
 func httpError(rsp *http.Response) error {
 	// assert rsp.Status < 200 || rsp.Status > 299
 	data, err := ioutil.ReadAll(rsp.Body)
-	requestID := rsp.Header.Get("X-REQUEST-ID")
 	if err != nil {
 		data = []byte{}
 	}
-	return newHTTPError(rsp.StatusCode, fmt.Sprintf("{request-id: %s}, %s", requestID, string(data)))
+	return newHTTPError(rsp.StatusCode, rsp.Header, string(data))
 }
 
 // Ansers if the given response has a status code representing an error.
