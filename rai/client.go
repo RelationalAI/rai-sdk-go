@@ -327,10 +327,11 @@ var ErrNotFound = newHTTPError(http.StatusNotFound, "")
 func httpError(rsp *http.Response) error {
 	// assert rsp.Status < 200 || rsp.Status > 299
 	data, err := ioutil.ReadAll(rsp.Body)
+	requestID := rsp.Header.Get("X-REQUEST-ID")
 	if err != nil {
 		data = []byte{}
 	}
-	return newHTTPError(rsp.StatusCode, string(data))
+	return newHTTPError(rsp.StatusCode, fmt.Sprintf("{request-id: %s}, %s", requestID, string(data)))
 }
 
 // Ansers if the given response has a status code representing an error.
