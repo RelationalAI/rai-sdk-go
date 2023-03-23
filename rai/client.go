@@ -552,8 +552,10 @@ func (c *Client) DeleteEngine(engine string) error {
 	for !isTerminalState(rsp.State, "DELETED") {
 		time.Sleep(3 * time.Second)
 		if rsp, err = c.GetEngine(engine); err != nil {
-			if err == ErrNotFound {
-				return nil // successfully deleted
+			if e, ok := err.(HTTPError); ok {
+				if e.StatusCode == ErrNotFound.(HTTPError).StatusCode {
+					return nil // successfully deleted
+				}
 			}
 			return err
 		}
