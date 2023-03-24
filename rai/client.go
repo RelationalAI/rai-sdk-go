@@ -306,22 +306,23 @@ func (c *Client) request(
 
 type HTTPError struct {
 	StatusCode int
+	Headers    http.Header
 	Body       string
 }
 
 func (e HTTPError) Error() string {
 	statusText := http.StatusText(e.StatusCode)
 	if e.Body != "" {
-		return fmt.Sprintf("%d %s\n%s", e.StatusCode, statusText, e.Body)
+		return fmt.Sprintf("%d %s %s\n%s", e.StatusCode, e.Headers, statusText, e.Body)
 	}
-	return fmt.Sprintf("%d %s", e.StatusCode, statusText)
+	return fmt.Sprintf("%d %s %s", e.StatusCode, e.Headers, statusText)
 }
 
-func newHTTPError(status int, body string) error {
-	return HTTPError{StatusCode: status, Body: body}
+func newHTTPError(status int, headers http.Header, body string) error {
+	return HTTPError{StatusCode: status, Headers: headers, Body: body}
 }
 
-var ErrNotFound = newHTTPError(http.StatusNotFound, "")
+var ErrNotFound = newHTTPError(http.StatusNotFound, nil, "")
 
 // Returns an HTTPError corresponding to the given response.
 func httpError(rsp *http.Response) error {
@@ -330,7 +331,7 @@ func httpError(rsp *http.Response) error {
 	if err != nil {
 		data = []byte{}
 	}
-	return newHTTPError(rsp.StatusCode, string(data))
+	return newHTTPError(rsp.StatusCode, rsp.Header, string(data))
 }
 
 // Ansers if the given response has a status code representing an error.
@@ -551,8 +552,10 @@ func (c *Client) DeleteEngine(engine string) error {
 	for !isTerminalState(rsp.State, "DELETED") {
 		time.Sleep(3 * time.Second)
 		if rsp, err = c.GetEngine(engine); err != nil {
-			if err == ErrNotFound {
-				return nil // successfully deleted
+			if e, ok := err.(HTTPError); ok {
+				if e.StatusCode == ErrNotFound.(HTTPError).StatusCode {
+					return nil // successfully deleted
+				}
 			}
 			return err
 		}
