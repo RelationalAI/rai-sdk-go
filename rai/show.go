@@ -49,9 +49,14 @@ func Encode(w io.Writer, item interface{}, indent int) error {
 	return enc.Encode(item)
 }
 
+// Print the given item as JSON to io.Writer
+func ShowJSONIO(io io.Writer, item interface{}, indent int) error {
+	return Encode(io, item, indent)
+}
+
 // Print the given item as JSON to stdout.
 func ShowJSON(item interface{}, indent int) error {
-	return Encode(os.Stdout, item, indent)
+	return ShowJSONIO(os.Stdout, item, indent)
 }
 
 // Deprecated: Use `ShowJSON` instead.
@@ -250,41 +255,65 @@ func ShowMetadata(m *pb.MetadataInfo) {
 
 // Show a tabular data value.
 func ShowTabularData(d Tabular) {
+	ShowTabularDataIO(os.Stdout, d)
+}
+
+func ShowTabularDataIO(io io.Writer, d Tabular) {
 	for rnum := 0; rnum < d.NumRows(); rnum++ {
 		if rnum > 0 {
-			fmt.Println(";")
+			fmt.Fprintln(io, ";")
 		}
-		fmt.Print(strings.Join(d.Strings(rnum), ", "))
+		fmt.Fprint(io, strings.Join(d.Strings(rnum), ", "))
 	}
 	fmt.Println()
 }
 
 func ShowRelation(r Relation) {
+	ShowRelationIO(os.Stdout, r)
+}
+
+func ShowRelationIO(io io.Writer, r Relation) {
 	sig := r.Signature()
-	fmt.Printf("// %s\n", strings.Join(sig.Strings(), ", "))
-	ShowTabularData(r)
+	fmt.Fprintf(io, "// %s\n", strings.Join(sig.Strings(), ", "))
+	ShowTabularDataIO(io, r)
 }
 
 func (r *baseRelation) Show() {
-	ShowRelation(r)
+	r.ShowIO(os.Stdout)
+}
+
+func (r *baseRelation) ShowIO(io io.Writer) {
+	ShowRelationIO(io, r)
 }
 
 func (r derivedRelation) Show() {
-	ShowRelation(r)
+	r.ShowIO(os.Stdout)
+}
+
+func (r derivedRelation) ShowIO(io io.Writer) {
+	ShowRelationIO(io, r)
 }
 
 func (rc RelationCollection) Show() {
+	rc.ShowIO(os.Stdout)
+}
+
+func (rc RelationCollection) ShowIO(io io.Writer) {
 	for i, r := range rc {
 		if i > 0 {
-			fmt.Println()
+			fmt.Fprintln(io)
 		}
-		r.Show()
+		ShowRelationIO(io, r)
 	}
 }
 
 func (rsp *TransactionResponse) Show() {
-	if err := ShowJSON(&rsp.Transaction, 4); err != nil {
-		fmt.Println(errors.Wrapf(err, "failed to show transaction"))
+	rsp.ShowIO(os.Stdout, os.Stderr)
+}
+
+func (rsp *TransactionResponse) ShowIO(stdout io.Writer, stderr io.Writer) {
+	if err := ShowJSONIO(stdout, &rsp.Transaction, 4); err != nil {
+		fmt.Fprintln(stderr, errors.Wrapf(err, "failed to show transaction"))
 		return
 	}
 	if rsp.Metadata == nil {
@@ -292,12 +321,12 @@ func (rsp *TransactionResponse) Show() {
 	}
 	rc := rsp.Relations("output")
 	if len(rc) > 0 {
-		fmt.Println()
-		rc.Show()
+		fmt.Fprintln(stdout)
+		rc.ShowIO(stdout)
 	}
 	rc = rsp.Relations("rel", "catalog", "diagnostic")
 	if len(rc) > 0 {
-		fmt.Printf("\nProblems:\n")
-		ShowTabularData(rc.Union())
+		fmt.Fprintf(stderr, "\nProblems:\n")
+		ShowTabularDataIO(stderr, rc.Union())
 	}
 }
