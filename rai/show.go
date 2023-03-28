@@ -267,27 +267,34 @@ func ShowDiagnosticsIO(io io.Writer, rc RelationCollection) {
 	reports := rc.Select("rel", "catalog", "diagnostic", "report")
 
 	errors := 0
+	exceptions := 0
 	warnings := 0
 
 	for i := 0; i < msgs.Union().NumRows(); i++ {
 		code := codes.Union().Column(5).Value(i)
 		msg := msgs.Union().Column(5).Value(i)
 		svt := svts.Union().Column(5).Value(i)
-		startLine := startLines.Union().Column(8).Value(i)
-		startChar := startChars.Union().Column(8).Value(i)
 		report := reports.Union().Column(5).Value(i)
 
-		if svt == "error" {
-			errors += 1
-		}
+		if svt == "exception" {
+			exceptions += 1
+			fmt.Fprintf(io, "%s: %s, %s\n%s", svt, code, msg, report)
+		} else {
+			startLine := startLines.Union().Column(8).Value(i)
+			startChar := startChars.Union().Column(8).Value(i)
 
-		if svt == "warning" {
-			warnings += 1
-		}
+			if svt == "error" {
+				errors += 1
+			}
 
-		fmt.Fprintf(io, "%s: %s, %s (%d, %d)\n%s", svt, code, msg, startLine, startChar, report)
+			if svt == "warning" {
+				warnings += 1
+			}
+
+			fmt.Fprintf(io, "%s: %s, %s (%d, %d)\n%s", svt, code, msg, startLine, startChar, report)
+		}
 	}
-	fmt.Fprintf(io, "Diagnositcs: errors: %d, warnings: %d", errors, warnings)
+	fmt.Fprintf(io, "Diagnositcs: errors: %d, exceptions: %d, warnings: %d", errors, exceptions, warnings)
 }
 
 // Show a tabular data value.
@@ -365,6 +372,7 @@ func (rsp *TransactionResponse) ShowIO(iout io.Writer, ioerr io.Writer) {
 	rc = rsp.Relations("rel", "catalog", "diagnostic")
 	if len(rc) > 0 {
 		fmt.Fprintf(ioerr, "\nProblems:\n")
+		//ShowTabularDataIO(ioerr, rc.Union())
 		ShowDiagnosticsIO(ioerr, rc)
 	}
 }
