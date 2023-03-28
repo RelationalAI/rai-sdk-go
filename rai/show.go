@@ -285,9 +285,9 @@ func ShowDiagnosticsIO(io io.Writer, rc RelationCollection) {
 			warnings += 1
 		}
 
-		fmt.Fprintf(io, "%s: %s, %s (%d, %d)\n%s\n", svt, code, msg, startLine, startChar, report)
+		fmt.Fprintf(io, "%s: %s, %s (%d, %d)\n%s", svt, code, msg, startLine, startChar, report)
 	}
-	fmt.Fprintf(io, "Diagnositcs: errors: %d, warnings: %d\n", errors, warnings)
+	fmt.Fprintf(io, "Diagnositcs: errors: %d, warnings: %d", errors, warnings)
 }
 
 // Show a tabular data value.
@@ -366,6 +366,5 @@ func (rsp *TransactionResponse) ShowIO(iout io.Writer, ioerr io.Writer) {
 	if len(rc) > 0 {
 		fmt.Fprintf(ioerr, "\nProblems:\n")
 		ShowDiagnosticsIO(ioerr, rc)
-		fmt.Fprintln(ioerr)
 	}
 }
