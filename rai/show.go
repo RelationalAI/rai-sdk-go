@@ -253,6 +253,43 @@ func ShowMetadata(m *pb.MetadataInfo) {
 	}
 }
 
+// Show diagnostics
+func ShowDiagnostics(rc RelationCollection) {
+	ShowDiagnosticsIO(os.Stdout, rc)
+}
+
+func ShowDiagnosticsIO(io io.Writer, rc RelationCollection) {
+	msgs := rc.Select("rel", "catalog", "diagnostic", "message")
+	svts := rc.Select("rel", "catalog", "diagnostic", "severity")
+	codes := rc.Select("rel", "catalog", "diagnostic", "code")
+	startLines := rc.Select("rel", "catalog", "diagnostic", "range", "start", "line")
+	startChars := rc.Select("rel", "catalog", "diagnostic", "range", "start", "character")
+	reports := rc.Select("rel", "catalog", "diagnostic", "report")
+
+	errors := 0
+	warnings := 0
+
+	for i := 0; i < msgs.Union().NumRows(); i++ {
+		code := codes.Union().Column(5).Value(i)
+		msg := msgs.Union().Column(5).Value(i)
+		svt := svts.Union().Column(5).Value(i)
+		startLine := startLines.Union().Column(8).Value(i)
+		startChar := startChars.Union().Column(8).Value(i)
+		report := reports.Union().Column(5).Value(i)
+
+		if svt == "error" {
+			errors += 1
+		}
+
+		if svt == "warning" {
+			warnings += 1
+		}
+
+		fmt.Fprintf(io, "%s: %s, %s (%d, %d)\n%s\n", svt, code, msg, startLine, startChar, report)
+	}
+	fmt.Fprintf(io, "Diagnositcs: errors: %d, warnings: %d\n", errors, warnings)
+}
+
 // Show a tabular data value.
 func ShowTabularData(d Tabular) {
 	ShowTabularDataIO(os.Stdout, d)
@@ -311,9 +348,9 @@ func (rsp *TransactionResponse) Show() {
 	rsp.ShowIO(os.Stdout, os.Stderr)
 }
 
-func (rsp *TransactionResponse) ShowIO(stdout io.Writer, stderr io.Writer) {
-	if err := ShowJSONIO(stdout, &rsp.Transaction, 4); err != nil {
-		fmt.Fprintln(stderr, errors.Wrapf(err, "failed to show transaction"))
+func (rsp *TransactionResponse) ShowIO(iout io.Writer, ioerr io.Writer) {
+	if err := ShowJSONIO(iout, &rsp.Transaction, 4); err != nil {
+		fmt.Fprintln(ioerr, errors.Wrapf(err, "failed to show transaction"))
 		return
 	}
 	if rsp.Metadata == nil {
@@ -321,12 +358,14 @@ func (rsp *TransactionResponse) ShowIO(stdout io.Writer, stderr io.Writer) {
 	}
 	rc := rsp.Relations("output")
 	if len(rc) > 0 {
-		fmt.Fprintln(stdout)
-		rc.ShowIO(stdout)
+		fmt.Fprintln(iout)
+		rc.ShowIO(iout)
 	}
+
 	rc = rsp.Relations("rel", "catalog", "diagnostic")
 	if len(rc) > 0 {
-		fmt.Fprintf(stderr, "\nProblems:\n")
-		ShowTabularDataIO(stderr, rc.Union())
+		fmt.Fprintf(ioerr, "\nProblems:\n")
+		ShowDiagnosticsIO(ioerr, rc)
+		fmt.Fprintln(ioerr)
 	}
 }
