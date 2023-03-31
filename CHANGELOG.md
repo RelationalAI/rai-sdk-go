@@ -1,8 +1,12 @@
 # Changelog
 
+## v0.4.4-alpha
+
+* Add support for Snowflake database links.
+
 ## v0.4.3-alpha
 
-* Add support for Snowflake integrations
+* Add support for Snowflake integrations.
 
 ## v0.4.2-alpha
 
