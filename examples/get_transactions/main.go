@@ -24,7 +24,7 @@ import (
 
 type Options struct {
 	Profile string   `long:"profile" default:"default" description:"config profile"`
-	Tags    []string `long:"tags" default:"" description:"filter tansactions by a comma separated list of tags"`
+	Tags    []string `long:"tags" description:"filter tansactions by a comma separated list of tags"`
 }
 
 func run(opts *Options) error {
