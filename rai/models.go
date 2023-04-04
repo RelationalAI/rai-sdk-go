@@ -351,6 +351,9 @@ type Integration struct {
 	Snowflake  struct {
 		Account string `json:"account"`
 	} `json:"snowflake"`
+	RAI struct {
+		Engine string `json:"engine"`
+	} `json:"rai"`
 }
 
 type SnowflakeCredentials struct {
