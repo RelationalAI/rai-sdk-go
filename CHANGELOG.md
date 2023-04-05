@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.5-alpha
+
+* Add support for Snowflake data stream APIs.
+
 ## v0.4.4-alpha
 
 * Add support for Snowflake database links.
