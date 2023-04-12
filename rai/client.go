@@ -1780,14 +1780,3 @@ func (c *Client) ListSnowflakeDataStreams(
 	}
 	return result, nil
 }
-
-func (c *Client) GetSnowflakeDataStreamStatus(
-	integration, dbLink, objectName string,
-) (*SnowflakeDataStreamStatus, error) {
-	var result SnowflakeDataStreamStatus
-	path := makePath(PathIntegrations, integration, "database-links", dbLink, "data-streams", objectName, "status")
-	if err := c.Get(path, nil, nil, &result); err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
