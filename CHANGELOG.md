@@ -3,6 +3,7 @@
 ## v0.4.6-alpha
 
 * Add support for Snowflake data stream on views.
+* Add support for Snowflake data stream status.
 
 ## v0.4.5-alpha
 
