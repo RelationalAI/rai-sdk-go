@@ -810,3 +810,73 @@ func TestUser(t *testing.T) {
 		assert.True(t, isErrNotFound(err))
 	}
 }
+
+func TestListEdb(t *testing.T) {
+	client := test.client
+
+	// simple edb: int64 values
+	query := "def insert:foo = 1"
+	rsp, err := client.Execute(test.databaseName, test.engineName, query, nil, false)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+
+	edbs, err := client.ListEDBs(test.databaseName, test.engineName)
+	assert.Nil(t, err)
+	assert.NotNil(t, edbs)
+	edb := findEDB(edbs, "foo")
+	assert.NotNil(t, edb)
+	assert.Equal(t, &EDB{Name: "foo", Keys: []interface{}{}, Values: []interface{}{"Int64"}}, edb)
+
+	// simple edb: :x keys, int64 values
+	query = "def insert:bar:x = 1"
+	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+
+	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
+	assert.Nil(t, err)
+	assert.NotNil(t, edbs)
+	edb = findEDB(edbs, "bar")
+	assert.NotNil(t, edb)
+	assert.Equal(t, &EDB{Name: "bar", Keys: []interface{}{":x"}, Values: []interface{}{"Int64"}}, edb)
+
+	// value type edb with only values
+	query = `
+		value type FooType = Int, Char
+		def insert:FooEDB = ^FooType[1, 'a']`
+	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+
+	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
+	assert.Nil(t, err)
+	assert.NotNil(t, edbs)
+	edb = findEDB(edbs, "FooEDB")
+	assert.NotNil(t, edb)
+	values := []interface{}{
+		map[string]interface{}{
+			"params": []interface{}{":FooType", "Int64", "Char"},
+		},
+	}
+	assert.Equal(t, &EDB{Name: "FooEDB", Keys: []interface{}{}, Values: values}, edb)
+
+	// value type edb with keys and values
+	query = `
+		value type FooType = Int, Char
+		def insert:FooEDB:x = ^FooType[1, 'a']`
+	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+
+	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
+	assert.Nil(t, err)
+	assert.NotNil(t, edbs)
+	edb = findEDB(edbs, "FooEDB")
+	assert.NotNil(t, edb)
+	values = []interface{}{
+		map[string]interface{}{
+			"params": []interface{}{":FooType", "Int64", "Char"},
+		},
+	}
+	assert.Equal(t, &EDB{Name: "FooEDB", Keys: []interface{}{":x"}, Values: values}, edb)
+}

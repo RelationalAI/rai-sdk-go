@@ -38,9 +38,9 @@ type Database struct {
 }
 
 type EDB struct {
-	Name   string   `json:"name"`
-	Keys   []string `json:"keys"`
-	Values []string `json:"values"`
+	Name   string        `json:"name"`
+	Keys   []interface{} `json:"keys"`
+	Values []interface{} `json:"values"`
 }
 
 type Engine struct {
