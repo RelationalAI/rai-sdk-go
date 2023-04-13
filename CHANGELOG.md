@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.6-alpha
+
+* Add support for Snowflake data stream on views.
+
 ## v0.4.5-alpha
 
 * Add support for Snowflake data stream APIs.

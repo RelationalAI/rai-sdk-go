@@ -1720,14 +1720,16 @@ func (c *Client) ListSnowflakeDatabaseLinks(
 //
 
 type DataStreamOpts struct {
-	IsView      bool
 	RaiDatabase string
 	Relation    string
 	ObjectName  string
+	ObjectType  string
 	Role        string
 	Warehouse   string
 }
 
+// Creates a data stream to replicate data from a Snowflake table/view to a RAI relation.
+// The opts.Snowflake.ObjectType argument takes either "view" or "table". It is optional and will default to "table".
 func (c *Client) CreateSnowflakeDataStream(
 	integration, dbLink string, creds *SnowflakeCredentials, opts *DataStreamOpts,
 ) (*SnowflakeDataStream, error) {
@@ -1735,7 +1737,7 @@ func (c *Client) CreateSnowflakeDataStream(
 	path := makePath(PathIntegrations, integration, "database-links", dbLink, "data-streams")
 	req := createSnowflakeDataStreamRequest{}
 	req.Snowflake.Object = opts.ObjectName
-	req.Snowflake.IsView = opts.IsView
+	req.Snowflake.ObjectType = opts.ObjectType
 	req.Snowflake.Role = opts.Role
 	req.Snowflake.Warehouse = opts.Warehouse
 	req.Snowflake.Credentials = *creds
