@@ -815,7 +815,7 @@ func TestListEdb(t *testing.T) {
 	client := test.client
 
 	// simple edb: int64 values
-	query := "def insert:foo = 1"
+	query := "def insert:a = 1"
 	rsp, err := client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -823,12 +823,12 @@ func TestListEdb(t *testing.T) {
 	edbs, err := client.ListEDBs(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.NotNil(t, edbs)
-	edb := findEDB(edbs, "foo")
+	edb := findEDB(edbs, "a")
 	assert.NotNil(t, edb)
-	assert.Equal(t, &EDB{Name: "foo", Keys: []interface{}{}, Values: []interface{}{"Int64"}}, edb)
+	assert.Equal(t, &EDB{Name: "a", Keys: []interface{}{}, Values: []interface{}{"Int64"}}, edb)
 
 	// simple edb: :x keys, int64 values
-	query = "def insert:bar:x = 1"
+	query = "def insert:b:x = 1"
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -836,14 +836,14 @@ func TestListEdb(t *testing.T) {
 	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.NotNil(t, edbs)
-	edb = findEDB(edbs, "bar")
+	edb = findEDB(edbs, "b")
 	assert.NotNil(t, edb)
-	assert.Equal(t, &EDB{Name: "bar", Keys: []interface{}{":x"}, Values: []interface{}{"Int64"}}, edb)
+	assert.Equal(t, &EDB{Name: "b", Keys: []interface{}{":x"}, Values: []interface{}{"Int64"}}, edb)
 
 	// value type edb with only values
 	query = `
 		value type FooType = Int, Char
-		def insert:FooEDB = ^FooType[1, 'a']`
+		def insert:c = ^FooType[1, 'a']`
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -851,19 +851,19 @@ func TestListEdb(t *testing.T) {
 	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.NotNil(t, edbs)
-	edb = findEDB(edbs, "FooEDB")
+	edb = findEDB(edbs, "c")
 	assert.NotNil(t, edb)
 	values := []interface{}{
 		map[string]interface{}{
 			"params": []interface{}{":FooType", "Int64", "Char"},
 		},
 	}
-	assert.Equal(t, &EDB{Name: "FooEDB", Keys: []interface{}{}, Values: values}, edb)
+	assert.Equal(t, &EDB{Name: "c", Keys: []interface{}{}, Values: values}, edb)
 
-	// value type edb with keys and values
+	// value type edb as value
 	query = `
 		value type FooType = Int, Char
-		def insert:BarEDB:x = ^FooType[1, 'a']`
+		def insert:d:x = ^FooType[1, 'a']`
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -871,17 +871,39 @@ func TestListEdb(t *testing.T) {
 	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.NotNil(t, edbs)
-	edb = findEDB(edbs, "BarEDB")
+	edb = findEDB(edbs, "d")
 	assert.NotNil(t, edb)
 	values = []interface{}{
 		map[string]interface{}{
 			"params": []interface{}{":FooType", "Int64", "Char"},
 		},
 	}
-	assert.Equal(t, &EDB{Name: "BarEDB", Keys: []interface{}{":x"}, Values: values}, edb)
+	assert.Equal(t, &EDB{Name: "d", Keys: []interface{}{":x"}, Values: values}, edb)
+
+	// value type edb as key
+	query = `
+		value type FooType = Int, Char
+		def v = ^FooType[2, 'd']
+		def insert:e:v = #(v)`
+	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+
+	edbs, err = client.ListEDBs(test.databaseName, test.engineName)
+	assert.Nil(t, err)
+	assert.NotNil(t, edbs)
+	edb = findEDB(edbs, "e")
+	assert.NotNil(t, edb)
+	keys := []interface{}{
+		":v",
+		map[string]interface{}{
+			"_constant": []interface{}{"FooType", 2., "d"},
+		},
+	}
+	assert.Equal(t, &EDB{Name: "e", Keys: keys, Values: []interface{}{}}, edb)
 
 	// cleanup
-	for _, edb := range []string{"foo", "bar", "FooEDB", "BarEDB"} {
+	for _, edb := range []string{"a", "b", "c", "d", "e"} {
 		query = fmt.Sprintf("def delete:%s=%s", edb, edb)
 		rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 		assert.Nil(t, err)
