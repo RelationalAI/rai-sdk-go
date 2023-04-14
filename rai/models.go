@@ -458,3 +458,11 @@ type deleteSnowflakeDataStreamRequest struct {
 		Credentials SnowflakeCredentials `json:"credentials"` // not-persisted
 	} `json:"snowflake"`
 }
+
+type SnowflakeDataStreamStatus struct {
+	ID                   string `json:"id"`
+	SnowflakeUnloadStart int64  `json:"snowflakeUnloadStart"` //  time of stream actions started from snowflake
+	RaiLoadEnd           int64  `json:"raiLoadEnd"`           // time of stream actions complete
+	Name                 string `json:"name"`                 // integration + dataStream name
+	Account              string `json:"account"`
+}
