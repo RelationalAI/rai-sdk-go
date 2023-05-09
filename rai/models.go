@@ -427,10 +427,9 @@ type SnowflakeDataStream struct {
 	CreatedOn   string `json:"createdOn"`
 	State       string `json:"state"`
 	Snowflake   struct {
-		Database   string `json:"database"`
-		Schema     string `json:"schema"`
-		Object     string `json:"object"` // fully qualified object name
-		ObjectType string `json:"objectType"`
+		Database string `json:"database"`
+		Schema   string `json:"schema"`
+		Object   string `json:"object"` // fully qualified object name
 	} `json:"snowflake"`
 	RAI struct {
 		Database string `json:"database"`
@@ -441,7 +440,6 @@ type SnowflakeDataStream struct {
 type createSnowflakeDataStreamRequest struct {
 	Snowflake struct {
 		Object      string               `json:"object"` // fully qualified object name
-		ObjectType  string               `json:"objectType"`
 		Role        string               `json:"role"`
 		Warehouse   string               `json:"warehouse"`
 		Credentials SnowflakeCredentials `json:"credentials"` // not-persisted
