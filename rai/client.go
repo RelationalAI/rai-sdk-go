@@ -1638,6 +1638,17 @@ func (c *Client) CreateSnowflakeIntegration(
 	return &result, nil
 }
 
+func (c *Client) UpdateSnowflakeIntegration(
+	name, raiClientID, raiClientSecret string, proxyCreds *SnowflakeCredentials,
+) (error) {
+	var result Integration
+	req := updateSnowflakeIntegrationRequest{Name: name}
+	req.Snowflake.Proxy = *proxyCreds
+	req.RAI.ClientID = raiClientID
+	req.RAI.ClientSecret = raiClientSecret
+	return c.Patch(PathIntegrations, nil, &req, &result)
+}
+
 func (c *Client) DeleteSnowflakeIntegration(name string, adminCreds *SnowflakeCredentials) error {
 	req := deleteSnowflakeIntegrationRequest{}
 	req.Snowflake.Admin = *adminCreds
