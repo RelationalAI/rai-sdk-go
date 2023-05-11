@@ -368,9 +368,6 @@ type createSnowflakeIntegrationRequest struct {
 		Admin   SnowflakeCredentials `json:"admin"`   // not-persisted
 		Proxy   SnowflakeCredentials `json:"proxy"`   // persisted
 	} `json:"snowflake"`
-	RAI struct {
-		Engine string `json:"engine"`
-	} `json:"rai"`
 }
 
 type updateSnowflakeIntegrationRequest struct {
