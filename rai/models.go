@@ -373,6 +373,17 @@ type createSnowflakeIntegrationRequest struct {
 	} `json:"rai"`
 }
 
+type updateSnowflakeIntegrationRequest struct {
+	Name      string `json:"name"`
+	Snowflake struct {
+		Proxy SnowflakeCredentials `json:"proxy"` // persisted
+	} `json:"snowflake"`
+	RAI struct {
+		ClientID     string `json:"clientID"`
+		ClientSecret string `json:"clientSecret"`
+	}
+}
+
 type deleteSnowflakeIntegrationRequest struct {
 	Snowflake struct {
 		Admin SnowflakeCredentials `json:"admin"` // not-persisted
