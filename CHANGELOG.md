@@ -1,7 +1,8 @@
 # Changelog
 
 ## v0.5.0-alpha
-  * remove extraneous integration parameters from the metadata (engine, objecttype)
+  * Remove extraneous integration parameters from the metadata (engine, objecttype).
+  * Add support for updating Snowflake integrations.
 
 ## v0.4.7-alpha
 
