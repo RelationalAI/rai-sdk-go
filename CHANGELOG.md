@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.0-alpha
+  * remove extraneous integration parameters from the metadata (engine, objecttype)
+  * Add support for updating credentials used in Snowflake integrations
+
+
 ## v0.4.7-alpha
 
 * Add support for Snowflake data stream status.
