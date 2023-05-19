@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.5.1-alpha
+* removing engine since it is no longer required by snowflake integrations.
+
 ## v0.5.0-alpha
   * remove extraneous integration parameters from the metadata (engine, objecttype)
   * Add support for updating credentials used in Snowflake integrations
