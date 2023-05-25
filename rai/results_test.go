@@ -249,8 +249,9 @@ var primitiveTypeTests = []execTest{
 	},
 	{
 		query: `def output = auto_number[1]`,
-		mdata: mdata("0.arrow", sig("output", Int64Type,
-			vtype("rel:base:AutoNumber", nil))), // TODO (dba) AutoNumber was incorrectly tagged as having an `Int64Type`. Until the change in the engine is in prod, we need to keep it as `nil`.
+		// TODO (dba) AutoNumber was incorrectly tagged as having an `Int64Type`. Until the change in the engine is in prod, we need to keep it as `nil`.
+		// mdata: mdata("0.arrow", sig("output", Int64Type,
+		// 	vtype("rel:base:AutoNumber", Uint64Type))), 
 		pdata: xdata("0.arrow", sig(Int64Type, Uint64Type), nil), // value changes on each call
 		rdata: xdata("0.arrow", sig("output", Int64Type, Uint64Type), nil),
 	},
