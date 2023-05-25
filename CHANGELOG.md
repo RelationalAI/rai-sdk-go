@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.5.2-alpha
+* Add support for updating Snowflake database links
+
 ## v0.5.1-alpha
 * removing engine since it is no longer required by snowflake integrations.
 * Add support for updating Snowflake database links
