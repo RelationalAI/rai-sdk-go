@@ -1640,7 +1640,7 @@ func (c *Client) CreateSnowflakeIntegration(
 
 func (c *Client) UpdateSnowflakeIntegration(
 	name, raiClientID, raiClientSecret string, proxyCreds *SnowflakeCredentials,
-) (error) {
+) error {
 	var result Integration
 	req := updateSnowflakeIntegrationRequest{Name: name}
 	req.Snowflake.Proxy = *proxyCreds
@@ -1689,6 +1689,20 @@ func (c *Client) CreateSnowflakeDatabaseLink(
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (c *Client) UpdateSnowflakeDatabaseLink(
+	integration, database, schema, role string, warehouse string, creds *SnowflakeCredentials,
+) error {
+	var result SnowflakeDatabaseLink
+	path := makePath(PathIntegrations, integration, "database-links")
+	req := updateSnowflakeDatabaseLinkRequest{}
+	req.Snowflake.Database = database
+	req.Snowflake.Schema = schema
+	req.Snowflake.Role = role
+	req.Snowflake.Warehouse = warehouse
+	req.Snowflake.Credentials = *creds
+	return c.Patch(path, nil, &req, &result)
 }
 
 func (c *Client) DeleteSnowflakeDatabaseLink(

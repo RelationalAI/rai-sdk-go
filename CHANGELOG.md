@@ -2,6 +2,7 @@
 
 ## v0.5.1-alpha
 * removing engine since it is no longer required by snowflake integrations.
+* Add support for updating Snowflake database links
 
 ## v0.5.0-alpha
   * remove extraneous integration parameters from the metadata (engine, objecttype)
