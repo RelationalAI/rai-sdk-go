@@ -413,8 +413,6 @@ type createSnowflakeDatabaseLinkRequest struct {
 
 type updateSnowflakeDatabaseLinkRequest struct {
 	Snowflake struct {
-		Database    string               `json:"database"`
-		Schema      string               `json:"schema"`
 		Role        string               `json:"role"`
 		Warehouse   string               `json:"warehouse"`
 		Credentials SnowflakeCredentials `json:"credentials"` // not-persisted

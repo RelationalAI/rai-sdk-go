@@ -1695,10 +1695,9 @@ func (c *Client) UpdateSnowflakeDatabaseLink(
 	integration, database, schema, role string, warehouse string, creds *SnowflakeCredentials,
 ) error {
 	var result SnowflakeDatabaseLink
-	path := makePath(PathIntegrations, integration, "database-links")
+	name := fmt.Sprintf("%s.%s", database, schema)
+	path := makePath(PathIntegrations, integration, "database-links", name)
 	req := updateSnowflakeDatabaseLinkRequest{}
-	req.Snowflake.Database = database
-	req.Snowflake.Schema = schema
 	req.Snowflake.Role = role
 	req.Snowflake.Warehouse = warehouse
 	req.Snowflake.Credentials = *creds
