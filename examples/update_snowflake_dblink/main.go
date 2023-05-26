@@ -28,7 +28,6 @@ type Options struct {
 	Database          string `long:"database" required:"true" description:"Snowflake database name"`
 	Schema            string `long:"schema" required:"true" description:"Snowflake schema name"`
 	Role              string `long:"role" required:"true" description:"Snowflake role"`
-	Warehouse         string `long:"warehouse" required:"true" description:"Snowflake warehouse"`
 	SnowflakeUsername string `long:"snowflakeUsername" default:"default" description:"Snowflake username"`
 	SnowflakePassword string `long:"snowflakePassword" default:"default" description:"Snowflake password"`
 }
@@ -39,7 +38,7 @@ func run(opts *Options) error {
 		return err
 	}
 	creds := rai.SnowflakeCredentials{Username: opts.SnowflakeUsername, Password: opts.SnowflakePassword}
-	return client.UpdateSnowflakeDatabaseLink(opts.Integration, opts.Database, opts.Schema, opts.Role, opts.Warehouse, &creds)
+	return client.UpdateSnowflakeDatabaseLink(opts.Integration, opts.Database, opts.Schema, opts.Role, &creds)
 }
 
 func main() {
