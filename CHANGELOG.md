@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.5.3-alpha
+TODO
+
 ## v0.5.2-alpha
 * Add support for updating Snowflake database links
 
