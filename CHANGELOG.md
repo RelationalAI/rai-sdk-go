@@ -1,7 +1,7 @@
 # Changelog
 
 ## v0.5.3-alpha
-TODO
+* Make passing SF creds optional for creating/deleting data streams
 
 ## v0.5.2-alpha
 * Add support for updating Snowflake database links
