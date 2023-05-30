@@ -17,6 +17,7 @@ package rai
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -61,11 +62,40 @@ func findModel(models []Model, name string) *Model {
 	return nil
 }
 
+func getConfig(cfg *Config) error {
+	configPath, _ := expandUser(DefaultConfigFile)
+	if _, err := os.Stat(configPath); err == nil {
+		return LoadConfig(cfg)
+	} else {
+		clientId := os.Getenv("CLIENT_ID")
+		clientSecret := os.Getenv("CLIENT_SECRET")
+		clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
+		raiHost := os.Getenv("HOST")
+		if raiHost == "" {
+			raiHost = "azure.relationalai.com"
+		}
+
+		configFormat := `
+		[default]
+		host=%s
+		region=us-east
+		port=443
+		scheme=https
+		client_id=%s
+		client_secret=%s
+		client_credentials_url=%s
+		`
+		configSrc := fmt.Sprintf(configFormat, raiHost, clientId, clientSecret, clientCredentialsUrl)
+		return LoadConfigString(configSrc, "default", cfg)
+	}
+}
+
 func TestNewClient(t *testing.T) {
 	var testClient *Client
 	var cfg Config
 
-	LoadConfig(&cfg)
+	err := getConfig(&cfg)
+	assert.Nil(t, err)
 
 	opts := ClientOptions{Config: cfg}
 	testClient = NewClient(context.Background(), &opts)
