@@ -454,7 +454,7 @@ type createSnowflakeDataStreamRequest struct {
 		Object      string               `json:"object"` // fully qualified object name
 		Role        string               `json:"role"`
 		Warehouse   string               `json:"warehouse"`
-		Credentials SnowflakeCredentials `json:"credentials"` // not-persisted
+		Credentials SnowflakeCredentials `json:"credentials"` // optional, not-persisted
 	} `json:"snowflake"`
 	RAI struct {
 		Database string `json:"database"`
@@ -465,7 +465,7 @@ type createSnowflakeDataStreamRequest struct {
 type deleteSnowflakeDataStreamRequest struct {
 	Snowflake struct {
 		Role        string               `json:"role"`
-		Credentials SnowflakeCredentials `json:"credentials"` // not-persisted
+		Credentials SnowflakeCredentials `json:"credentials"` // optional, not-persisted
 	} `json:"snowflake"`
 }
 
