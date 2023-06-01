@@ -98,20 +98,11 @@ func (h headerRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
 	return h.defaultRoundTrip.RoundTrip(r)
 }
 
-// todo: fix client init logic, load from config only if env vars are not
-// available.
-func newTestClient() (*Client, error) {
+func getConfig(cfg *Config) error {
 	configPath, _ := expandUser(DefaultConfigFile)
-	var testClient *Client
 	if _, err := os.Stat(configPath); err == nil {
-		testClient, err = NewDefaultClient()
-		if err != nil {
-			panic(err)
-		}
-
+		return LoadConfig(cfg)
 	} else {
-		var cfg Config
-
 		clientId := os.Getenv("CLIENT_ID")
 		clientSecret := os.Getenv("CLIENT_SECRET")
 		clientCredentialsUrl := os.Getenv("CLIENT_CREDENTIALS_URL")
@@ -131,12 +122,22 @@ func newTestClient() (*Client, error) {
 		client_credentials_url=%s
 		`
 		configSrc := fmt.Sprintf(configFormat, raiHost, clientId, clientSecret, clientCredentialsUrl)
-		if err := LoadConfigString(configSrc, "default", &cfg); err != nil {
-			return nil, err
-		}
-		opts := ClientOptions{Config: cfg}
-		testClient = NewClient(context.Background(), &opts)
+		return LoadConfigString(configSrc, "default", cfg)
 	}
+}
+
+// todo: fix client init logic, load from config only if env vars are not
+// available.
+func newTestClient() (*Client, error) {
+	var testClient *Client
+	var cfg Config
+
+	if err := getConfig(&cfg); err != nil {
+		return nil, err
+	}
+
+	opts := ClientOptions{Config: cfg}
+	testClient = NewClient(context.Background(), &opts)
 
 	// get custom headers
 	var customHeaders map[string]string
