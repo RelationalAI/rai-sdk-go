@@ -1,4 +1,6 @@
 # Changelog
+## v0.5.4-alpha
+* Add Snowflake role in database link definition
 
 ## v0.5.3-alpha
 * Make passing SF creds optional for creating/deleting data streams

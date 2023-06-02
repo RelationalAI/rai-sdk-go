@@ -399,6 +399,7 @@ type SnowflakeDatabaseLink struct {
 	Snowflake   struct {
 		Database string `json:"database"`
 		Schema   string `json:"schema"`
+		Role     string `json:"role"`
 	} `json:"snowflake"`
 }
 
