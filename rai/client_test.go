@@ -82,9 +82,10 @@ func TestNewClient(t *testing.T) {
 	assert.NotNil(t, token)
 
 	missingCreds := &ClientCredentials{
-		ClientID:             cfg.Credentials.ClientID,
+		ClientID:             "",
 		ClientSecret:         cfg.Credentials.ClientSecret,
 		ClientCredentialsUrl: cfg.Credentials.ClientCredentialsUrl,
+		Audience:             cfg.Credentials.Audience,
 	}
 
 	token, err = testClient.GetAccessToken(missingCreds)
