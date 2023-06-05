@@ -265,7 +265,9 @@ func TestExecuteAsyncMocked(t *testing.T) {
 		data, _ := os.ReadFile("./multipart.data")
 		w.Header().Set("Content-Type", "multipart/form-data; boundary=b11385ead6144ee0a9550db3672a7ccf")
 		w.WriteHeader(http.StatusOK)
-		w.Write(data)
+		_, err := w.Write(data)
+		assert.Nil(t, err)
+
 	}))
 	defer server.Close()
 
