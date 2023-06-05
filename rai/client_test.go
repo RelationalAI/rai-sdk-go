@@ -15,6 +15,7 @@
 package rai
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -58,6 +59,37 @@ func findModel(models []Model, name string) *Model {
 		}
 	}
 	return nil
+}
+
+func TestNewClient(t *testing.T) {
+	var testClient *Client
+	var cfg Config
+
+	err := getConfig(&cfg)
+	assert.Nil(t, err)
+
+	opts := ClientOptions{Config: cfg}
+	testClient = NewClient(context.Background(), &opts)
+
+	creds := &ClientCredentials{
+		ClientID:             cfg.Credentials.ClientID,
+		ClientSecret:         cfg.Credentials.ClientSecret,
+		ClientCredentialsUrl: cfg.Credentials.ClientCredentialsUrl,
+		Audience:             cfg.Credentials.Audience,
+	}
+	token, err := testClient.GetAccessToken(creds)
+	assert.Nil(t, err)
+	assert.NotNil(t, token)
+
+	missingCreds := &ClientCredentials{
+		ClientID:             cfg.Credentials.ClientID,
+		ClientSecret:         cfg.Credentials.ClientSecret,
+		ClientCredentialsUrl: cfg.Credentials.ClientCredentialsUrl,
+	}
+
+	token, err = testClient.GetAccessToken(missingCreds)
+	assert.Nil(t, token)
+	assert.NotNil(t, err)
 }
 
 // Test database management APIs.

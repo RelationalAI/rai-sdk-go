@@ -171,13 +171,12 @@ func (c *Client) GetAccessToken(creds *ClientCredentials) (*AccessToken, error) 
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(c.ctx)
 	c.ensureHeaders(req, nil)
-	rsp, err := c.HttpClient.Do(req)
+	rsp, err := c.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+
 	token := &AccessToken{}
 	if err = token.Load(rsp.Body); err != nil {
 		return nil, err
