@@ -53,6 +53,5 @@ runs:
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
         RunId: ${{ github.run_id	}}
       run: |
-        runId = rai-sdk-go-${{ github.run_id	}}
-        go test -v -timeout 30m ./rai -e $runId -d $runId
+        go test -v -timeout 30m ./rai -e rai-sdk-go-${{ github.run_id	}} -d rai-sdk-go-${{ github.run_id	}}
       shell: bash
