@@ -54,6 +54,6 @@ runs:
         RunId: ${{ github.run_id	}}
         RunnerOS: ${{ matrix.os }}
       run: |
-        runId = ${{ github.run_id	}} + "-" + ${{ matrix.os	}} 
-        go test -v -timeout 30m ./rai -e "rai-sdk-go-$runId" -d "rai-sdk-go-$runId"
+        runId = ${{ format('rai-sdk-go-{0}-{1}', github.run_id, matrix.os	}}
+        go test -v -timeout 30m ./rai -e $runId -d $runId
       shell: bash
