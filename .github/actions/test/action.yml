@@ -51,7 +51,9 @@ runs:
         CLIENT_CREDENTIALS_URL: ${{ inputs.client_credentials_url }}
         HOST: ${{ inputs.rai_host }}
         CUSTOM_HEADERS: ${{ inputs.custom_headers }}
+        RunId: ${{ github.run_id	}}
+        RunnerOS: ${{ matrix.os }}
       run: |
-        timestamp=$(date +"%s%N")
-        go test -v -timeout 30m ./rai -e "rai-sdk-go-$timestamp" -d "rai-sdk-go-$timestamp"
+        runId = ${{ github.run_id	}} + "-" + ${{ matrix.os	}} 
+        go test -v -timeout 30m ./rai -e "rai-sdk-go-$runId" -d "rai-sdk-go-$runId"
       shell: bash
