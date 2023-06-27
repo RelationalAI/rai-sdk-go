@@ -1,4 +1,7 @@
 # Changelog
+## v0.5.5-alpha
+* Updating Snowflake integration data stream status body
+
 ## v0.5.4-alpha
 * Add Snowflake role in database link definition
 

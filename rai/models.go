@@ -474,8 +474,8 @@ type SnowflakeDataStreamStatus struct {
 	ID              string           `json:"id"`
 	LatestReceived  *DataStreamBatch `json:"latestReceived"`  // latest batch sent from SF
 	LatestProcessed *DataStreamBatch `json:"latestProcessed"` // latest batch fully processed (loaded into RAI)
-	Name            string           `json:"name"`            // locator
-	Account         string           `json:"account"`         // partition key
+	Name            string           `json:"name"`            // integration + dataStream name
+	Account         string           `json:"account"`
 }
 
 type DataStreamBatch struct {
