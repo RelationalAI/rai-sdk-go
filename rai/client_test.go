@@ -17,6 +17,10 @@ package rai
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -284,6 +288,45 @@ func TestListTransactionsByTag(t *testing.T) {
 
 	assert.Equal(t, 1, len(txns), "filter tag did not apply as expected")
 
+}
+
+// testing executeAsync without relation id in arrow partname
+func TestExecuteAsyncMocked(t *testing.T) {
+	// httptest server is used to mock http responses
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data, _ := os.ReadFile("./multipart.data")
+		w.Header().Set("Content-Type", "multipart/form-data; boundary=b11385ead6144ee0a9550db3672a7ccf")
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write(data)
+		assert.Nil(t, err)
+
+	}))
+	defer server.Close()
+
+	url, err := url.Parse(server.URL)
+	assert.Nil(t, err)
+	assert.NotNil(t, url)
+
+	// point the client to the test server
+	cfg := Config{Scheme: url.Scheme, Host: url.Hostname(), Port: url.Port()}
+	opts := ClientOptions{Config: cfg}
+	client := NewClient(context.Background(), &opts)
+
+	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+	rsp, err := client.ExecuteAsync("mocked_db", "mocked_engine", query, nil, true)
+	assert.Nil(t, err)
+	assert.NotNil(t, rsp)
+
+	assert.Equal(t, 1, len(rsp.Relations()))
+	rel := rsp.Relation("0.arrow")
+	assert.NotNil(t, rel)
+	assert.Equal(t, 5, rel.NumRows())
+	assert.Equal(t, sig("output", Int64Type, Int64Type, Int64Type, Int64Type), rel.Signature())
+	assert.Equal(t, []any{"output", int64(1), int64(1), int64(1), int64(1)}, rel.Row(0))
+	assert.Equal(t, []any{"output", int64(2), int64(4), int64(8), int64(16)}, rel.Row(1))
+	assert.Equal(t, []any{"output", int64(3), int64(9), int64(27), int64(81)}, rel.Row(2))
+	assert.Equal(t, []any{"output", int64(4), int64(16), int64(64), int64(256)}, rel.Row(3))
+	assert.Equal(t, []any{"output", int64(5), int64(25), int64(125), int64(625)}, rel.Row(4))
 }
 
 func findRelation(relations []RelationV1, colName string) *RelationV1 {
