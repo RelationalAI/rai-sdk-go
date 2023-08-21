@@ -943,3 +943,11 @@ func TestListEdb(t *testing.T) {
 		assert.NotNil(t, rsp)
 	}
 }
+
+func TestTransactionAbort(t *testing.T) {
+	query := `ic test_ic { false }`
+
+	rsp, err := test.client.Execute(test.databaseName, test.engineName, query, nil, true, o11yTag)
+	assert.Nil(t, err)
+	assert.Equal(t, "integrity constraint violation", rsp.Transaction.AbortReason)
+}
