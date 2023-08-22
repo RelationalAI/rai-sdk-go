@@ -1,4 +1,8 @@
 # Changelog
+
+## v0.5.9-alpha
+* Increased auth token expiration token from 5s to 60s.
+
 ## v0.5.5-alpha
 * Updating Snowflake integration data stream status body
 
