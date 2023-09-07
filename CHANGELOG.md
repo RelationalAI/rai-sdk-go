@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.10-alpha
+* `X-Request-Id` is generated for every HTTP request.
+* Stringified `HTTPError` includes the `X-Request-Id` instead of all headers from the response.
+
 ## v0.5.9-alpha
 * Increased auth token expiration token from 5s to 60s.
 

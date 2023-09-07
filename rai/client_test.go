@@ -17,10 +17,12 @@ package rai
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -950,4 +952,46 @@ func TestTransactionAbort(t *testing.T) {
 	rsp, err := test.client.Execute(test.databaseName, test.engineName, query, nil, true, o11yTag)
 	assert.Nil(t, err)
 	assert.Equal(t, "integrity constraint violation", rsp.Transaction.AbortReason)
+}
+
+func TestXRequestId(t *testing.T) {
+	query := `def output = 1 + 1`
+	inputs := make([]interface{}, 0)
+
+	tx := TransactionRequest{
+		Database: test.databaseName,
+		Engine:   test.engineName,
+		Query:    query,
+		ReadOnly: true,
+		Inputs:   inputs,
+		Tags:     []string{o11yTag}}
+	var rsp *http.Response
+	err := test.client.request(http.MethodPost, PathTransactions, nil, nil, tx, &rsp)
+
+	// assert that the request id is set
+	assert.Nil(t, err)
+	assert.NotEmpty(t, rsp.Header.Get("X-Request-Id"))
+
+	// assert that the request id is returned in the response
+	xRequestId := uuid.New().String()
+	headers := map[string]string{"X-Request-Id": xRequestId}
+	err = test.client.request(http.MethodPost, PathTransactions, headers, nil, tx, &rsp)
+
+	assert.Nil(t, err)
+	assert.Equal(t, xRequestId, rsp.Header.Get("X-Request-Id"))
+
+	// assert that the request id is specified in the error
+	tx = TransactionRequest{
+		Database: test.databaseName,
+		Engine:   "fake-engine",
+		Query:    query,
+		ReadOnly: true,
+		Inputs:   inputs,
+		Tags:     []string{o11yTag}}
+	xRequestId = uuid.New().String()
+	headers = map[string]string{"X-Request-Id": xRequestId}
+	err = test.client.request(http.MethodPost, PathTransactions, headers, nil, tx, &rsp)
+
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), xRequestId)
 }
