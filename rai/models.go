@@ -228,6 +228,10 @@ type createEngineResponse struct {
 	Engine Engine `json:"compute"`
 }
 
+type SuspendEngineRequest struct {
+	Suspend bool `json:"suspend"`
+}
+
 type createOAuthClientRequest struct {
 	Name        string   `json:"name"`
 	Permissions []string `json:"permissions"`

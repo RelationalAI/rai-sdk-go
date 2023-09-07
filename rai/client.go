@@ -606,6 +606,28 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 	return result.Engines, nil
 }
 
+func (c *Client) ResumeEngine(engineName string) error {
+	var result interface{}
+	data := &SuspendEngineRequest{Suspend: false}
+	uri := makePath(PathEngine, engineName)
+	err := c.Patch(uri, nil, data, &result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) SuspendEngine(engineName string) error {
+	var result interface{}
+	data := &SuspendEngineRequest{Suspend: true}
+	uri := makePath(PathEngine, engineName)
+	err := c.Patch(uri, nil, data, &result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //
 // OAuth Clients
 //
