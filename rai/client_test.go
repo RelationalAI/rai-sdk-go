@@ -220,7 +220,7 @@ func TestEngine(t *testing.T) {
 	engine = findEngine(engines, test.engineName)
 	assert.Nil(t, engine)
 
-	// suspend the test engine
+	// resume the test engine
 	err = client.SuspendEngine(test.engineName)
 	assert.Nil(t, err)
 
