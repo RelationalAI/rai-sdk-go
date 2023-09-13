@@ -606,7 +606,7 @@ func (c *Client) ListEngines(filters ...interface{}) ([]Engine, error) {
 	return result.Engines, nil
 }
 
-func (c *Client) ResumeEngine(engineName string) error {
+func (c *Client) StartEngine(engineName string) error {
 	var result interface{}
 	data := &SuspendEngineRequest{Suspend: false}
 	uri := makePath(PathEngine, engineName)
@@ -617,7 +617,7 @@ func (c *Client) ResumeEngine(engineName string) error {
 	return nil
 }
 
-func (c *Client) SuspendEngine(engineName string) error {
+func (c *Client) StopEngine(engineName string) error {
 	var result interface{}
 	data := &SuspendEngineRequest{Suspend: true}
 	uri := makePath(PathEngine, engineName)

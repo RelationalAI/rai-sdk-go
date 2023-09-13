@@ -39,12 +39,12 @@ func run(opts *Options) error {
 
 	switch rsp.State {
 	case "PROVISIONED":
-		err := client.SuspendEngine(opts.Engine)
+		err := client.StopEngine(opts.Engine)
 		if err != nil {
 			return err
 		}
 	case "SUSPENDED":
-		err := client.ResumeEngine(opts.Engine)
+		err := client.StartEngine(opts.Engine)
 		if err != nil {
 			return err
 		}

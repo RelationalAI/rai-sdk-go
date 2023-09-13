@@ -221,7 +221,7 @@ func TestEngine(t *testing.T) {
 	assert.Nil(t, engine)
 
 	// resume the test engine
-	err = client.SuspendEngine(test.engineName)
+	err = client.StopEngine(test.engineName)
 	assert.Nil(t, err)
 
 	waitOrFail := func(state string) {
@@ -246,7 +246,7 @@ func TestEngine(t *testing.T) {
 	assert.Equal(t, "SUSPENDED", engine.State)
 
 	// suspend the test engine
-	err = client.ResumeEngine(test.engineName)
+	err = client.StartEngine(test.engineName)
 	assert.Nil(t, err)
 
 	waitOrFail("PROVISIONED")
