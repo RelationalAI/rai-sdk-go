@@ -14,4 +14,4 @@
 
 package rai
 
-const Version = "0.5.10-alpha"
+const Version = "0.5.11-alpha"

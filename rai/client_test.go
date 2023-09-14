@@ -219,6 +219,38 @@ func TestEngine(t *testing.T) {
 	assert.Nil(t, err)
 	engine = findEngine(engines, test.engineName)
 	assert.Nil(t, engine)
+
+	// resume the test engine
+	err = client.StopEngine(test.engineName)
+	assert.Nil(t, err)
+
+	waitOrFail := func(state string) {
+		const maxWaitTime = 600 // seconds
+		const duration = 5      // seconds
+		eng := &Engine{}
+		waitTime := 0
+		for !isTerminalState(eng.State, state) {
+			time.Sleep(duration * time.Second)
+			waitTime += duration
+			eng, err = client.GetEngine(test.engineName)
+			assert.Nil(t, err)
+			assert.Less(t, waitTime, maxWaitTime, "Failed waiting for engine state change: %s", eng.State)
+		}
+	}
+	waitOrFail("SUSPENDED")
+
+	// check status
+	engine, err = client.GetEngine(test.engineName)
+	assert.Nil(t, err)
+	assert.NotNil(t, engine)
+	assert.Equal(t, "SUSPENDED", engine.State)
+
+	// suspend the test engine
+	err = client.StartEngine(test.engineName)
+	assert.Nil(t, err)
+
+	waitOrFail("PROVISIONED")
+
 }
 
 // Test transaction execution.
