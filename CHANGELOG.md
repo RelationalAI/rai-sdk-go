@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.5.11-alpha
+* Add ability to start and stop engines. 
+
 ## v0.5.10-alpha
 * `X-Request-Id` is generated for every HTTP request.
 * Stringified `HTTPError` includes the `X-Request-Id` instead of all headers from the response.
