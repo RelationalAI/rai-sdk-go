@@ -610,22 +610,14 @@ func (c *Client) StartEngine(engineName string) error {
 	var result interface{}
 	data := &SuspendEngineRequest{Suspend: false}
 	uri := makePath(PathEngine, engineName)
-	err := c.Patch(uri, nil, data, &result)
-	if err != nil {
-		return err
-	}
-	return nil
+	return c.Patch(uri, nil, data, &result)
 }
 
 func (c *Client) StopEngine(engineName string) error {
 	var result interface{}
 	data := &SuspendEngineRequest{Suspend: true}
 	uri := makePath(PathEngine, engineName)
-	err := c.Patch(uri, nil, data, &result)
-	if err != nil {
-		return err
-	}
-	return nil
+	return c.Patch(uri, nil, data, &result)
 }
 
 //
