@@ -1855,8 +1855,6 @@ type DataStreamOpts struct {
 	ObjectName        string
 	Role              string
 	Warehouse         string
-	// Optional, will fall back to stored SF credentials if not supplied
-	Credentials SnowflakeCredentials
 }
 
 // Register snowflake datastream created by native app to replicate data from a Snowflake table/view to a RAI relation.
