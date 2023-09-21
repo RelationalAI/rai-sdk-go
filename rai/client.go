@@ -1850,8 +1850,8 @@ func (c *Client) GetSnowflakeDataStreamStatus(
 type DataStreamOpts struct {
 	RaiDatabase       string
 	Relation          string
-	SnowflakeDatabase string
-	SnowflakeSchema   string
+	SnowflakeDatabase string // native app db
+	SnowflakeSchema   string // native app schema
 	ObjectName        string
 	Role              string
 	Warehouse         string
@@ -1887,6 +1887,7 @@ func (c *Client) UnregisterSnowflakeDataStream(
 	return c.Delete(path, nil, nil, nil)
 }
 
+// Get datastream registered by native app
 func (c *Client) GetRegisteredSnowflakeDataStream(
 	integration, objectName string,
 ) (*SnowflakeDataStream, error) {
@@ -1898,8 +1899,9 @@ func (c *Client) GetRegisteredSnowflakeDataStream(
 	return &result, nil
 }
 
+// List datastreams registered by native app associated with the integration
 func (c *Client) ListRegisteredSnowflakeDataStreams(
-	integration, dbLink string,
+	integration string,
 ) ([]SnowflakeDataStream, error) {
 	var result []SnowflakeDataStream
 	path := makePath(PathIntegrationsBeta, integration, "data-streams")
@@ -1909,6 +1911,7 @@ func (c *Client) ListRegisteredSnowflakeDataStreams(
 	return result, nil
 }
 
+// Get datastream status registered by native app
 func (c *Client) GetRegisteredSnowflakeDataStreamStatus(
 	integration, objectName string,
 ) (*SnowflakeDataStreamStatus, error) {
