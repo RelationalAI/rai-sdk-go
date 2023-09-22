@@ -445,9 +445,9 @@ type SnowflakeDataStream struct {
 	CreatedOn   string `json:"createdOn"`
 	State       string `json:"state"`
 	Snowflake   struct {
-		Database string `json:"database"`
-		Schema   string `json:"schema"`
-		Object   string `json:"object"` // fully qualified object name
+		Database string `json:"database,omitempty"` // Deprecated after alpha"`
+		Schema   string `json:"schema,omitempty"`   // Deprecated after alpha"`
+		Object   string `json:"object"`             // fully qualified object name
 	} `json:"snowflake"`
 	RAI struct {
 		Database string `json:"database"`
@@ -457,11 +457,7 @@ type SnowflakeDataStream struct {
 
 type createSnowflakeDataStreamRequest struct {
 	Snowflake struct {
-		Database  string `json:"database"` // native app db
-		Schema    string `json:"schema"`   // native app schema
-		Object    string `json:"object"`   // fully qualified object name
-		Role      string `json:"role"`
-		Warehouse string `json:"warehouse"`
+		Object string `json:"object"` // fully qualified object name
 	} `json:"snowflake"`
 	RAI struct {
 		Database string `json:"database"`

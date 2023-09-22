@@ -1848,13 +1848,9 @@ func (c *Client) GetSnowflakeDataStreamStatus(
 // beta
 
 type DataStreamOpts struct {
-	RaiDatabase       string
-	Relation          string
-	SnowflakeDatabase string // native app db
-	SnowflakeSchema   string // native app schema
-	ObjectName        string
-	Role              string
-	Warehouse         string
+	RaiDatabase string
+	Relation    string
+	ObjectName  string
 }
 
 // Register snowflake datastream created by native app to replicate data from a Snowflake table/view to a RAI relation.
@@ -1864,11 +1860,7 @@ func (c *Client) RegisterSnowflakeDataStream(
 	var result SnowflakeDataStream
 	path := makePath(PathIntegrationsBeta, integration, "data-streams")
 	req := createSnowflakeDataStreamRequest{}
-	req.Snowflake.Database = opts.SnowflakeDatabase
-	req.Snowflake.Schema = opts.SnowflakeSchema
 	req.Snowflake.Object = opts.ObjectName
-	req.Snowflake.Role = opts.Role
-	req.Snowflake.Warehouse = opts.Warehouse
 	req.RAI.Database = opts.RaiDatabase
 	req.RAI.Relation = opts.Relation
 	if err := c.Post(path, nil, &req, &result); err != nil {
