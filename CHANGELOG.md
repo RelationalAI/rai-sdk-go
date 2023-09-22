@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.5.12-alpha
+* Add beta version of snowflake datastream APIs. 
+
 ## v0.5.11-alpha
 * Add ability to start and stop engines. 
 
