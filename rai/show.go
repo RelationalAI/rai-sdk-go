@@ -49,9 +49,14 @@ func Encode(w io.Writer, item interface{}, indent int) error {
 	return enc.Encode(item)
 }
 
+// Print the given item as JSON to io.Writer
+func ShowJSONIO(io io.Writer, item interface{}, indent int) error {
+	return Encode(io, item, indent)
+}
+
 // Print the given item as JSON to stdout.
 func ShowJSON(item interface{}, indent int) error {
-	return Encode(os.Stdout, item, indent)
+	return ShowJSONIO(os.Stdout, item, indent)
 }
 
 // Deprecated: Use `ShowJSON` instead.
@@ -248,43 +253,111 @@ func ShowMetadata(m *pb.MetadataInfo) {
 	}
 }
 
+// Show diagnostics
+func ShowDiagnostics(rc RelationCollection) {
+	ShowDiagnosticsIO(os.Stdout, rc)
+}
+
+func ShowDiagnosticsIO(io io.Writer, rc RelationCollection) {
+	msgs := rc.Select("rel", "catalog", "diagnostic", "message")
+	svts := rc.Select("rel", "catalog", "diagnostic", "severity")
+	codes := rc.Select("rel", "catalog", "diagnostic", "code")
+	startLines := rc.Select("rel", "catalog", "diagnostic", "range", "start", "line")
+	startChars := rc.Select("rel", "catalog", "diagnostic", "range", "start", "character")
+	reports := rc.Select("rel", "catalog", "diagnostic", "report")
+
+	errors := 0
+	exceptions := 0
+	warnings := 0
+
+	for i := 0; i < msgs.Union().NumRows(); i++ {
+		code := codes.Union().Column(5).Value(i)
+		msg := msgs.Union().Column(5).Value(i)
+		svt := svts.Union().Column(5).Value(i)
+		report := reports.Union().Column(5).Value(i)
+
+		if svt == "exception" {
+			exceptions += 1
+			fmt.Fprintf(io, "%s: %s, %s\n%s", svt, code, msg, report)
+		} else {
+			startLine := startLines.Union().Column(8).Value(i)
+			startChar := startChars.Union().Column(8).Value(i)
+
+			if svt == "error" {
+				errors += 1
+			}
+
+			if svt == "warning" {
+				warnings += 1
+			}
+
+			fmt.Fprintf(io, "%s: %s, %s (%d, %d)\n%s", svt, code, msg, startLine, startChar, report)
+		}
+	}
+	fmt.Fprintf(io, "Diagnositcs: errors: %d, exceptions: %d, warnings: %d", errors, exceptions, warnings)
+}
+
 // Show a tabular data value.
 func ShowTabularData(d Tabular) {
+	ShowTabularDataIO(os.Stdout, d)
+}
+
+func ShowTabularDataIO(io io.Writer, d Tabular) {
 	for rnum := 0; rnum < d.NumRows(); rnum++ {
 		if rnum > 0 {
-			fmt.Println(";")
+			fmt.Fprintln(io, ";")
 		}
-		fmt.Print(strings.Join(d.Strings(rnum), ", "))
+		fmt.Fprint(io, strings.Join(d.Strings(rnum), ", "))
 	}
 	fmt.Println()
 }
 
 func ShowRelation(r Relation) {
+	ShowRelationIO(os.Stdout, r)
+}
+
+func ShowRelationIO(io io.Writer, r Relation) {
 	sig := r.Signature()
-	fmt.Printf("// %s\n", strings.Join(sig.Strings(), ", "))
-	ShowTabularData(r)
+	fmt.Fprintf(io, "// %s\n", strings.Join(sig.Strings(), ", "))
+	ShowTabularDataIO(io, r)
 }
 
 func (r *baseRelation) Show() {
-	ShowRelation(r)
+	r.ShowIO(os.Stdout)
+}
+
+func (r *baseRelation) ShowIO(io io.Writer) {
+	ShowRelationIO(io, r)
 }
 
 func (r derivedRelation) Show() {
-	ShowRelation(r)
+	r.ShowIO(os.Stdout)
+}
+
+func (r derivedRelation) ShowIO(io io.Writer) {
+	ShowRelationIO(io, r)
 }
 
 func (rc RelationCollection) Show() {
+	rc.ShowIO(os.Stdout)
+}
+
+func (rc RelationCollection) ShowIO(io io.Writer) {
 	for i, r := range rc {
 		if i > 0 {
-			fmt.Println()
+			fmt.Fprintln(io)
 		}
-		r.Show()
+		ShowRelationIO(io, r)
 	}
 }
 
 func (rsp *TransactionResponse) Show() {
-	if err := ShowJSON(&rsp.Transaction, 4); err != nil {
-		fmt.Println(errors.Wrapf(err, "failed to show transaction"))
+	rsp.ShowIO(os.Stdout, os.Stderr)
+}
+
+func (rsp *TransactionResponse) ShowIO(iout io.Writer, ioerr io.Writer) {
+	if err := ShowJSONIO(iout, &rsp.Transaction, 4); err != nil {
+		fmt.Fprintln(ioerr, errors.Wrapf(err, "failed to show transaction"))
 		return
 	}
 	if rsp.Metadata == nil {
@@ -292,12 +365,14 @@ func (rsp *TransactionResponse) Show() {
 	}
 	rc := rsp.Relations("output")
 	if len(rc) > 0 {
-		fmt.Println()
-		rc.Show()
+		fmt.Fprintln(iout)
+		rc.ShowIO(iout)
 	}
+
 	rc = rsp.Relations("rel", "catalog", "diagnostic")
 	if len(rc) > 0 {
-		fmt.Printf("\nProblems:\n")
-		ShowTabularData(rc.Union())
+		fmt.Fprintf(ioerr, "\nProblems:\n")
+		//ShowTabularDataIO(ioerr, rc.Union())
+		ShowDiagnosticsIO(ioerr, rc)
 	}
 }
