@@ -103,6 +103,9 @@ type Tabular interface {
 	Strings(int) []string
 }
 
+// TabularSlice is an interface for columns that contain array data that can
+// be sliced into sub-arrays, combining the sub-array's values to represent
+// values such as int128
 type TabularSlice interface {
 	Tabular
 	ColumnSlice(int, int) Column
@@ -1640,7 +1643,8 @@ func newSimpleValueColumn(vt ValueType, c Column, nrows int) Column {
 	return valueColumn{cols}
 }
 
-// get the corresponding width of an Arrow array column for this part of a Signature
+// getSliceWidth gets the corresponding width of an Arrow array column for
+// a `t` that is one of the parts of a Signature
 func getSliceWidth(t any) int {
 	switch tt := t.(type) {
 	case reflect.Type:
@@ -1693,7 +1697,7 @@ func newTabularValueColumn(vt ValueType, c Tabular, nrows int) Column {
 				cc = newRelationColumn(tt, c.Column(ncol), nrows)
 				ncol++
 			case ValueType:
-				cc = newValueColumn(tt, c.Column(ncol) /* listCol */, nrows)
+				cc = newValueColumn(tt, c.Column(ncol), nrows)
 				ncol++
 			case string:
 				cc = newSymbolColumn(tt, nrows)
