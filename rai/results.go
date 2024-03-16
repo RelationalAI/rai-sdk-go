@@ -1678,10 +1678,10 @@ func newTabularValueColumn(vt ValueType, c Tabular, nrows int) Column {
 			switch tt := t.(type) {
 			case reflect.Type:
 				cc = newRelationColumn(tt, tsc.ColumnSlice(ncol, sliceWidth), nrows)
-				ncol++
+				ncol += sliceWidth
 			case ValueType:
 				cc = newValueColumn(tt, tsc.ColumnSlice(ncol, sliceWidth), nrows)
-				ncol++
+				ncol += sliceWidth
 			case string:
 				cc = newSymbolColumn(tt, nrows)
 			default:
