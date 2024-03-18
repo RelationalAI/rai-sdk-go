@@ -1896,7 +1896,7 @@ func TestConstValueTypes(t *testing.T) {
 }
 
 func TestValueTypes(t *testing.T) {
-	//runTests(t, valueTypeTests)
+	runTests(t, valueTypeTests)
 	runTests(t, extraValueTypeTests)
 }
 
