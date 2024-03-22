@@ -103,6 +103,14 @@ type Tabular interface {
 	Strings(int) []string
 }
 
+// TabularSlice is an interface for columns that contain array data that can
+// be sliced into sub-arrays, combining the sub-array's values to represent
+// values such as int128
+type TabularSlice interface {
+	Tabular
+	ColumnSlice(int, int) Column
+}
+
 type Relation interface {
 	Tabular
 	Showable
@@ -273,6 +281,8 @@ type listColumn[T any] struct {
 	cols  []Column
 }
 
+var _ TabularSlice = &listColumn[int]{}
+
 func (c listColumn[T]) Column(cnum int) Column {
 	return listItemColumn[T]{c.data, cnum, c.ncols}
 }
@@ -285,6 +295,13 @@ func (c listColumn[T]) Columns() []Column {
 		}
 	}
 	return c.cols
+}
+
+func (c listColumn[T]) ColumnSlice(cnum int, width int) Column {
+	if width == 1 {
+		return listItemColumn[T]{c.data, cnum, c.ncols}
+	}
+	return listSliceColumn[T]{c.data, cnum, width, c.ncols}
 }
 
 func (c listColumn[T]) GetItem(rnum int, out []T) {
@@ -428,6 +445,58 @@ func (c listItemColumn[T]) Type() any {
 }
 
 func (c listItemColumn[T]) Value(rnum int) any {
+	return c.Item(rnum)
+}
+
+// Represents several sub-columns of a `listColumn` that represent one column for a composite type (e.g. int128)
+type listSliceColumn[T any] struct {
+	data  []T
+	cnum  int
+	width int
+	ncols int
+}
+
+var _ TabularColumn[int] = &listSliceColumn[int]{}
+
+func (c listSliceColumn[T]) Item(rnum int) []T {
+	out := make([]T, c.width)
+	c.GetItem(rnum, out)
+	return out
+}
+
+func (c listSliceColumn[T]) GetItem(rnum int, out []T) {
+	roffs := rnum * c.ncols
+	for i := 0; i < c.width; i++ {
+		out[i] = c.data[roffs+c.cnum+i]
+	}
+}
+
+func (c listSliceColumn[T]) NumCols() int {
+	return 1
+}
+
+func (c listSliceColumn[T]) Strings(rnum int) []string {
+	roffs := rnum * c.ncols
+	result := make([]string, c.width)
+	for i := 0; i < c.width; i++ {
+		result[i] = asString(c.data[roffs+c.cnum+i])
+	}
+	return result
+}
+
+func (c listSliceColumn[T]) NumRows() int {
+	return len(c.data) / c.ncols
+}
+
+func (c listSliceColumn[T]) String(rnum int) string {
+	return asString(c.Item(rnum))
+}
+
+func (c listSliceColumn[T]) Type() any {
+	return typeOf[T]()
+}
+
+func (c listSliceColumn[T]) Value(rnum int) any {
 	return c.Item(rnum)
 }
 
@@ -1544,7 +1613,7 @@ func newBuiltinValueColumn(vt ValueType, c Column, nrows int) Column {
 		case "FixedDecimal":
 			return newDecimalColumn(vt, c)
 		case "Hash":
-			return newUint128Column(c.(listColumn[uint64]))
+			return newUint128Column(c.(TabularColumn[uint64]))
 		case "Rational":
 			return newRationalColumn(c)
 		case "Missing":
@@ -1574,27 +1643,71 @@ func newSimpleValueColumn(vt ValueType, c Column, nrows int) Column {
 	return valueColumn{cols}
 }
 
+// getSliceWidth gets the corresponding width of an Arrow array column for
+// a `t` that is one of the parts of a Signature
+func getSliceWidth(t any) int {
+	switch tt := t.(type) {
+	case reflect.Type:
+		switch tt {
+		case Int128Type:
+		case Uint128Type:
+			return 2
+		default:
+			return 1
+		}
+	case ValueType:
+		ret := 0
+		for _, st := range t.(ValueType) {
+			ret += getSliceWidth(st)
+		}
+		return ret
+	}
+	return 0
+}
+
 // Projects a valueColumn from an underlying `Tabular` column.
 func newTabularValueColumn(vt ValueType, c Tabular, nrows int) Column {
 	ncol := 0
-	ncols := len(vt)
-	cols := make([]Column, ncols)
-	for i, t := range vt {
-		var cc Column
-		switch tt := t.(type) {
-		case reflect.Type:
-			cc = newRelationColumn(tt, c.Column(ncol), nrows)
-			ncol++
-		case ValueType:
-			cc = newValueColumn(tt, c.Column(ncol), nrows)
-			ncol++
-		case string:
-			cc = newSymbolColumn(tt, nrows)
-		default:
-			cc = newLiteralColumn(tt, nrows)
+	tcols := len(vt)
+	cols := make([]Column, tcols)
+
+	if tsc, ok := c.(TabularSlice); ok {
+		for i, t := range vt {
+			sliceWidth := getSliceWidth(t)
+			var cc Column
+			switch tt := t.(type) {
+			case reflect.Type:
+				cc = newRelationColumn(tt, tsc.ColumnSlice(ncol, sliceWidth), nrows)
+				ncol += sliceWidth
+			case ValueType:
+				cc = newValueColumn(tt, tsc.ColumnSlice(ncol, sliceWidth), nrows)
+				ncol += sliceWidth
+			case string:
+				cc = newSymbolColumn(tt, nrows)
+			default:
+				cc = newLiteralColumn(tt, nrows)
+			}
+			cols[i] = cc
 		}
-		cols[i] = cc
+	} else {
+		for i, t := range vt {
+			var cc Column
+			switch tt := t.(type) {
+			case reflect.Type:
+				cc = newRelationColumn(tt, c.Column(ncol), nrows)
+				ncol++
+			case ValueType:
+				cc = newValueColumn(tt, c.Column(ncol), nrows)
+				ncol++
+			case string:
+				cc = newSymbolColumn(tt, nrows)
+			default:
+				cc = newLiteralColumn(tt, nrows)
+			}
+			cols[i] = cc
+		}
 	}
+
 	return valueColumn{cols}
 }
 

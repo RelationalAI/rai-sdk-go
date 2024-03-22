@@ -1236,14 +1236,58 @@ var valueTypeTests = []execTest{
 }
 
 var extraValueTypeTests = []execTest{
+	// Tests RAI-22855
 	{
 		query: `
-			module Foo
-				module Bar
-					value type MyType = Int, Int
+			value type MyType = UnsignedInt[64], FixedDecimal[128, 2]
+			def output = ^MyType[uint[64, 1], decimal[128, 2, 2/3]]`,
+		mdata: mdata("0.arrow", sig("output",
+			vtype("MyType", Uint64Type, vtype("rel:base:FixedDecimal", int64(128), int64(2), Int128Type)))),
+		pdata: xdata("0.arrow", sig(StructType),
+			row([]any{uint64(1), []uint64{67, 0}})),
+		rdata: xdata("0.arrow",
+			sig("output", vtype("MyType", Uint64Type, DecimalType)),
+			row("output", value("MyType", uint64(1),
+				NewDecimal128(67, 0, -2)))),
+	},
+	{
+		query: `
+				value type MyType = Hash
+				def h(x) = hash128["abc", _, x]
+				def output = ^MyType[h]`,
+		mdata: mdata("0.arrow", sig("output",
+			vtype("MyType", vtype("rel:base:Hash", Uint128Type)))),
+		pdata: xdata("0.arrow", sig(Uint64ListType),
+			row([]uint64{3877405323480549948, 3198683864092244389})),
+		rdata: xdata("0.arrow",
+			sig("output", vtype("MyType", BigIntType)),
+			row("output", value("MyType",
+				NewBigUint128(3877405323480549948, 3198683864092244389)))),
+	},
+	{
+		query: `
+				value type MyType = Hash, Hash
+				def h(x) = hash128["abc", _, x]
+				def output = ^MyType[h, h]`,
+		mdata: mdata("0.arrow", sig("output",
+			vtype("MyType", vtype("rel:base:Hash", Uint128Type), vtype("rel:base:Hash", Uint128Type)))),
+		pdata: xdata("0.arrow", sig(Uint64ListType),
+			row([]uint64{3877405323480549948, 3198683864092244389, 3877405323480549948, 3198683864092244389})),
+		rdata: xdata("0.arrow",
+			sig("output", vtype("MyType", BigIntType, BigIntType)),
+			row("output", value("MyType",
+				NewBigUint128(3877405323480549948, 3198683864092244389),
+				NewBigUint128(3877405323480549948, 3198683864092244389)))),
+	},
+	// End tests RAI-22855
+	{
+		query: `
+				module Foo
+					module Bar
+						value type MyType = Int, Int
+					end
 				end
-			end
-			def output = Foo:Bar:^MyType[12, 34]`,
+				def output = Foo:Bar:^MyType[12, 34]`,
 		mdata: mdata("0.arrow",
 			sig("output", vtype("Foo", "Bar", "MyType", Int64Type, Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{12, 34})),
@@ -1251,6 +1295,22 @@ var extraValueTypeTests = []execTest{
 			sig("output", vtype("Foo", "Bar", "MyType", Int64Type, Int64Type)),
 			row("output", value("Foo", "Bar", "MyType", int64(12), int64(34)))),
 	},
+	// RAI-23484 There is a bug with nested value types
+	/*
+		{
+			query: `
+				value type Foo { Foo2 }
+				value type Foo2 {Int, SignedInt[128]}
+				def output { ^Foo[^Foo2[1, int128[2]]] }`,
+			mdata: mdata("0.arrow", sig("output",
+				vtype("Foo", vtype("Foo2", Int64Type, Int128Type)))),
+			pdata: xdata("0.arrow", sig(StructType),
+				row([]any{int64(1), []uint64{2, 0}})),
+			rdata: xdata("0.arrow",
+				sig("output", vtype("Foo", vtype("Foo2", Int64Type, BigIntType))),
+				row("output", value("Foo", vtype("Foo2", uint64(1), NewBigInt128(2, 0))))),
+		},
+	*/
 }
 
 var constValueTypeTests = []execTest{
