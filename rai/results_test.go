@@ -1295,8 +1295,7 @@ var extraValueTypeTests = []execTest{
 			sig("output", vtype("Foo", "Bar", "MyType", Int64Type, Int64Type)),
 			row("output", value("Foo", "Bar", "MyType", int64(12), int64(34)))),
 	},
-	// There is a bug with nested value types
-	// RAI-23484
+	// RAI-23484 There is a bug with nested value types
 	/*
 		{
 			query: `
