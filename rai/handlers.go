@@ -65,6 +65,15 @@ func cacheName() (string, error) {
 	return path.Join(usr.HomeDir, ".rai", "tokens.json"), nil
 }
 
+// Returns the directory of the token cache file.
+func cacheDir() (string, error) {
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(usr.HomeDir, ".rai"), nil
+}
+
 // Read the access token corresponding to the given ClientID from the local
 // token cache, returns nil if the token does not exist.
 func readAccessToken(creds *ClientCredentials) (*AccessToken, error) {
@@ -107,12 +116,22 @@ func writeAccessToken(clientID string, token *AccessToken) {
 }
 
 func writeTokenCache(cache map[string]*AccessToken) {
+	dname, err := cacheDir()
+	if err != nil {
+		fmt.Println(errors.Wrapf(err, "failed to find token directory"))
+	} else {
+		err = os.MkdirAll(dname, 0775)
+		if err != nil {
+			fmt.Println(errors.Wrapf(err, "failed to create token directory"))
+		}
+	}
 	fname, err := cacheName()
 	if err != nil {
 		return
 	}
 	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
+		fmt.Println(errors.Wrapf(err, "failed to open token file"))
 		return
 	}
 	if err := json.NewEncoder(f).Encode(cache); err != nil {
