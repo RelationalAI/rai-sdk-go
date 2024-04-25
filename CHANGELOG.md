@@ -1,10 +1,16 @@
 # Changelog
 
+## v0.5.14-alpha
+* Added print outs for client.execute.
+
+## v0.5.13-alpha
+* Fix (u)int128/hash handling.
+
 ## v0.5.12-alpha
-* Add beta version of snowflake datastream APIs. 
+* Add beta version of snowflake datastream APIs.
 
 ## v0.5.11-alpha
-* Add ability to start and stop engines. 
+* Add ability to start and stop engines.
 
 ## v0.5.10-alpha
 * `X-Request-Id` is generated for every HTTP request.
