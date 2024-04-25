@@ -1,7 +1,10 @@
 # Changelog
 
-## v0.5.13-alpha
+## v0.5.14-alpha
 * Added print outs for client.execute.
+
+## v0.5.13-alpha
+* Fix (u)int128/hash handling.
 
 ## v0.5.12-alpha
 * Add beta version of snowflake datastream APIs.

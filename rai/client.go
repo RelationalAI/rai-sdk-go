@@ -974,7 +974,7 @@ func (c *Client) Execute(
 		return nil, err
 	}
 	if isTransactionComplete(&rsp.Transaction) {
-		fmt.Println(fmt.Sprintf("Txn state: %s.", rsp.Transaction.State))
+		fmt.Printf("Txn state: %s.\n", rsp.Transaction.State)
 		return rsp, nil // fast path
 	}
 	id := rsp.Transaction.ID
@@ -986,17 +986,17 @@ func (c *Client) Execute(
 			return nil, err
 		}
 		if isTransactionComplete(&rsp.Transaction) {
-			fmt.Println(fmt.Sprintf("Txn %s state: %s.", id, rsp.Transaction.State))
+			fmt.Printf("Txn %s state: %s.", id, rsp.Transaction.State)
 			return rsp, nil
 		}
-		fmt.Println(fmt.Sprintf("Txn %s state: %s.", id, rsp.Transaction.State))
+		fmt.Printf("Txn %s state: %s.", id, rsp.Transaction.State)
 		delta := time.Since(t0) // total run time
-		fmt.Println(fmt.Sprintf("Delta is %s.", delta))
+		fmt.Printf("Delta is %s.", delta)
 		pause := time.Duration(int64(delta) / 5) // 20% of total run time
 		if pause > twoMinutes {
 			pause = twoMinutes
 		}
-		fmt.Println(fmt.Sprintf("Pause took %s.", pause))
+		fmt.Printf("Pause took %s.", pause)
 		time.Sleep(pause)
 	}
 }
