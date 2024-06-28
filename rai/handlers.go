@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -56,22 +57,13 @@ func NewClientCredentialsHandler(
 	return &ClientCredentialsHandler{client: c, creds: creds}
 }
 
-// Returns the name of the token cache file.
-func cacheName() (string, error) {
+// Returns the path of the token cache file.
+func cachePath() (string, error) {
 	usr, err := user.Current()
 	if err != nil {
 		return "", err
 	}
 	return path.Join(usr.HomeDir, ".rai", "tokens.json"), nil
-}
-
-// Returns the directory of the token cache file.
-func cacheDir() (string, error) {
-	usr, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-	return path.Join(usr.HomeDir, ".rai"), nil
 }
 
 // Read the access token corresponding to the given ClientID from the local
@@ -88,7 +80,7 @@ func readAccessToken(creds *ClientCredentials) (*AccessToken, error) {
 }
 
 func readTokenCache() (map[string]*AccessToken, error) {
-	fname, err := cacheName()
+	fname, err := cachePath()
 	if err != nil {
 		return nil, err
 	}
@@ -116,19 +108,17 @@ func writeAccessToken(clientID string, token *AccessToken) {
 }
 
 func writeTokenCache(cache map[string]*AccessToken) {
-	dname, err := cacheDir()
-	if err != nil {
-		fmt.Println(errors.Wrapf(err, "failed to find token directory"))
-	} else {
-		err = os.MkdirAll(dname, 0775)
-		if err != nil {
-			fmt.Println(errors.Wrapf(err, "failed to create token directory"))
-		}
-	}
-	fname, err := cacheName()
+	fname, err := cachePath()
 	if err != nil {
 		return
 	}
+
+	dirName := filepath.Dir(fname)
+	err = os.MkdirAll(dirName, 0775)
+	if err != nil {
+		fmt.Println(errors.Wrapf(err, "failed to create token directory"))
+	}
+
 	f, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Println(errors.Wrapf(err, "failed to open token file"))
