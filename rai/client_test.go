@@ -18,11 +18,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,6 +66,32 @@ func findModel(models []Model, name string) *Model {
 	return nil
 }
 
+// deleteTokenCacheDir deletes the token file cache and the "~/.rai" directory if empty
+func deleteTokenCacheDir(t *testing.T) {
+	fname, err := cachePath()
+	if err != nil {
+		t.Error("Failed to get token cache file name")
+	}
+	err = os.Remove(fname)
+	if err != nil {
+		t.Errorf("Failed to delete token cache file %s\n", fname)
+	}
+	// if the directory is not empty then the deletion request will fail, but we want the test to continue
+	_ = os.Remove(filepath.Dir(fname))
+}
+
+// assertTokenCacheFileCreated asserts that the token file has been created
+func assertTokenCacheFileCreated(t *testing.T) {
+	fpath, err := cachePath()
+	if err != nil {
+		t.Error("Failed to get token cache file name")
+	}
+
+	if _, err := os.Stat(fpath); err != nil {
+		t.Error(errors.Wrapf(err, "Failed to stat token cache file %s", fpath))
+	}
+}
+
 func TestNewClient(t *testing.T) {
 	var testClient *Client
 	var cfg Config
@@ -93,6 +122,30 @@ func TestNewClient(t *testing.T) {
 	token, err = testClient.GetAccessToken(missingCreds)
 	assert.Nil(t, token)
 	assert.NotNil(t, err)
+}
+
+// Test token cache file creation
+func TestTokenCacheFile(t *testing.T) {
+	deleteTokenCacheDir(t)
+
+	var testClient *Client
+	var cfg Config
+
+	err := getConfig(&cfg)
+	assert.Nil(t, err)
+
+	opts := ClientOptions{Config: cfg}
+	testClient = NewClient(context.Background(), &opts)
+
+	token, err := testClient.accessTokenHandler.GetAccessToken()
+	assert.Nil(t, err)
+	assert.NotNil(t, token)
+
+	tokenCached, _ := testClient.accessTokenHandler.GetAccessToken()
+
+	assert.Equal(t, token, tokenCached)
+
+	assertTokenCacheFileCreated(t)
 }
 
 // Test database management APIs.
