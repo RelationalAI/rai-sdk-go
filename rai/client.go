@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -974,6 +975,7 @@ func (c *Client) Execute(
 		return nil, err
 	}
 	if isTransactionComplete(&rsp.Transaction) {
+		log.Printf("Txn state: %s.\n", rsp.Transaction.State)
 		return rsp, nil // fast path
 	}
 	id := rsp.Transaction.ID
@@ -985,13 +987,17 @@ func (c *Client) Execute(
 			return nil, err
 		}
 		if isTransactionComplete(&rsp.Transaction) {
+			log.Printf("Txn %s state: %s.", id, rsp.Transaction.State)
 			return rsp, nil
 		}
-		delta := time.Since(t0)                  // total run time
+		log.Printf("Txn %s state: %s.", id, rsp.Transaction.State)
+		delta := time.Since(t0) // total run time
+		log.Printf("Delta is %s.", delta)
 		pause := time.Duration(int64(delta) / 5) // 20% of total run time
 		if pause > twoMinutes {
 			pause = twoMinutes
 		}
+		log.Printf("Pause took %s.", pause)
 		time.Sleep(pause)
 	}
 }
