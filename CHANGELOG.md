@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.14-alpha
+* Add support for token file directory creation. 
+
+## v0.5.13-alpha
+* Fix handling of (u)int128 Value types. 
+
 ## v0.5.12-alpha
 * Add beta version of snowflake datastream APIs. 
 
