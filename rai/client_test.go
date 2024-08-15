@@ -207,18 +207,18 @@ func TestDatabase(t *testing.T) {
 	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
-	assert.True(t, contains(modelNames, "rel/stdlib"))
+	assert.True(t, contains(modelNames, "pkg/std/std/common"))
 
 	models, err := client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(models) > 0)
-	model := findModel(models, "rel/stdlib")
+	model := findModel(models, "pkg/std/std/common")
 	assert.NotNil(t, model)
 	if model != nil {
 		assert.True(t, len(model.Value) > 0)
 	}
 
-	model, err = client.GetModel(test.databaseName, test.engineName, "rel/stdlib")
+	model, err = client.GetModel(test.databaseName, test.engineName, "pkg/std/std/common")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	if model != nil {
