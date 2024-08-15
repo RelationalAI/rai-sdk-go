@@ -355,26 +355,23 @@ func TestListTransactions(t *testing.T) {
 }
 
 // testing tag filters for transactions
-// @FIXME: Temporarily disabled due to blocking MQ without oncallers available
-//         for RCA. See https://relationalai.slack.com/archives/C028U514FQV/p1723672487903109
-//         for details.
-// func TestListTransactionsByTag(t *testing.T) {
-// 	client := test.client
+func TestListTransactionsByTag(t *testing.T) {
+	client := test.client
 
-// 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-// 	tag := fmt.Sprintf("rai-sdk-go:%d", time.Now().Unix())
-// 	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true, tag)
-// 	assert.Nil(t, err)
+	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+	tag := fmt.Sprintf("rai-sdk-go:%d", time.Now().Unix())
+	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true, tag)
+	assert.Nil(t, err)
 
-// 	expectedProblems := []Problem{}
-// 	assert.Equal(t, expectedProblems, txn.Problems)
+	expectedProblems := []Problem{}
+	assert.Equal(t, expectedProblems, txn.Problems)
 
-// 	txns, err := client.ListTransactions(tag)
-// 	assert.Nil(t, err)
+	txns, err := client.ListTransactions(tag)
+	assert.Nil(t, err)
 
-// 	assert.Equal(t, 1, len(txns), "filter tag did not apply as expected")
+	assert.Equal(t, 1, len(txns), "filter tag did not apply as expected")
 
-// }
+}
 
 func findRelation(relations []RelationV1, colName string) *RelationV1 {
 	for _, relation := range relations {
