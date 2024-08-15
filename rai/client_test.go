@@ -207,18 +207,18 @@ func TestDatabase(t *testing.T) {
 	modelNames, err := client.ListModelNames(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(modelNames) > 0)
-	assert.True(t, contains(modelNames, "rel/solverlib"))
+	assert.True(t, contains(modelNames, "rel/core-intrinsics"))
 
 	models, err := client.ListModels(test.databaseName, test.engineName)
 	assert.Nil(t, err)
 	assert.True(t, len(models) > 0)
-	model := findModel(models, "rel/solverlib")
+	model := findModel(models, "rel/core-intrinsics")
 	assert.NotNil(t, model)
 	if model != nil {
 		assert.True(t, len(model.Value) > 0)
 	}
 
-	model, err = client.GetModel(test.databaseName, test.engineName, "rel/solverlib")
+	model, err = client.GetModel(test.databaseName, test.engineName, "rel/core-intrinsics")
 	assert.Nil(t, err)
 	assert.NotNil(t, model)
 	if model != nil {
