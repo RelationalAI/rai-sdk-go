@@ -359,7 +359,7 @@ func TestListTransactionsByTag(t *testing.T) {
 	client := test.client
 
 	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
-	tag := fmt.Sprintf("rai-sdk-go:%d", time.Now().Unix())
+	tag := fmt.Sprintf("rai-sdk-go:%s", uuid.New().String())
 	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true, tag)
 	assert.Nil(t, err)
 
