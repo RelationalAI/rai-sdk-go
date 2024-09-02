@@ -1467,14 +1467,15 @@ func genSchemaConfig(b *strings.Builder, opts *CSVOptions) {
 		return
 	}
 	count := 0
-	b.WriteString("def config:schema = ")
+	b.WriteString("def config[:schema]: {")
 	for k, v := range schema {
 		if count > 0 {
 			b.WriteRune(';')
 		}
-		b.WriteString(fmt.Sprintf("\n    :%s, \"%s\"", k, v))
+		b.WriteString(fmt.Sprintf("\n    (:%s, \"%s\")", k, v))
 		count++
 	}
+	b.WriteRune('}')
 	b.WriteRune('\n')
 }
 
@@ -1503,7 +1504,7 @@ func genLiteral(v interface{}) string {
 // Generates a Rel syntax config def for the given option name and value.
 func genSyntaxOption(b *strings.Builder, name string, value interface{}) {
 	lit := genLiteral(value)
-	def := fmt.Sprintf("def config:syntax:%s = %s\n", name, lit)
+	def := fmt.Sprintf("def config[:syntax, :%s]: %s\n", name, lit)
 	b.WriteString(def)
 }
 
@@ -1531,8 +1532,8 @@ func genLoadCSV(relation string, opts *CSVOptions) string {
 	b := new(strings.Builder)
 	genSyntaxConfig(b, opts)
 	genSchemaConfig(b, opts)
-	b.WriteString("def config:data = data\n")
-	b.WriteString(fmt.Sprintf("def insert:%s = load_csv[config]", relation))
+	b.WriteString("def config[:data]: data\n")
+	b.WriteString(fmt.Sprintf("def insert[:%s]: load_csv[config]", relation))
 	return b.String()
 }
 
@@ -1556,8 +1557,8 @@ func (c *Client) LoadJSON(
 		return nil, err
 	}
 	b := new(strings.Builder)
-	b.WriteString("def config:data = data\n")
-	b.WriteString(fmt.Sprintf("def insert:%s = load_json[config]", relation))
+	b.WriteString("def config[:data]: data\n")
+	b.WriteString(fmt.Sprintf("def insert[:%s]: load_json[config]", relation))
 	inputs := map[string]string{"data": string(data)}
 	return c.ExecuteV1(database, engine, b.String(), inputs, false)
 }

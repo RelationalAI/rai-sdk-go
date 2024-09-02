@@ -310,7 +310,7 @@ func TestEngine(t *testing.T) {
 func TestExecuteV1(t *testing.T) {
 	client := test.client
 
-	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+	query := "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
 
 	rsp, err := client.ExecuteV1(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
@@ -334,7 +334,7 @@ func TestExecuteV1(t *testing.T) {
 func TestListTransactions(t *testing.T) {
 	client := test.client
 
-	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+	query := "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
 	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
 
@@ -358,7 +358,7 @@ func TestListTransactions(t *testing.T) {
 func TestListTransactionsByTag(t *testing.T) {
 	client := test.client
 
-	query := "x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}"
+	query := "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
 	tag := fmt.Sprintf("rai-sdk-go:%s", uuid.New().String())
 	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true, tag)
 	assert.Nil(t, err)
@@ -408,7 +408,7 @@ func TestLoadCSV(t *testing.T) {
 		assert.Equal(t, 0, len(rsp.Problems))
 	}
 
-	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_csv", nil, true)
+	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output { sample_csv }", nil, true)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	if rsp != nil {
@@ -482,7 +482,7 @@ func TestLoadCSVNoHeader(t *testing.T) {
 		assert.Equal(t, 0, len(rsp.Problems))
 	}
 
-	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_no_header", nil, true)
+	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output { sample_no_header }", nil, true)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	if rsp != nil {
@@ -555,7 +555,7 @@ func TestLoadCSVAltSyntax(t *testing.T) {
 	}
 
 	rsp, err = client.ExecuteV1(
-		test.databaseName, test.engineName, "def output = sample_alt_syntax", nil, true)
+		test.databaseName, test.engineName, "def output { sample_alt_syntax }", nil, true)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	if rsp != nil {
@@ -625,7 +625,7 @@ func TestLoadCSVWithSchema(t *testing.T) {
 		assert.Equal(t, 0, len(rsp.Problems))
 	}
 
-	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output = sample_with_schema", nil, true)
+	rsp, err = client.ExecuteV1(test.databaseName, test.engineName, "def output { sample_with_schema }", nil, true)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	if rsp != nil {
@@ -696,7 +696,7 @@ func TestLoadJSON(t *testing.T) {
 	}
 
 	rsp, err = client.ExecuteV1(
-		test.databaseName, test.engineName, "def output = sample_json", nil, true)
+		test.databaseName, test.engineName, "def output { sample_json }", nil, true)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
 	if rsp != nil {
@@ -738,7 +738,7 @@ func TestLoadJSON(t *testing.T) {
 func TestModels(t *testing.T) {
 	client := test.client
 
-	const testModel = "def R = \"hello\", \"world\""
+	const testModel = "def R { \"hello\", \"world\" }"
 
 	r := strings.NewReader(testModel)
 	rsp, err := client.LoadModel(test.databaseName, test.engineName, "test_model", r)
@@ -935,7 +935,7 @@ func TestListEdb(t *testing.T) {
 	client := test.client
 
 	// simple edb: int64 values
-	query := "def insert:a = 1"
+	query := "def insert[:a]: 1"
 	rsp, err := client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -948,7 +948,7 @@ func TestListEdb(t *testing.T) {
 	assert.Equal(t, &EDB{Name: "a", Keys: []interface{}{}, Values: []interface{}{"Int64"}}, edb)
 
 	// simple edb: :x keys, int64 values
-	query = "def insert:b:x = 1"
+	query = "def insert[:b, :x]: 1"
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -962,8 +962,8 @@ func TestListEdb(t *testing.T) {
 
 	// value type edb with only values
 	query = `
-		value type FooType = Int, Char
-		def insert:c = ^FooType[1, 'a']`
+		value type FooType {(Int, Char)}
+		def insert[:c]: ^FooType[1, 'a']`
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -982,8 +982,8 @@ func TestListEdb(t *testing.T) {
 
 	// value type edb as value
 	query = `
-		value type FooType = Int, Char
-		def insert:d:x = ^FooType[1, 'a']`
+		value type FooType {(Int, Char)}
+		def insert[:d, :x]: ^FooType[1, 'a']`
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -1002,9 +1002,9 @@ func TestListEdb(t *testing.T) {
 
 	// value type edb as key
 	query = `
-		value type FooType = Int, Char
-		def v = ^FooType[2, 'd']
-		def insert:e:v = #(v)`
+		value type FooType {(Int, Char)}
+		def v { ^FooType[2, 'd'] }
+		def insert[:e, :v]: ::std::mirror::lift[v]`
 	rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 	assert.Nil(t, err)
 	assert.NotNil(t, rsp)
@@ -1024,7 +1024,7 @@ func TestListEdb(t *testing.T) {
 
 	// cleanup
 	for _, edb := range []string{"a", "b", "c", "d", "e"} {
-		query = fmt.Sprintf("def delete:%s=%s", edb, edb)
+		query = fmt.Sprintf("def delete[:%s]: %s", edb, edb)
 		rsp, err = client.Execute(test.databaseName, test.engineName, query, nil, false)
 		assert.Nil(t, err)
 		assert.NotNil(t, rsp)
@@ -1032,7 +1032,7 @@ func TestListEdb(t *testing.T) {
 }
 
 func TestTransactionAbort(t *testing.T) {
-	query := `ic test_ic { false }`
+	query := `ic test_ic() requires { false }`
 
 	rsp, err := test.client.Execute(test.databaseName, test.engineName, query, nil, true, o11yTag)
 	assert.Nil(t, err)
@@ -1040,7 +1040,7 @@ func TestTransactionAbort(t *testing.T) {
 }
 
 func TestXRequestId(t *testing.T) {
-	query := `def output = 1 + 1`
+	query := `def output {1 + 1}`
 	inputs := make([]interface{}, 0)
 
 	tx := TransactionRequest{

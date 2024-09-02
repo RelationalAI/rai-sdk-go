@@ -14,7 +14,7 @@ package rai
 // relation data is partitioned by the resulting unique metadata signatures.
 // For example:
 //
-//     def output = 1, :foo; 2, :bar; 3, :baz
+//     def output {(1, :foo); (2, :bar); (3, :baz)}
 //
 //  results in 3 partitions, each with a unique metadata signature, and in this
 //  example, a single column with a single row of data:
