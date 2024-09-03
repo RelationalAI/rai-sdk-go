@@ -33,7 +33,7 @@ go run list_models/main.go -d $DATABASE -e $ENGINE
 go run get_model/main.go -d $DATABASE -e $ENGINE -m stdlib
 
 # exec
-QUERY='x, x^2, x^3, x^4 from x in {1; 2; 3; 4; 5}'
+QUERY='def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4'
 go run execute/main.go -d $DATABASE -e $ENGINE -c "$QUERY"
 go run execute/main.go -d $DATABASE -e $ENGINE -c "$QUERY" --readonly
 
