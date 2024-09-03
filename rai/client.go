@@ -1475,8 +1475,7 @@ func genSchemaConfig(b *strings.Builder, opts *CSVOptions) {
 		b.WriteString(fmt.Sprintf("\n    (:%s, \"%s\")", k, v))
 		count++
 	}
-	b.WriteRune('}')
-	b.WriteRune('\n')
+	b.WriteString("}\n")
 }
 
 func genLiteralInt(v int) string {
