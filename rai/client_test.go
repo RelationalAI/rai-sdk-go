@@ -738,7 +738,7 @@ func TestLoadJSON(t *testing.T) {
 func TestModels(t *testing.T) {
 	client := test.client
 
-	const testModel = "def R { \"hello\", \"world\" }"
+	const testModel = "def R {(\"hello\", \"world\")}"
 
 	r := strings.NewReader(testModel)
 	rsp, err := client.LoadModel(test.databaseName, test.engineName, "test_model", r)
