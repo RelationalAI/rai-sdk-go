@@ -236,12 +236,12 @@ var primitiveTypeTests = []execTest{
 	},
 	{
 		query: `
-			def config:data="""
+			def config[:data]: """
 				a,b,c
 				1,2,3
 				4,5,6"""
-			def csv = load_csv[config]
-			def output(p) = csv(_, p, _)`,
+			def csv { load_csv[config] }
+			def output(p): csv(_, p, _)`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:FilePos", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), [][]any{{int64(2), int64(3)}}),
 		rdata: xdata("0.arrow", sig("output", Int64Type),
@@ -463,7 +463,7 @@ var constPrimitiveTypeTests = []execTest{
 		rdata: xdata("0.arrow", sig("output", '👍'), row("output", '👍')),
 	},
 	{
-		query: `def output { #(2021-10-12T01:22:31+10:00) }`,
+		query: `def output { ::std::mirror::lift[2021-10-12T01:22:31+10:00] }`,
 		mdata: mdata("0.arrow", sig("output",
 			ctype("rel:base:DateTime", int64(63801184951000)))),
 		pdata: xdata("0.arrow", sig(), row()),
