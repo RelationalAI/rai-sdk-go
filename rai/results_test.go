@@ -159,61 +159,61 @@ var primitiveTypeTests = []execTest{
 			row("output", DateFromRataDie(738075))),
 	},
 	{
-		query: `def output {Year[2022]}`,
+		query: `def output {^Year[2022]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Year", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(2022))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(2022))),
 	},
 	{
-		query: `def output {Month[1]}`,
+		query: `def output {^Month[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Month", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Week[1]}`,
+		query: `def output {^Week[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Week", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Day[1]}`,
+		query: `def output {^Day[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Day", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Hour[1]}`,
+		query: `def output {^Hour[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Hour", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Minute[1]}`,
+		query: `def output {^Minute[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Minute", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Second[1]}`,
+		query: `def output {^Second[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Second", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Millisecond[1]}`,
+		query: `def output {^Millisecond[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Millisecond", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Microsecond[1]}`,
+		query: `def output {^Microsecond[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Microsecond", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
 	},
 	{
-		query: `def output {Nanosecond[1]}`,
+		query: `def output {^Nanosecond[1]}`,
 		mdata: mdata("0.arrow", sig("output", vtype("rel:base:Nanosecond", Int64Type))),
 		pdata: xdata("0.arrow", sig(Int64Type), row(int64(1))),
 		rdata: xdata("0.arrow", sig("output", Int64Type), row("output", int64(1))),
@@ -481,61 +481,61 @@ var constPrimitiveTypeTests = []execTest{
 			row("output", DateFromRataDie(738075))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Year[2022]]}`,
+		query: `def output {::std::mirror::lift[^Year[2022]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Year", int64(2022)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(2022)), row("output", int64(2022))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Month[1]]}`,
+		query: `def output {::std::mirror::lift[^Month[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Month", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Week[1]]}`,
+		query: `def output {::std::mirror::lift[^Week[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Week", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Day[1]]}`,
+		query: `def output {::std::mirror::lift[^Day[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Day", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Hour[1]]}`,
+		query: `def output {::std::mirror::lift[^Hour[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Hour", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Minute[1]]}`,
+		query: `def output {::std::mirror::lift[^Minute[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Minute", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Second[1]]}`,
+		query: `def output {::std::mirror::lift[^Second[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Second", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Millisecond[1]]}`,
+		query: `def output {::std::mirror::lift[^Millisecond[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Millisecond", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Microsecond[1]]}`,
+		query: `def output {::std::mirror::lift[^Microsecond[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Microsecond", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
 	},
 	{
-		query: `def output {::std::mirror::lift[Nanosecond[1]]}`,
+		query: `def output {::std::mirror::lift[^Nanosecond[1]]}`,
 		mdata: mdata("0.arrow", sig("output", ctype("rel:base:Nanosecond", int64(1)))),
 		pdata: xdata("0.arrow", sig(), row()),
 		rdata: xdata("0.arrow", sig("output", int64(1)), row("output", int64(1))),
@@ -817,8 +817,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Year)}
-			def output { ^MyType[1, Year[2022]] }`,
+			value type MyType {(Int, ::std::datetime::Year)}
+			def output { ^MyType[1, ^Year[2022]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Year", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2022})),
@@ -828,8 +828,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Month)}
-			def output { ^MyType[1, Month[2]] }`,
+			value type MyType {(Int, ::std::datetime::Month)}
+			def output { ^MyType[1, ^Month[2]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Month", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -839,8 +839,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Week)}
-			def output { ^MyType[1, Week[2]] }`,
+			value type MyType {(Int, ::std::datetime::Week)}
+			def output { ^MyType[1, ^Week[2]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Week", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -850,8 +850,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Day)}
-			def output { ^MyType[1, Day[2]] }`,
+			value type MyType {(Int, ::std::datetime::Day)}
+			def output { ^MyType[1, ^Day[2]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Day", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -861,8 +861,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Hour)}
-			def output { ^MyType[1, Hour[2]] }`,
+			value type MyType {(Int, ::std::datetime::Hour)}
+			def output { ^MyType[1, ^Hour[2]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Hour", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -872,8 +872,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Minute)}
-			def output { ^MyType[1, Minute[2]] }`,
+			value type MyType {(Int, ::std::datetime::Minute)}
+			def output { ^MyType[1, ^Minute[2]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Minute", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -883,8 +883,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Second)}
-			def output { ^MyType[1, Second[2]] }`,
+			value type MyType {(Int, ::std::datetime::Second)}
+			def output { ^MyType[1, ^Second[2]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, vtype("rel:base:Second", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -894,8 +894,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Millisecond)}
-			def output { ^MyType[1, Millisecond[2]] }`,
+			value type MyType {(Int, ::std::datetime::Millisecond)}
+			def output { ^MyType[1, ^Millisecond[2]] }`,
 		mdata: mdata("0.arrow", sig("output", vtype("MyType", Int64Type,
 			vtype("rel:base:Millisecond", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -905,8 +905,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Microsecond)}
-			def output { ^MyType[1, Microsecond[2]] }`,
+			value type MyType {(Int, ::std::datetime::Microsecond)}
+			def output { ^MyType[1, ^Microsecond[2]] }`,
 		mdata: mdata("0.arrow", sig("output", vtype("MyType", Int64Type,
 			vtype("rel:base:Microsecond", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -916,8 +916,8 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Nanosecond)}
-			def output { ^MyType[1, Nanosecond[2]] }`,
+			value type MyType {(Int, ::std::datetime::Nanosecond)}
+			def output { ^MyType[1, ^Nanosecond[2]] }`,
 		mdata: mdata("0.arrow", sig("output", vtype("MyType", Int64Type,
 			vtype("rel:base:Nanosecond", Int64Type)))),
 		pdata: xdata("0.arrow", sig(Int64ListType), row([]int64{1, 2})),
@@ -969,7 +969,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[8])}
+			value type MyType {(Int, SignedInteger[#8])}
 			def output { ^MyType[1, int[8, -12]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Int8Type))),
@@ -981,7 +981,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[16])}
+			value type MyType {(Int, SignedInteger[#16])}
 			def output { ^MyType[1, int[16, -123]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Int16Type))),
@@ -993,7 +993,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[32])}
+			value type MyType {(Int, SignedInteger[#32])}
 			def output { ^MyType[1, int[32, -1234]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Int32Type))),
@@ -1005,7 +1005,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[64])}
+			value type MyType {(Int, SignedInteger[#64])}
 			def output { ^MyType[1, int[64, -12345]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Int64Type))),
@@ -1016,7 +1016,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[128])}
+			value type MyType {(Int, SignedInteger[#128])}
 			def output { ^MyType[1, int[128, 123456789101112131415]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Int128Type))),
@@ -1028,7 +1028,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[8])}
+			value type MyType {(Int, UnsignedInteger[#8])}
 			def output { ^MyType[1, uint[8, 12]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Uint8Type))),
@@ -1040,7 +1040,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[16])}
+			value type MyType {(Int, UnsignedInteger[#16])}
 			def output { ^MyType[1, uint[16, 123]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Uint16Type))),
@@ -1052,7 +1052,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[32])}
+			value type MyType {(Int, UnsignedInteger[#32])}
 			def output { ^MyType[1, uint[32, 1234]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Uint32Type))),
@@ -1064,7 +1064,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[64])}
+			value type MyType {(Int, UnsignedInteger[#64])}
 			def output { ^MyType[1, uint[64, 12345]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Uint64Type))),
@@ -1076,7 +1076,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[128])}
+			value type MyType {(Int, UnsignedInteger[#128])}
 			def output { ^MyType[1, uint[128, 123456789101112131415]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Uint128Type))),
@@ -1088,7 +1088,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, Floating[16])}
+			value type MyType {(Int, FloatBinary[#16])}
 			def output { ^MyType[1, float[16, 42.5]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Float16Type))),
@@ -1100,7 +1100,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, Floating[32])}
+			value type MyType {(Int, FloatBinary[#32])}
 			def output { ^MyType[1, float[32, 42.5]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Float32Type))),
@@ -1112,7 +1112,7 @@ var valueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, Floating[64])}
+			value type MyType {(Int, FloatBinary[#64])}
 			def output { ^MyType[1, float[64, 42.5]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Int64Type, Float64Type))),
@@ -1239,7 +1239,7 @@ var extraValueTypeTests = []execTest{
 	// Tests RAI-22855
 	{
 		query: `
-			value type MyType {(UnsignedInt[64], FixedDecimal[128, 2])}
+			value type MyType {(UnsignedInteger[#64], FixedDecimal[128, 2])}
 			def output { ^MyType[uint[64, 1], decimal[128, 2, 2/3]] }`,
 		mdata: mdata("0.arrow", sig("output",
 			vtype("MyType", Uint64Type, vtype("rel:base:FixedDecimal", int64(128), int64(2), Int128Type)))),
@@ -1300,7 +1300,7 @@ var extraValueTypeTests = []execTest{
 		{
 			query: `
 				value type Foo { Foo2 }
-				value type Foo2 {(Int, SignedInt[128])}
+				value type Foo2 {(Int, SignedInteger[#128])}
 				def output { ^Foo[^Foo2[1, int128[2]]] }`,
 			mdata: mdata("0.arrow", sig("output",
 				vtype("Foo", vtype("Foo2", Int64Type, Int128Type)))),
@@ -1381,8 +1381,8 @@ var constValueTypeTests = []execTest{
 	*/
 	{
 		query: `
-			value type MyType {(Int, is_Year)}
-			def v { ^MyType[1, Year[2022]] }
+			value type MyType {(Int, ::std::datetime::Year)}
+			def v { ^MyType[1, ^Year[2022]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Year", int64(2022))))),
@@ -1393,8 +1393,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Month)}
-			def v { ^MyType[1, Month[2]] }
+			value type MyType {(Int, ::std::datetime::Month)}
+			def v { ^MyType[1, ^Month[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Month", int64(2))))),
@@ -1405,8 +1405,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Week)}
-			def v { ^MyType[1, Week[2]] }
+			value type MyType {(Int, ::std::datetime::Week)}
+			def v { ^MyType[1, ^Week[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Week", int64(2))))),
@@ -1417,8 +1417,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Day)}
-			def v { ^MyType[1, Day[2]] }
+			value type MyType {(Int, ::std::datetime::Day)}
+			def v { ^MyType[1, ^Day[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Day", int64(2))))),
@@ -1429,8 +1429,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Hour)}
-			def v { ^MyType[1, Hour[2]] }
+			value type MyType {(Int, ::std::datetime::Hour)}
+			def v { ^MyType[1, ^Hour[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Hour", int64(2))))),
@@ -1441,8 +1441,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Minute)}
-			def v { ^MyType[1, Minute[2]] }
+			value type MyType {(Int, ::std::datetime::Minute)}
+			def v { ^MyType[1, ^Minute[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Minute", int64(2))))),
@@ -1453,8 +1453,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Second)}
-			def v { ^MyType[1, Second[2]] }
+			value type MyType {(Int, ::std::datetime::Second)}
+			def v { ^MyType[1, ^Second[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Second", int64(2))))),
@@ -1465,8 +1465,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Millisecond)}
-			def v { ^MyType[1, Millisecond[2]] }
+			value type MyType {(Int, ::std::datetime::Millisecond)}
+			def v { ^MyType[1, ^Millisecond[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Millisecond", int64(2))))),
@@ -1477,8 +1477,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Microsecond)}
-			def v { ^MyType[1, Microsecond[2]] }
+			value type MyType {(Int, ::std::datetime::Microsecond)}
+			def v { ^MyType[1, ^Microsecond[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1),
 			ctype("rel:base:Microsecond", int64(2))))),
@@ -1489,8 +1489,8 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, is_Nanosecond)}
-			def v { ^MyType[1, Nanosecond[2]] }
+			value type MyType {(Int, ::std::datetime::Nanosecond)}
+			def v { ^MyType[1, ^Nanosecond[2]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
 			sig("output", ctype("MyType", int64(1), ctype("rel:base:Nanosecond", int64(2))))),
@@ -1542,7 +1542,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[8])}
+			value type MyType {(Int, SignedInteger[#8])}
 			def v { ^MyType[1, int[8, -12]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), int8(-12)))),
@@ -1553,7 +1553,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[16])}
+			value type MyType {(Int, SignedInteger[#16])}
 			def v { ^MyType[1, int[16, -123]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), int16(-123)))),
@@ -1564,7 +1564,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[32])}
+			value type MyType {(Int, SignedInteger[#32])}
 			def v { ^MyType[1, int[32, -1234]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), int32(-1234)))),
@@ -1575,7 +1575,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[64])}
+			value type MyType {(Int, SignedInteger[#64])}
 			def v { ^MyType[1, int[64, -12345]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), int64(-12345)))),
@@ -1586,7 +1586,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, SignedInt[128])}
+			value type MyType {(Int, SignedInteger[#128])}
 			def v { ^MyType[1, int[128, 123456789101112131415]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
@@ -1598,7 +1598,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[8])}
+			value type MyType {(Int, UnsignedInteger[#8])}
 			def v { ^MyType[1, uint[8, 12]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), uint8(12)))),
@@ -1609,7 +1609,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[16])}
+			value type MyType {(Int, UnsignedInteger[#16])}
 			def v { ^MyType[1, uint[16, 123]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), uint16(123)))),
@@ -1620,7 +1620,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[32])}
+			value type MyType {(Int, UnsignedInteger[#32])}
 			def v { ^MyType[1, uint[32, 1234]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), uint32(1234)))),
@@ -1631,7 +1631,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[64])}
+			value type MyType {(Int, UnsignedInteger[#64])}
 			def v { ^MyType[1, uint[64, 12345]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), uint64(12345)))),
@@ -1642,7 +1642,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, UnsignedInt[128])}
+			value type MyType {(Int, UnsignedInteger[#128])}
 			def v { ^MyType[1, uint[128, 123456789101112131415]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow",
@@ -1654,7 +1654,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, Floating[16])}
+			value type MyType {(Int, FloatBinary[#16])}
 			def v { ^MyType[1, float[16, 42.5]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), float16.New(42.5)))),
@@ -1665,7 +1665,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, Floating[32])}
+			value type MyType {(Int, FloatBinary[#32])}
 			def v { ^MyType[1, float[32, 42.5]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), float32(42.5)))),
@@ -1676,7 +1676,7 @@ var constValueTypeTests = []execTest{
 	},
 	{
 		query: `
-			value type MyType {(Int, Floating[64])}
+			value type MyType {(Int, FloatBinary[#64])}
 			def v { ^MyType[1, float[64, 42.5]] }
 			def output { ::std::mirror::lift[v] }`,
 		mdata: mdata("0.arrow", sig("output", ctype("MyType", int64(1), float64(42.5)))),
