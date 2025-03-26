@@ -310,7 +310,7 @@ func TestEngine(t *testing.T) {
 func TestExecuteV1(t *testing.T) {
 	client := test.client
 
-	query := "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
+	query := "@function def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
 
 	rsp, err := client.ExecuteV1(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
@@ -334,7 +334,7 @@ func TestExecuteV1(t *testing.T) {
 func TestListTransactions(t *testing.T) {
 	client := test.client
 
-	query := "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
+	query := "@function def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
 	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true)
 	assert.Nil(t, err)
 
@@ -358,7 +358,7 @@ func TestListTransactions(t *testing.T) {
 func TestListTransactionsByTag(t *testing.T) {
 	client := test.client
 
-	query := "def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
+	query := "@function def output(x, x2, x3, x4): {1; 2; 3; 4; 5}(x) and x2 = x^2 and x3 = x^3 and x4 = x^4"
 	tag := fmt.Sprintf("rai-sdk-go:%s", uuid.New().String())
 	txn, err := client.Execute(test.databaseName, test.engineName, query, nil, true, tag)
 	assert.Nil(t, err)
