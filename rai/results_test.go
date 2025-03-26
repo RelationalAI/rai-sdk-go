@@ -2032,7 +2032,7 @@ func TestInterfaceTypes(t *testing.T) {
 }
 
 func TestPrefixMatch(t *testing.T) {
-	query := `def output {(1, :foo, "a"); (42, :bar, "c")}`
+	query := `@function def output {(1, :foo, "a"); (42, :bar, "c")}`
 
 	rsp, err := test.client.Execute(test.databaseName, test.engineName, dindent(query), nil, true, o11yTag)
 	assert.Nil(t, err)
@@ -2094,7 +2094,7 @@ func pick(r Relation, ncol int, v any) []any {
 
 func TestRelationSlice(t *testing.T) {
 	query := `
-		def output {
+	  @no_diagnostics(:FUNCTION_ON_METAVALUE) @function def output {
 			(1, :foo, "a");
 			(2, :bar, "c");
 			(3, :baz, 42);
@@ -2174,7 +2174,7 @@ func TestRelationSlice(t *testing.T) {
 
 func TestRelationUnion(t *testing.T) {
 	query := `
-		def output {
+		@no_diagnostics(:FUNCTION_ON_METAVALUE) @function def output {
 			(1, :foo, "a");
 			(2, :bar, "c");
 			(3, :baz, 42);
