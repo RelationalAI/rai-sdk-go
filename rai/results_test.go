@@ -2094,7 +2094,7 @@ func pick(r Relation, ncol int, v any) []any {
 
 func TestRelationSlice(t *testing.T) {
 	query := `
-	  @no_diagnostics(:FUNCTION_ON_METAVALUE)	@function def output {
+	  @no_diagnostics(:FUNCTION_ON_METAVALUE) @function def output {
 			(1, :foo, "a");
 			(2, :bar, "c");
 			(3, :baz, 42);
