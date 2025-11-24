@@ -10,7 +10,7 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.1
 	google.golang.org/protobuf v1.28.0
-	gopkg.in/ini.v1 v1.66.4
+	gopkg.in/ini.v1 v1.67.0
 )
 
 require (
