@@ -8,7 +8,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/shopspring/decimal v1.3.1
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.10.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/ini.v1 v1.66.4
 )
